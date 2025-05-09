@@ -10,4 +10,5 @@ public class MemberResponse {
   private Long memberId;
   private String email;
   private String nickname;
+  private String profileImage;
 }

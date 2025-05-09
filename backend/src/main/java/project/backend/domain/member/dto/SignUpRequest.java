@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import project.backend.domain.imagefile.ImageFile;
 
 @Data
 public class SignUpRequest {
@@ -18,4 +19,6 @@ public class SignUpRequest {
 
   @NotBlank(message = "닉네임은 필수입니다.")
   private String nickname;
+
+  private ImageFile profile_image;
 }
