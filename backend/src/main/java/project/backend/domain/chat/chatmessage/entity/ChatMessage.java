@@ -35,7 +35,7 @@ public class ChatMessage {
 
     private String content;
 
-    private LocalDateTime send_at = LocalDateTime.now();
+    private LocalDateTime sendAt = LocalDateTime.now();
 
     @Enumerated(EnumType.STRING)
     private MessageType type = MessageType.TEXT;

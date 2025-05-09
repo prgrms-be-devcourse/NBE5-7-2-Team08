@@ -12,6 +12,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
+import project.backend.domain.chat.chatroom.entity.ChatRoom;
 
 @Entity
 @Getter
@@ -29,7 +30,7 @@ public class Member {
 
     private String nickname;
 
-    private LocalDateTime join_at = LocalDateTime.now();
+    private LocalDateTime joinAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "participant")
     private List<ChatParticipant> participants = new ArrayList<>();

@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
@@ -28,11 +29,11 @@ public class ChatRoom {
 
     private String name;
 
-    private LocalDateTime created_at = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    private String repository_url;
+    private String repositoryUrl;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "owner_id")
     private Member owner;
 
