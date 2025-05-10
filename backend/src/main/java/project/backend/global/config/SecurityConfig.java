@@ -12,28 +12,32 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-  }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
 
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http
-        .csrf(AbstractHttpConfigurer::disable)
-        .cors(AbstractHttpConfigurer::disable)
-        .authorizeHttpRequests(auth -> {
-          auth
-              .requestMatchers("/signup")
-              .permitAll()
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .formLogin(form -> {
+                    form.loginPage("/login")
+                            .permitAll();
+                })
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> {
+                    auth
+                            .requestMatchers("/signup")
+                            .permitAll()
 
-              .requestMatchers("/login")
-              .anonymous()
+                            .requestMatchers("/login")
+                            .permitAll()
 
-              .anyRequest()
-              .authenticated();
-        })
-        .formLogin(Customizer.withDefaults())
-        .build();
-  }
+                            .anyRequest()
+                            .authenticated();
+                })
+                .logout(Customizer.withDefaults())
+                .build();
+    }
 }

@@ -2,10 +2,9 @@ package project.backend.domain.member.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import project.backend.domain.member.app.MemberService;
 import project.backend.domain.member.dto.MemberResponse;
 import project.backend.domain.member.dto.SignUpRequest;
@@ -16,11 +15,13 @@ import project.backend.domain.member.dto.SignUpRequest;
 @RequiredArgsConstructor
 public class SignupController {
 
-  private final MemberService memberService;
+    private final MemberService memberService;
 
-  @PostMapping
-  public MemberResponse signup(@RequestBody SignUpRequest request) {
-    log.info("request = {}", request);
-    return memberService.saveMember(request);
-  }
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public MemberResponse signup(@RequestBody SignUpRequest request) {
+        log.info("request = {}", request);
+        return memberService.saveMember(request);
+    }
+    
 }
