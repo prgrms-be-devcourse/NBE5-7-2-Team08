@@ -29,7 +29,10 @@ function App() {
     });
 
     if (!response.ok) {
-      throw new Error("Signup failed");
+      const errorData = await response.json();
+      console.error(errorData)
+      alert(errorData.message || "회원가입 실패");
+      return;
     }
 
     const data = await response.json();
@@ -38,10 +41,10 @@ function App() {
     navigate("/login");
 
   } catch (error) {
-    console.error("❌ Error during signup:", error);
-    alert("회원가입 실패: 서버 에러 또는 잘못된 입력입니다.");
+    console.error("❌ 네트워크 또는 서버 에러:", error);
+    alert("서버에 연결할 수 없습니다.");
   }
-  }
+}
 
   return (
     <div className="app-container">
