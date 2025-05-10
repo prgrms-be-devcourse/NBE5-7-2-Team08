@@ -1,68 +1,94 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // React Router 필요
+"use client"
 
-export default function LoginForm() {
+import { useState } from "react"
+import { useNavigate } from "react-router-dom";
+import "./App.css"
+
+function App() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  e.preventDefault();
 
-    try {
-      // 여기에 실제 인증 로직이 들어갑니다
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      alert("You have successfully logged in.");
-      navigate("/dashboard");
-    } catch (err) {
-      setError("Invalid email or password. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+  const payload = {
+    email,
+    password,
   };
 
-  return (
-    <div className="card">
-      <form onSubmit={handleSubmit}>
-        <h2>Login</h2>
-        <p>Enter your email and password to access your account</p>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            placeholder="m@example.com"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign in"}
-        </button>
-        {error && <p className="error">{error}</p>}
-        <p>
-          Don't have an account?{" "}
-          <a href="/signup">Sign up</a>
-        </p>
-      </form>
-    </div>
-  );
+  try {
+    const response = await fetch("http://localhost:8080/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error(errorData)
+      alert(errorData.message || "로그인인 실패");
+      return;
+    }
+
+    const data = await response.json();
+    console.log("✅ Signup successful:", data);
+    alert("로그인인 성공!");
+    navigate("/");
+
+  } catch (error) {
+    console.error("네트워크 또는 서버 에러:", error);
+    alert("서버에 연결할 수 없습니다.");
+  }
 }
+
+  return (
+    <div className="app-container">
+      <div className="form-container">
+        <div className="logo-container">
+          <img src="/images/devchat-logo.png" alt="DevChat Logo" className="logo-image" />
+        </div>
+
+        <h1 className="heading">Welcome Back!</h1>
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="이메일을 입력해주세요"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="비밀번호를 입력해주세요"
+              required
+            />
+          </div>
+
+          <button type="submit" className="signup-button">
+            Login
+          </button>
+        </form>
+      </div>
+
+      <div className="background-container">
+        <img src="/images/signup-background.png" alt="Background" className="background-image" />
+      </div>
+    </div>
+  )
+}
+
+export default App

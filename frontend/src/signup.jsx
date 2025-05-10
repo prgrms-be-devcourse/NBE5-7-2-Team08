@@ -41,7 +41,7 @@ function App() {
     navigate("/login");
 
   } catch (error) {
-    console.error("❌ 네트워크 또는 서버 에러:", error);
+    console.error("네트워크 또는 서버 에러:", error);
     alert("서버에 연결할 수 없습니다.");
   }
 }
