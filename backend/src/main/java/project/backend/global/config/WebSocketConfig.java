@@ -15,7 +15,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-            .setAllowedOriginPatterns("http://localhost:3000") // cors 허용 fixme 3000번 포트만 허용
+            .setAllowedOriginPatterns("http://localhost:3000")
             .withSockJS();
     }
 

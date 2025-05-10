@@ -6,22 +6,27 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import project.backend.domain.chat.chatmessage.app.ChatMessageService;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
+import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
 
 @Controller
 @RequiredArgsConstructor
 public class ChatMessageController {
 
     private final ChatMessageService chatMessageService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/send-message/{roomId}") //클라이언트가 메세지를 보낼 경로
-    @SendTo("/topic/public") //브로드캐스트할 경로
-    public ChatMessageRequest sendMessage(@DestinationVariable Long roomId,
-        @Payload ChatMessageRequest request,
-        Principal principal) {
-        chatMessageService.save(roomId, request, principal.getName());
-        return request;
+    public ChatMessageResponse sendMessage(@DestinationVariable Long roomId,
+        @Payload ChatMessageRequest request, Principal principal) {
+        ChatMessageResponse response = chatMessageService.save(roomId, request,
+            principal.getName());
+
+        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+
+        return response;
     }
 }
