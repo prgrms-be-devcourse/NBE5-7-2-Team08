@@ -3,6 +3,7 @@ package project.backend.domain.member.app;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.backend.domain.imagefile.ImageFile;
@@ -31,7 +32,7 @@ public class MemberService {
             log.info("예외 = {}", "이미 존재하는 email");
             throw new MemberException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
- 
+
         ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
                 "default-profile.png");
         request.setProfile_image(defaultProfileImg);
@@ -45,17 +46,16 @@ public class MemberService {
         return memberRepository.findByEmail(email).isPresent();
     }
 
-    public MemberResponse findMemberByEmail(String email) {
-        Member foundMember = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    public Member findMemberByEmail(String email) {
 
-        return MemberMapper.toDto(foundMember);
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 유저입니다."));
     }
 
 
     public MemberResponse updateMember(Long id, MemberUpdateRequest request) {
         Member targetMember = memberRepository.findById(id)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 유저입니다."));
 
         if (request.getNickname() != null) {
             targetMember.setNickname(request.getNickname());

@@ -12,19 +12,21 @@ function App() {
   const handleSubmit = async (e) => {
   e.preventDefault();
 
-  const payload = {
-    email,
-    password,
-  };
+  const params = new URLSearchParams();
+  params.append("email",email);
+  params.append("password",password);
 
   try {
     const response = await fetch("http://localhost:8080/login", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: params.toString(),
+      credentials: "include",
     });
+
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -34,8 +36,8 @@ function App() {
     }
 
     const data = await response.json();
-    console.log("✅ Signup successful:", data);
-    alert("로그인인 성공!");
+    console.log("Signup successful:", data);
+    alert("로그인 성공!");
     navigate("/");
 
   } catch (error) {
@@ -82,6 +84,11 @@ function App() {
             Login
           </button>
         </form>
+
+        <div className="signup-link">
+          <span>계정이 아직 없으신가요?</span>
+          <a href="/signup">회원가입</a>
+        </div>
       </div>
 
       <div className="background-container">

@@ -1,5 +1,6 @@
 package project.backend.global.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import project.backend.domain.member.MemberErrorCode;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -20,7 +22,7 @@ public class GlobalExceptionHandler {
                 .message(errorCode.getMessage())
                 .status(errorCode.getStatus())
                 .build();
-
+        log.info("response.getMessage() = {}", response.getMessage());
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
