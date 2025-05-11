@@ -7,12 +7,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatRoomRequest {
-
-
-	private String name;
-
-	private String repositoryUrl;
-
-	private Long ownerId;
+public class InviteCodeResponse {
+	private String inviteUrl;
 }

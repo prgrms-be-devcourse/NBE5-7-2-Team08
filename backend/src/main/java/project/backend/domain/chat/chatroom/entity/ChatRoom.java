@@ -38,6 +38,8 @@ public class ChatRoom {
 
     private String repositoryUrl;
 
+    private String inviteCode;
+
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private Member owner;

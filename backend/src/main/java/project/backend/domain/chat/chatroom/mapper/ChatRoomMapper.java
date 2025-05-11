@@ -1,6 +1,7 @@
 package project.backend.domain.chat.chatroom.mapper;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
@@ -15,6 +16,7 @@ public class ChatRoomMapper {
 			.name(dto.getName())
 			.createdAt(LocalDateTime.now())
 			.repositoryUrl(dto.getRepositoryUrl())
+			.inviteCode(UUID.randomUUID().toString())
 			.owner(owner)
 			.build();
 	}
