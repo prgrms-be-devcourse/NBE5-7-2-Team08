@@ -16,6 +16,7 @@ public class ChatMessageMapper {
             .sender(sender)
             .content(request.getContent())
             .type(request.getType())
+            .codeLanguage(request.getLanguage())
             .build();
 
     }
@@ -28,6 +29,7 @@ public class ChatMessageMapper {
             .content(message.getContent())
             .type(message.getType())
             .sendAt(message.getSendAt())
+            .language(message.getCodeLanguage())
             .build();
     }
 

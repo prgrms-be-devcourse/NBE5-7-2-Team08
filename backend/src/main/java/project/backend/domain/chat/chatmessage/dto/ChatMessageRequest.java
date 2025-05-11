@@ -8,5 +8,6 @@ public class ChatMessageRequest {
 
     private String content;
     private MessageType type;
+    private String language;
 
 }

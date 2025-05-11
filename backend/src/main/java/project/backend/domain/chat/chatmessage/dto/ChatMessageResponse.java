@@ -13,5 +13,6 @@ public class ChatMessageResponse {
     private String senderName;
     private LocalDateTime sendAt;
     private MessageType type;
+    private String language;
 
 }
