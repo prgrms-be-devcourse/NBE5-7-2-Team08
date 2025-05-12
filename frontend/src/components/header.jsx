@@ -14,14 +14,18 @@ export function Header() {
       try {
         setIsLoading(true)
         // Replace with your actual API endpoint
-        const response = await fetch("https://localhost:8080/user/profile-image")
+        const response = await fetch("http://localhost:8080/user/details" ,{
+          method: "GET",
+          credentials: "include"
+        });
+        
 
         if (!response.ok) {
           throw new Error("Failed to fetch profile image")
         }
 
         const data = await response.json()
-        setProfileImage(data.imageUrl)
+        setProfileImage(data.profileImg)
         setIsLoading(false)
       } catch (err) {
         console.error("Error fetching profile image:", err)
@@ -61,14 +65,10 @@ export function Header() {
               </svg>
             </div>
           ) : (
-            <img
-              src={profileImage || "https://via.placeholder.com/32"}
+            <img 
+              src={profileImage}
               alt="User profile"
               className="profile-image"
-              onError={(e) => {
-                e.target.onerror = null
-                e.target.src = "https://via.placeholder.com/32"
-              }}
             />
           )}
           <button

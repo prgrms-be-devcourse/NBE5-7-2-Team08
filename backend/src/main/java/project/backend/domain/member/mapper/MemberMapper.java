@@ -9,21 +9,21 @@ import project.backend.domain.member.entity.Member;
 @RequiredArgsConstructor
 public class MemberMapper {
 
-  public static Member toEntity(SignUpRequest request) {
-    return Member.builder()
-        .email(request.getEmail())
-        .password(request.getPassword())
-        .nickname(request.getNickname())
-        .profileImage(request.getProfile_image())
-        .build();
-  }
+    public static Member toEntity(SignUpRequest request) {
+        return Member.builder()
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .nickname(request.getNickname())
+                .profileImage(request.getProfile_image())
+                .build();
+    }
 
-  public static MemberResponse toDto(Member member) {
-    return MemberResponse.builder()
-        .memberId(member.getId())
-        .email(member.getEmail())
-        .nickname(member.getNickname())
-        .profileImage(member.getProfileImage().getUploadFileName())
-        .build();
-  }
+    public static MemberResponse toDto(Member member) {
+        return MemberResponse.builder()
+                .id(member.getId())
+                .email(member.getEmail())
+                .nickname(member.getNickname())
+                .profileImg(member.getProfileImage().getUploadFileName())
+                .build();
+    }
 }

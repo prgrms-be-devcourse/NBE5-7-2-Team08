@@ -16,4 +16,4 @@ spring:
 
 
 file:
-  profile-path: src/main/resources/profiles/
+  profile-path: img/

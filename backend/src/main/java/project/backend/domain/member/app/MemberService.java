@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileService;
 import project.backend.domain.member.dao.MemberRepository;
+import project.backend.domain.member.dto.MemberDetails;
 import project.backend.domain.member.dto.MemberResponse;
 import project.backend.domain.member.dto.MemberUpdateRequest;
 import project.backend.domain.member.dto.SignUpRequest;
@@ -35,7 +36,7 @@ public class MemberService {
         }
 
         ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
-                "default-profile.png");
+                "/profile/default-profile.png");
         request.setProfile_image(defaultProfileImg);
         request.setPassword(passwordEncoder.encode(request.getPassword()));
 
@@ -44,9 +45,8 @@ public class MemberService {
     }
 
     public MemberResponse getMemberDetails(Authentication auth) {
-        Member member = (Member) auth.getPrincipal();
-        log.info("auth = {}", auth);
-        return MemberMapper.toDto(member);
+        MemberDetails member = (MemberDetails) auth.getPrincipal();
+        return MemberDetails.toDto(member);
     }
 
     private boolean checkIfMemberExists(String email) {

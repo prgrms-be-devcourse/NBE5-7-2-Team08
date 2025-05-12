@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import project.backend.domain.member.dto.MemberDetails;
 
 import java.io.IOException;
 import java.util.Map;
@@ -26,7 +27,6 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
         Map<String, String> result = Map.of("message", "로그인 성공");
         new ObjectMapper().writeValue(response.getWriter(), result);
-
         log.info("로그인 성공: {}", authentication.getName());
     }
 }

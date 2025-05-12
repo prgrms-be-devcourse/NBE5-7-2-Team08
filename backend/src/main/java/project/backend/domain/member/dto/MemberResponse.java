@@ -7,8 +7,8 @@ import lombok.Data;
 @Builder
 public class MemberResponse {
 
-  private Long memberId;
-  private String email;
-  private String nickname;
-  private String profileImage;
+    private Long id;
+    private String email;
+    private String nickname;
+    private String profileImg;
 }
