@@ -1,42 +1,14 @@
 import React from 'react';
+import SideBar from '../fragments/SideBar';
 
 const BlankRoom = () => {
 
   return (
-    <div style={{ backgroundColor: '#e0e0e0', height: '100vh', padding: '20px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
+    <div style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
 
       {/* Top Bar */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '10px' }}>
-        {/* 방 생성 & 참가 그룹 */}
-        <div style={{ display: 'flex', gap: '10px', marginRight: '20px' }}>
-          <button
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#888',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-            onClick={() => window.location.href = '/create'}
-          >
-            방 생성
-          </button>
-          <button
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#aaa',
-              color: 'black',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-            onClick={() => window.location.href = '/join'}
-          >
-            방 참가
-          </button>
-        </div>
-
-        {/* 로그아웃 & 마이페이지 그룹 */}
-        <div style={{ display: 'flex', gap: '10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '10px', marginTop: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginRight: '10px' }}>
           <button
             style={{
               padding: '10px 15px',
@@ -84,16 +56,11 @@ const BlankRoom = () => {
 
       {/* 본문 전체 영역 */}
       <div style={{ flex:1, display: 'flex', overflow: 'hidden' }}>
-        {/* Sidebar */}
-        <div style={{ width: '200px', padding: '10px', backgroundColor: '#ffffff' }}>
-          <h3 style={{ color: 'black', fontWeight: 'bold' }}>채팅방 목록</h3>
-          <p>현재 참여 중인 채팅방이 없습니다.</p>
-        </div>
+        <SideBar />
 
         {/* Chat area */}
         <div style={{
           flex: 1,
-          marginLeft: '20px',
           width: '700px',
           backgroundColor: '#f9f9f9',
           borderRadius: '8px',
@@ -133,7 +100,7 @@ const BlankRoom = () => {
               <textarea
                 style={{
                   flex: 1,
-                  height: '50px',
+                  height: '30px',
                   resize: 'none',
                   padding: '15px',
                   fontSize: '16px',
