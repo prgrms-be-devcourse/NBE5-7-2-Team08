@@ -39,7 +39,7 @@ public class ChatRoomController {
 		return chatRoomService.createChatRoom(request, ownerId);
 	}
 
-	@GetMapping("/{roomId}/invite")
+	@GetMapping("/invite/{roomId}")
 	@ResponseBody
 	public InviteCodeResponse getInviteUrl(@PathVariable Long roomId,
 		@AuthenticationPrincipal MemberDetails memberDetails) {
