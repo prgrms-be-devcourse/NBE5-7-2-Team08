@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
@@ -40,4 +41,15 @@ public class ChatMessage {
     @Enumerated(EnumType.STRING)
     private MessageType type = MessageType.TEXT;
 
+    private String codeLanguage; //추가, 문법마다 다르게 하이라이팅을 하기 위함
+
+    @Builder
+    public ChatMessage(MessageType type, String content, ChatRoom chatRoom,
+        ChatParticipant sender, String codeLanguage) {
+        this.type = type;
+        this.content = content;
+        this.chatRoom = chatRoom;
+        this.sender = sender;
+        this.codeLanguage = codeLanguage;
+    }
 }

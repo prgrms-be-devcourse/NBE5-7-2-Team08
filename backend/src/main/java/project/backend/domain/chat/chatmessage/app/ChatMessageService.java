@@ -1,5 +1,51 @@
 package project.backend.domain.chat.chatmessage.app;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
+import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
+import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
+import project.backend.domain.chat.chatmessage.entity.ChatMessage;
+import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper;
+import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
+import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
+import project.backend.domain.chat.chatroom.entity.ChatParticipant;
+import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.member.dao.MemberRepository;
+import project.backend.domain.member.entity.Member;
+import project.backend.global.exception.ex.ChatException;
+import project.backend.global.exception.ex.MemberException;
+import project.backend.global.exception.errorcode.ChatErrorCode;
+import project.backend.global.exception.errorcode.MemberErrorCode;
+
+@Service
+@RequiredArgsConstructor
 public class ChatMessageService {
 
+    private final ChatMessageRepository chatMessageRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final MemberRepository memberRepository;
+    private final ChatParticipantRepository chatParticipantRepository;
+
+    private final ChatMessageMapper messageMapper;
+
+    @Transactional
+    public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String email) {
+
+        Member sender = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        ChatRoom room = chatRoomRepository.findById(roomId)
+            .orElseThrow(() -> new ChatException(ChatErrorCode.CHATROOM_NOT_FOUND));
+
+        ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
+                sender, room)
+            .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_PARTICIPANT));
+
+        ChatMessage message = messageMapper.toEntity(room, participant, request);
+        chatMessageRepository.save(message);
+
+        return messageMapper.toResponse(message);
+    }
 }

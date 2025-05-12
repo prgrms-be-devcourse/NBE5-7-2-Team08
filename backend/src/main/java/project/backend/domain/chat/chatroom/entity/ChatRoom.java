@@ -14,12 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.member.entity.Member;
 
 @Entity
 @NoArgsConstructor
 @Getter
+@Setter
 public class ChatRoom {
 
     @Id
