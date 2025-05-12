@@ -15,10 +15,9 @@ public class ChatRoomController {
     private final ChatRoomService chatRoomService;
 
     @GetMapping("/chat-rooms/recent")
-    public ResponseEntity<RecentChatRoomResponse> getRecentRoomId(Principal principal) {
-        return chatRoomService.getMostRecentRoomId(principal.getName())
-            .map(roomId -> ResponseEntity.ok(new RecentChatRoomResponse(roomId)))
-            .orElseGet(() -> ResponseEntity.noContent().build());
+    public RecentChatRoomResponse getRecentRoomId(Principal principal) {
+        Long roomId = chatRoomService.getMostRecentRoomId(principal.getName());
+        return new RecentChatRoomResponse(roomId);
     }
 
 }

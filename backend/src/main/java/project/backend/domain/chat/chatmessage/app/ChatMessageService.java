@@ -16,6 +16,8 @@ import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
 import project.backend.global.exception.ChatException;
 import project.backend.global.exception.MemberException;
+import project.backend.global.exception.errorcode.ChatErrorCode;
+import project.backend.global.exception.errorcode.MemberErrorCode;
 
 @Service
 @RequiredArgsConstructor
@@ -32,14 +34,14 @@ public class ChatMessageService {
     public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String email) {
 
         Member sender = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new MemberException("사용자 정보를 찾을 수 없습니다."));
+            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         ChatRoom room = chatRoomRepository.findById(roomId)
-            .orElseThrow(() -> new ChatException("채팅방을 찾을 수 없습니다."));
+            .orElseThrow(() -> new ChatException(ChatErrorCode.CHATROOM_NOT_FOUND));
 
         ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
                 sender, room)
-            .orElseThrow(() -> new ChatException("해당 방에 참여 중인 사용자가 아닙니다."));
+            .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_PARTICIPANT));
 
         ChatMessage message = messageMapper.toEntity(room, participant, request);
         chatMessageRepository.save(message);
