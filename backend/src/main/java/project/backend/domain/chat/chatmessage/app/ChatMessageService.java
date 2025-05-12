@@ -1,11 +1,15 @@
 package project.backend.domain.chat.chatmessage.app;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
+import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchRequest;
+import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchResponse;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
@@ -23,29 +27,41 @@ import project.backend.global.exception.errorcode.MemberErrorCode;
 @RequiredArgsConstructor
 public class ChatMessageService {
 
-    private final ChatMessageRepository chatMessageRepository;
-    private final ChatRoomRepository chatRoomRepository;
-    private final MemberRepository memberRepository;
-    private final ChatParticipantRepository chatParticipantRepository;
+	private final ChatMessageRepository chatMessageRepository;
+	private final ChatRoomRepository chatRoomRepository;
+	private final MemberRepository memberRepository;
+	private final ChatParticipantRepository chatParticipantRepository;
 
-    private final ChatMessageMapper messageMapper;
+	private final ChatMessageMapper messageMapper;
 
-    @Transactional
-    public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String email) {
+	@Transactional
+	public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String email) {
 
-        Member sender = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+		Member sender = memberRepository.findByEmail(email)
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        ChatRoom room = chatRoomRepository.findById(roomId)
-            .orElseThrow(() -> new ChatException(ChatErrorCode.CHATROOM_NOT_FOUND));
+		ChatRoom room = chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatException(ChatErrorCode.CHATROOM_NOT_FOUND));
 
-        ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
-                sender, room)
-            .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_PARTICIPANT));
+		ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
+				sender, room)
+			.orElseThrow(() -> new ChatException(ChatErrorCode.NOT_PARTICIPANT));
 
-        ChatMessage message = messageMapper.toEntity(room, participant, request);
-        chatMessageRepository.save(message);
+		ChatMessage message = messageMapper.toEntity(room, participant, request);
+		chatMessageRepository.save(message);
 
-        return messageMapper.toResponse(message);
-    }
+		return messageMapper.toResponse(message);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<ChatMessageSearchResponse> searchMessages(ChatMessageSearchRequest request) {
+		PageRequest pageable = PageRequest.of(request.getPage(), request.getPageSize());
+
+		Page<ChatMessage> resultPage = chatMessageRepository.searchByKeywordAndRoomId(
+			request.getKeyword(),
+			request.getRoomId(),
+			pageable
+		);
+		return resultPage.map(messageMapper::toSearchResponse);
+	}
 }
