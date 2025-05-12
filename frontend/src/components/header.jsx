@@ -14,7 +14,7 @@ export function Header() {
       try {
         setIsLoading(true)
         // Replace with your actual API endpoint
-        const response = await fetch("https://localhost/user/profile-image")
+        const response = await fetch("https://localhost:8080/user/profile-image")
 
         if (!response.ok) {
           throw new Error("Failed to fetch profile image")
@@ -37,7 +37,7 @@ export function Header() {
     <header className="header">
       <div className="container">
           <a href="/">
-            <img src="/images/devchat-logo.png" alt="DevChat Logo" className="logo-image" />     
+            <img src="/images/devchat-logo.png" alt="DevChat Logo" className="header-logo-image" />     
           </a>
         <div className="profile-container">
           {isLoading ? (
@@ -71,9 +71,41 @@ export function Header() {
               }}
             />
           )}
-          <span className="logout-text">Log Out</span>
+          <button
+            className="logout-text"
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              margin: 0,
+              cursor: "pointer",
+              fontWeight: 500
+            }}
+            onClick={async () => {
+              try {
+                const response = await fetch("http://localhost:8080/logout", {
+                  method: "POST",
+                  credentials: "include" // ✅ 세션 쿠키 포함 (JSESSIONID)
+                });
+
+                if (response.ok) {
+                  alert("로그아웃 되었습니다.");
+                  window.location.href = "/login"; // 또는 원하는 페이지로 이동
+                } else {
+                  alert("로그아웃 실패");
+                }
+              } catch (error) {
+                console.error("로그아웃 요청 실패:", error);
+                alert("서버 오류로 로그아웃 실패");
+              }
+            }}
+          >
+            Log Out
+          </button>
         </div>
       </div>
     </header>
   )
 }
+
+export default Header;

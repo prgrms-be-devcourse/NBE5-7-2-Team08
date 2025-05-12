@@ -20,6 +20,7 @@ public class SecurityConfig {
 
     private final CustomAuthenticationFailureHandler failureHandler;
     private final CustomAuthenticationSuccessHandler successHandler;
+    private final CustomLogoutSuccessHandler logoutSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -41,16 +42,18 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> {
                     auth
-                            .requestMatchers("/signup")
-                            .anonymous()
-
-                            .requestMatchers("/login")
+                            .requestMatchers("/signup", "/login", "/")
                             .anonymous()
 
                             .anyRequest()
                             .authenticated();
                 })
-                .logout(Customizer.withDefaults())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler(logoutSuccessHandler)
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                )
                 .build();
     }
 }

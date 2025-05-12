@@ -18,7 +18,7 @@ const Sidebar = () => {
   return (
     <div style={{ width: '200px', height: '100%', justifyContent: 'space-between', backgroundColor: '#2588F1', color: 'white', display: 'flex', flexDirection: 'column',  boxSizing: 'border-box'}}>
         <div>
-            <h3 style={{ marginBottom: '20px', marginLeft: '10px'}}>Chat Rooms</h3>
+            <h3 style={{ marginTop: '20px', marginBottom: '20px', marginLeft: '10px'}}>Chat Rooms</h3>
             {chatRooms.map(room => (
             <div key={room.id} style={{ padding: '10px'}}>
                 <div

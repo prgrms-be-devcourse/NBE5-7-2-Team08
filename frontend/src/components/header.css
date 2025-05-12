@@ -13,8 +13,8 @@
   align-items: center;
 }
 
-.logo-image {
-    width: 150px;
+.header-logo-image {
+    width: 100px;
     height: auto;
 }
 
@@ -53,6 +53,8 @@
 
 .logout-text {
   font-weight: 500;
+  text-decoration: none;
+  color: inherit;        
 }
 
 @keyframes pulse {
