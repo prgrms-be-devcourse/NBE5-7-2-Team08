@@ -11,7 +11,7 @@ import project.backend.domain.member.entity.Member;
 @Component
 public class ChatRoomMapper {
 
-	public ChatRoom toEntity(ChatRoomRequest dto, Member owner){
+	public ChatRoom toEntity(ChatRoomRequest dto, Member owner) {
 		return ChatRoom.builder()
 			.name(dto.getName())
 			.createdAt(LocalDateTime.now())
@@ -21,7 +21,7 @@ public class ChatRoomMapper {
 			.build();
 	}
 
-	public ChatRoomResponse toResponse(ChatRoom entity){
+	public ChatRoomResponse toResponse(ChatRoom entity) {
 		return ChatRoomResponse.of(
 			entity.getId(),
 			entity.getName(),

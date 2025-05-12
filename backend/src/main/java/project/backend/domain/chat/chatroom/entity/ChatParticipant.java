@@ -21,17 +21,17 @@ import project.backend.domain.member.entity.Member;
 @Getter
 public class ChatParticipant {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "chat_participant_id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "chat_participant_id")
+	private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "member_id")
-    private Member participant;
+	@ManyToOne
+	@JoinColumn(name = "member_id")
+	private Member participant;
 
-    @ManyToOne
-    @JoinColumn(name = "room_id")
-    private ChatRoom chatRoom;
+	@ManyToOne
+	@JoinColumn(name = "room_id")
+	private ChatRoom chatRoom;
 
 }

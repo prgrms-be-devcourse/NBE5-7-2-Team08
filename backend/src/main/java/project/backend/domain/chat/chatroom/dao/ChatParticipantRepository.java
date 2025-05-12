@@ -5,4 +5,6 @@ import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 
 public interface ChatParticipantRepository extends JpaRepository<ChatParticipant, Long> {
 
+	boolean existsByParticipantIdAndChatRoomId(Long participantId, Long chatRoomId);
 }
+
