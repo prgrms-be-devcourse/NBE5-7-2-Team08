@@ -52,6 +52,6 @@ public class ChatRoomService {
 
 		}
 
-		return chatRooms.map(ChatRoomMapper::toDto);
+		return chatRooms.map(ChatRoomMapper::toResponse);
 	}
 }

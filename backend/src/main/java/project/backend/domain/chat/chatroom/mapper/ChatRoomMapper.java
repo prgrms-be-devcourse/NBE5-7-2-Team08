@@ -14,9 +14,9 @@ import project.backend.domain.imagefile.ImageFile;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ChatRoomMapper {
 
-	public static ChatRoomResponse toDto(ChatRoom chatRoom) {
+	public static ChatRoomResponse toResponse(ChatRoom chatRoom) {
 		List<ChatParticipantResponse> participants = chatRoom.getParticipants().stream()
-			.map(ChatRoomMapper::toDto)
+			.map(ChatRoomMapper::toResponse)
 			.collect(Collectors.toList());
 
 		return ChatRoomResponse.builder()
@@ -28,7 +28,7 @@ public class ChatRoomMapper {
 			.build();
 	}
 
-	public static ChatParticipantResponse toDto(ChatParticipant p) {
+	public static ChatParticipantResponse toResponse(ChatParticipant p) {
 		return ChatParticipantResponse.builder()
 			.memberId(p.getParticipant().getId())
 			.nickname(p.getParticipant().getNickname())
