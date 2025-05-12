@@ -36,7 +36,7 @@ function App() {
     }
 
     const data = await response.json();
-    console.log("Signup successful:", data);
+    console.log("Login successful:", data);
     alert("로그인 성공!");
     navigate("/");
 

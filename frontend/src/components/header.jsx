@@ -14,7 +14,7 @@ export function Header() {
       try {
         setIsLoading(true)
         // Replace with your actual API endpoint
-        const response = await fetch("https://api.example.com/user/profile-image")
+        const response = await fetch("https://localhost/user/profile-image")
 
         if (!response.ok) {
           throw new Error("Failed to fetch profile image")

@@ -3,6 +3,7 @@ package project.backend.domain.member.app;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,12 @@ public class MemberService {
 
         Member newMember = memberRepository.save(MemberMapper.toEntity(request));
         return MemberMapper.toDto(newMember);
+    }
+
+    public MemberResponse getMemberDetails(Authentication auth) {
+        Member member = (Member) auth.getPrincipal();
+        log.info("auth = {}", auth);
+        return MemberMapper.toDto(member);
     }
 
     private boolean checkIfMemberExists(String email) {

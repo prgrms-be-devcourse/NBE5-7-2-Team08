@@ -45,7 +45,25 @@ const BlankRoom = () => {
               border: 'none',
               cursor: 'pointer'
             }}
-            onClick={() => window.location.href = '/logout'}
+            onClick={async() => {
+              try {
+                const response = await fetch("http://localhost:8080/logout", {
+                  method: "POST",
+                  credentials: "include"
+                });
+
+                if(response.ok) {
+                  alert("See You Again");
+                  window.location.href = "/login";
+                } else {
+                  alert("로그아웃 실패");
+                }
+              } catch(err) {
+                console.log("Logout Error", err);
+                alert("서버 오류로 로그아웃 실패");
+              }
+              }
+            } 
           >
             로그아웃
           </button>
