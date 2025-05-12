@@ -20,17 +20,21 @@ const Home = () => {
         }
     })
       .then(res => {
-        console.log(res.data.roomId);
-        if (res.status === 204) {
-          navigate('/blank'); // 참여한 방 없음
+        const roomId = res.data.roomId;
+        console.log(roomId);
+        if (roomId) {
+            navigate(`/chat/${roomId}`);
         } else {
-          navigate(`/chat/${res.data.roomId}`);
+            console.warn('roomId가 응답에 없음');
+            navigate('/blank'); // fallback
         }
       })
       .catch(err => {
-        if (err.response?.status === 401) {
-          // 인증 안됨 → 로그인 페이지로 이동
-          navigate(`/login`);
+        const status = err.response?.status;
+        if (status === 404) {
+          navigate('/blank'); // 참여 중인 채팅방 없음
+        } else if (status === 401) {
+          navigate('/login'); // 인증 필요
         } else {
           console.error('채팅방 이동 실패:', err);
         }
