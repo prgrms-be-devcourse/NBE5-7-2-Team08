@@ -9,8 +9,6 @@ public class ChatMessageSearchRequest {
 
 	private String keyword;
 
-	private Long roomId;
-
 	private int page = 0;
 
 	private int pageSize = 20;

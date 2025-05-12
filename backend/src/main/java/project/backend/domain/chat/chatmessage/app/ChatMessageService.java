@@ -54,12 +54,13 @@ public class ChatMessageService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<ChatMessageSearchResponse> searchMessages(ChatMessageSearchRequest request) {
+	public Page<ChatMessageSearchResponse> searchMessages(Long roomId,
+		ChatMessageSearchRequest request) {
 		PageRequest pageable = PageRequest.of(request.getPage(), request.getPageSize());
 
 		Page<ChatMessage> resultPage = chatMessageRepository.searchByKeywordAndRoomId(
 			request.getKeyword(),
-			request.getRoomId(),
+			roomId,
 			pageable
 		);
 		return resultPage.map(messageMapper::toSearchResponse);
