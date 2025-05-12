@@ -1,7 +1,7 @@
 package project.backend.global.exception;
 
 import lombok.Getter;
-import project.backend.domain.member.MemberErrorCode;
+import project.backend.global.exception.errorcode.MemberErrorCode;
 
 @Getter
 public class MemberException extends RuntimeException {
@@ -12,4 +12,5 @@ public class MemberException extends RuntimeException {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
+
 }

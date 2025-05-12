@@ -1,5 +1,5 @@
-import { Header } from "./components/header"
-import "./main.css"
+import { Header } from "../components/header"
+import "../main.css"
 
 function Main() {
   return (

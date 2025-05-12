@@ -19,7 +19,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileService;
-import project.backend.domain.member.MemberErrorCode;
 import project.backend.domain.member.app.MemberService;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.dto.MemberResponse;
