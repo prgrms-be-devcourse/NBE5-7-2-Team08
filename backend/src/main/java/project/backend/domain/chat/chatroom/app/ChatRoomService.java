@@ -26,7 +26,7 @@ public class ChatRoomService {
 	@Transactional
 	public ChatRoomResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
 		Member owner = memberRepository.findById(ownerId)
-			.orElseThrow(() -> new IllegalArgumentException("없는 사용자"));
+			.orElseThrow(() -> new IllegalArgumentException("없는 사용자 입니다"));
 
 		ChatRoom chatRoom = chatRoomMapper.toEntity(request, owner);
 

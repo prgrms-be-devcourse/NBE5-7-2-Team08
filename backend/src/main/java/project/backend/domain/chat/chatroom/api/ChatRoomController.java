@@ -1,9 +1,11 @@
 package project.backend.domain.chat.chatroom.api;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
@@ -20,7 +23,7 @@ import project.backend.domain.chat.chatroom.dto.InviteCodeResponse;
 import project.backend.domain.member.dto.MemberDetails;
 
 @Controller
-@RequestMapping("/api/chat-rooms")
+@RequestMapping("/chat-rooms")
 @RequiredArgsConstructor
 public class ChatRoomController {
 
@@ -28,7 +31,8 @@ public class ChatRoomController {
 
 	@PostMapping
 	@ResponseBody
-	public ChatRoomResponse createChatRoom(@RequestBody ChatRoomRequest request,
+	@ResponseStatus(HttpStatus.CREATED)
+	public ChatRoomResponse createChatRoom(@Valid @RequestBody ChatRoomRequest request,
 		@AuthenticationPrincipal MemberDetails memberDetails) {
 		Long ownerId = memberDetails.getId();
 		return chatRoomService.createChatRoom(request, ownerId);
@@ -52,10 +56,14 @@ public class ChatRoomController {
 	public String handleInviteLink(@PathVariable String inviteCode,
 		@AuthenticationPrincipal MemberDetails memberDetails) {
 
+		if (memberDetails == null) {
+			return "redirect:/login";
+		}
+
 		Long memberId = memberDetails.getId();
 		chatRoomService.joinChatRoom(inviteCode, memberId);
 
-		return "redirect:/chat-room/" + inviteCode; //프론트 채팅방 경로로 리다이렉트
+		return "redirect:/chat-room/" + inviteCode; //프론트 채팅방 경로로 리다이렉트(수정 예정)
 	}
 
 }
