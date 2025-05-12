@@ -1,18 +1,18 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LoginForm from "./login-form";
-import Signup from "./signup";
-import Main from "./main";
+import React from 'react';
+import ChatRoom from './pages/ChatRoom';
+import Home from './pages/Home'
+import BlankRoom from './pages/BlankRoom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/mypage" element={<div>Welcome to Mypage</div>} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/chat" element={<Main />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Home />}/>
+      <Route path="/chat/:roomId" element={<ChatRoom />} />
+      <Route path="/blank" element={<BlankRoom />} />
+    </Routes>
+  </BrowserRouter>
   );
 }
 
