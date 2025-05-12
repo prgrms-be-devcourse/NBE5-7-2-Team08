@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum ChatErrorCode {
+public enum ChatErrorCode implements ErrorCode {
 
     CHATROOM_NOT_FOUND("CHATROOM_NOT_FOUND", "채팅방을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     NOT_PARTICIPANT("NOT_PARTICIPANT", "해당 방에 참여 중인 사용자가 아닙니다.", HttpStatus.FORBIDDEN),

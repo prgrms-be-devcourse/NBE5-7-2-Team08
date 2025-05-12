@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
-import project.backend.global.exception.ChatException;
+import project.backend.global.exception.ex.ChatException;
 import project.backend.global.exception.errorcode.ChatErrorCode;
 
 @Service

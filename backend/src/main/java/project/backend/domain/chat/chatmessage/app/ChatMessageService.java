@@ -14,8 +14,8 @@ import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
-import project.backend.global.exception.ChatException;
-import project.backend.global.exception.MemberException;
+import project.backend.global.exception.ex.ChatException;
+import project.backend.global.exception.ex.MemberException;
 import project.backend.global.exception.errorcode.ChatErrorCode;
 import project.backend.global.exception.errorcode.MemberErrorCode;
 
