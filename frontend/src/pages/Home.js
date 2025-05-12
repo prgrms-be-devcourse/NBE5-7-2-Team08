@@ -34,7 +34,8 @@ const Home = () => {
         } else if (status === 401) {
           navigate('/login'); // 인증 필요
         } else {
-          console.error('채팅방 이동 실패:', err);
+          console.error('채팅방 이동 실패:', status);
+          alert(err);
         }
       })
       .finally(() => {

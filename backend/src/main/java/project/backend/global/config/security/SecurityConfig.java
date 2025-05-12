@@ -21,6 +21,7 @@ public class SecurityConfig {
     private final CustomAuthenticationFailureHandler failureHandler;
     private final CustomAuthenticationSuccessHandler successHandler;
     private final CustomLogoutSuccessHandler logoutSuccessHandler;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -54,6 +55,8 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                 )
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .build();
     }
 }
