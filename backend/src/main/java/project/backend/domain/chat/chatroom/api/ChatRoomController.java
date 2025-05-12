@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,7 +41,20 @@ public class ChatRoomController {
 
 	@GetMapping("/{roomId}/invite")
 	@ResponseBody
-	public InviteCodeResponse getInviteUrl(@PathVariable Long roomId) {
+	public InviteCodeResponse getInviteUrl(@PathVariable Long roomId,
+		@AuthenticationPrincipal MemberDetails memberDetails) {
+
+		if (memberDetails == null) {
+			throw new AccessDeniedException("로그인한 사용자만 초대 URL을 복사할 수 있습니다.");
+		}
+
+		Long memberId = memberDetails.getId();
+		boolean isParticipant = chatRoomService.isParticipant(roomId, memberId);
+
+		if (!isParticipant) {
+			throw new AccessDeniedException("해당 채팅방에 참여 중인 사용자만 초대 URL을 복사할 수 있습니다.");
+		}
+
 		String inviteCode = chatRoomService.getInviteCode(roomId);
 
 		String inviteUrl = ServletUriComponentsBuilder
@@ -51,6 +65,7 @@ public class ChatRoomController {
 
 		return new InviteCodeResponse(inviteUrl);
 	}
+
 
 	@GetMapping("/join/{inviteCode}")
 	public String handleInviteLink(@PathVariable String inviteCode,

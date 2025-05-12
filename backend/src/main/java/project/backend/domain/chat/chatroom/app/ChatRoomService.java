@@ -51,6 +51,12 @@ public class ChatRoomService {
 	}
 
 	@Transactional
+	public boolean isParticipant(Long roomId, Long memberId) {
+		return chatParticipantRepository.existsByParticipantIdAndChatRoomId(memberId, roomId);
+	}
+
+
+	@Transactional
 	public void joinChatRoom(String inviteCode, Long memberId) {
 		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
 			.orElseThrow(() -> new EntityNotFoundException("존재하지 않는 초대코드입니다"));
