@@ -21,6 +21,7 @@ import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.InviteCodeResponse;
+import project.backend.domain.chat.chatroom.dto.InviteJoinRequest;
 import project.backend.domain.member.dto.MemberDetails;
 
 @Controller
@@ -67,18 +68,16 @@ public class ChatRoomController {
 	}
 
 
-	@GetMapping("/join/{inviteCode}")
-	public String handleInviteLink(@PathVariable String inviteCode,
+	@PostMapping("/join")
+	@ResponseStatus(HttpStatus.OK)
+	public void joinChatRoom(@RequestBody InviteJoinRequest request,
 		@AuthenticationPrincipal MemberDetails memberDetails) {
-
 		if (memberDetails == null) {
-			return "redirect:/login";
+			throw new AccessDeniedException("로그인한 사용자만 입장할 수 있습니다.");
 		}
 
-		Long memberId = memberDetails.getId();
-		chatRoomService.joinChatRoom(inviteCode, memberId);
-
-		return "redirect:/chat-room/" + inviteCode; //프론트 채팅방 경로로 리다이렉트(수정 예정)
+		chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
 	}
+
 
 }
