@@ -45,7 +45,7 @@ public class ChatRoomController {
 
 		String inviteUrl = ServletUriComponentsBuilder
 			.fromCurrentContextPath()
-			.path("/api/chat-rooms/join/{code}")
+			.path("/chat-rooms/join/{code}")
 			.buildAndExpand(inviteCode)
 			.toUriString();
 
