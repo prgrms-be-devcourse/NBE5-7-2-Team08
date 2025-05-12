@@ -31,7 +31,7 @@ function App() {
     if (!response.ok) {
       const errorData = await response.json();
       console.error(errorData)
-      alert(errorData.message || "로그인인 실패");
+      alert(errorData.message || "로그인 실패");
       return;
     }
 
@@ -50,7 +50,9 @@ function App() {
     <div className="app-container">
       <div className="form-container">
         <div className="logo-container">
-          <img src="/images/devchat-logo.png" alt="DevChat Logo" className="logo-image" />
+          <a href="/">
+            <img src="/images/devchat-logo.png" alt="DevChat Logo" className="logo-image" />
+          </a>
         </div>
 
         <h1 className="heading">Welcome Back!</h1>

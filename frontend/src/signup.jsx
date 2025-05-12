@@ -50,7 +50,9 @@ function App() {
     <div className="app-container">
       <div className="form-container">
         <div className="logo-container">
-          <img src="/images/devchat-logo.png" alt="DevChat Logo" className="logo-image" />
+          <a href="/">
+            <img src="/images/devchat-logo.png" alt="DevChat Logo" className="logo-image" />
+          </a>
         </div>
 
         <h1 className="heading">Let's Start!</h1>
@@ -96,6 +98,11 @@ function App() {
             Sign Up
           </button>
         </form>
+
+        <div className="signup-link">
+          <span>이미 계정이 있나요?</span>
+          <a href="/login">로그인</a>
+        </div>
       </div>
 
       <div className="background-container">

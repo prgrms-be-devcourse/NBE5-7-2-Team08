@@ -1,3 +1,4 @@
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -113,6 +114,18 @@ input {
 .signup-link a:hover {
   text-decoration: underline;
 }
+
+.app {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.main-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
 
 /* Media query for larger screens */
 @media (min-width: 768px) {
