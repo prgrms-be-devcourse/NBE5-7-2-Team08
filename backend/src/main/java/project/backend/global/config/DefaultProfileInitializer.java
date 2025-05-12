@@ -11,19 +11,19 @@ import project.backend.domain.imagefile.ImageType;
 @RequiredArgsConstructor
 public class DefaultProfileInitializer {
 
-  private final ImageFileRepository imageFileRepository;
+    private final ImageFileRepository imageFileRepository;
 
-  @PostConstruct
-  public void initDefaultImage() {
-    boolean exists = imageFileRepository.existsByStoreFileName("default-profile.png");
+    @PostConstruct
+    public void initDefaultImage() {
+        boolean exists = imageFileRepository.existsByStoreFileName("default-profile.png");
 
-    if (!exists) {
-      imageFileRepository.save(ImageFile.builder()
-          .storeFileName("default-profile.png")
-          .uploadFileName("default-profile.png")
-          .imageType(ImageType.PROFILE_IMAGE)
-          .build());
+        if (!exists) {
+            imageFileRepository.save(ImageFile.builder()
+                    .storeFileName("default-profile.png")
+                    .uploadFileName("default-profile.png")
+                    .imageType(ImageType.PROFILE_IMAGE)
+                    .build());
+        }
     }
-  }
 }
 

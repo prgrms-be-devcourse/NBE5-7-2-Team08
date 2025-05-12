@@ -42,10 +42,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth
                             .requestMatchers("/signup")
-                            .permitAll()
+                            .anonymous()
 
                             .requestMatchers("/login")
-                            .permitAll()
+                            .anonymous()
 
                             .anyRequest()
                             .authenticated();

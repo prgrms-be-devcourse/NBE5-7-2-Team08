@@ -10,7 +10,7 @@ function App() {
         <Route path="/login" element={<LoginForm />} />
         <Route path="/mypage" element={<div>Welcome to Mypage</div>} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/" element={<Main />} />
+        <Route path="/chat" element={<Main />} />
       </Routes>
     </BrowserRouter>
   );

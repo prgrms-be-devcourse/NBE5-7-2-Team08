@@ -38,7 +38,7 @@ function App() {
     const data = await response.json();
     console.log("Signup successful:", data);
     alert("로그인 성공!");
-    navigate("/");
+    navigate("/chat");
 
   } catch (error) {
     console.error("네트워크 또는 서버 에러:", error);
