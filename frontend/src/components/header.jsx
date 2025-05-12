@@ -66,7 +66,7 @@ export function Header() {
             </div>
           ) : (
             <img 
-              src={profileImage}
+              src={`http://localhost:8080${profileImage}`}
               alt="User profile"
               className="profile-image"
             />
