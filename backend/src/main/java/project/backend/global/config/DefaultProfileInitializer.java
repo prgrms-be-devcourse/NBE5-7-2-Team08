@@ -72,7 +72,7 @@ public class DefaultProfileInitializer {
         for (int i = 0; i < allMembers.size(); i++) {
             Member owner = allMembers.get(i);
 
-            for (int j = 1; j <= 3; j++) {
+            for (int j = 1; j < allMembers.size(); j++) {
                 ChatRoom room = ChatRoom.builder()
                         .name("TestRoom-" + (i + 1) + "-" + j)
                         .repositoryUrl("https://github.com/test" + (i + 1) + "/repo" + j)
