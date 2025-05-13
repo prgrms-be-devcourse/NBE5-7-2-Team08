@@ -4,7 +4,8 @@ import { Stomp } from '@stomp/stompjs';
 import { useParams } from 'react-router-dom'
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
-import Sidebar from '../fragments/SideBar';
+import Sidebar from '../components/SideBar';
+import Header from '../components/header';
 
 const ChatRoom = () => {
   const [messages, setMessages]=useState([]);
@@ -77,35 +78,7 @@ const ChatRoom = () => {
     <div style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
 
       {/* Top Bar */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '10px', marginTop: '10px' }}>
-
-        <div style={{ display: 'flex', gap: '10px', marginRight: '10px'}}>
-          <button
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#eee',
-              color: 'black',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-            onClick={() => window.location.href = '/logout'}
-          >
-            로그아웃
-          </button>
-          <button
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#f5f5f5',
-              color: 'black',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-            onClick={() => window.location.href = '/mypage'}
-          >
-            마이페이지
-          </button>
-        </div>
-      </div>
+      <Header></Header>
 
       {/* 본문 전체 영역 */}
       <div style={{ flex:1, display: 'flex', overflow: 'hidden'}}>
