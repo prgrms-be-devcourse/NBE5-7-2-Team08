@@ -43,12 +43,7 @@ public class ImageFileService {
 
             file.transferTo(savePath.toFile());
 
-            return imageFileRepository.save(ImageFile.builder()
-                    .uploadFileName(uploadFileName)
-                    .storeFileName(storeFileName)
-                    .imageType(ImageType.PROFILE_IMAGE)
-                    .build()
-            );
+            return imageFileRepository.save(ImageFile.ofProfile(storeFileName, uploadFileName));
 
         } catch (IOException e) {
             throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
@@ -57,7 +52,7 @@ public class ImageFileService {
     }
 
     private void checkFileExtensionIsImage(String extension) {
-        List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", "webp");
+        List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp");
         if (!imageExtensions.contains(extension)) {
             throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
         }

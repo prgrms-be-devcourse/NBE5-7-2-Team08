@@ -17,3 +17,4 @@ spring:
 
 file:
   profile-path: img/
+  default-profile: /profile/default-profile.png
