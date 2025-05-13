@@ -12,8 +12,10 @@ import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper;
-import project.backend.global.exception.ex.ChatException;
-import project.backend.global.exception.errorcode.ChatErrorCode;
+import project.backend.global.exception.errorcode.MemberErrorCode;
+import project.backend.global.exception.ex.ChatRoomException;
+import project.backend.global.exception.errorcode.ChatRoomErrorCode;
+import project.backend.global.exception.ex.MemberException;
 
 @Service
 @RequiredArgsConstructor
@@ -40,18 +42,20 @@ public class ChatRoomService {
 		}
 
 		// 아무 채팅방에도 참여한 적이 없음 → 예외 던지기
-		throw new ChatException(ChatErrorCode.CHATROOM_NOT_EXIST);
+		throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_EXIST);
 
 	}
 
 	@Transactional(readOnly = true)
 	public Page<ChatRoomResponse> findAllByMemberId(Long memberId, Pageable pageable) {
 
+		chatRoomRepository.findById(memberId)
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+
 		Page<ChatRoom> chatRooms = chatRoomRepository.findAllRoomsByMemberId(memberId, pageable);
 		if (chatRooms.isEmpty()) {
-
+			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
 		}
-
 		return chatRooms.map(ChatRoomMapper::toResponse);
 	}
 }

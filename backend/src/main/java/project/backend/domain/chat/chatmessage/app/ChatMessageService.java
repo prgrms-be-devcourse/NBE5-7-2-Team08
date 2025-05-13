@@ -18,9 +18,11 @@ import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
-import project.backend.global.exception.ex.ChatException;
+import project.backend.global.exception.errorcode.ChatMessageErrorCode;
+import project.backend.global.exception.ex.ChatMessageException;
+import project.backend.global.exception.ex.ChatRoomException;
 import project.backend.global.exception.ex.MemberException;
-import project.backend.global.exception.errorcode.ChatErrorCode;
+import project.backend.global.exception.errorcode.ChatRoomErrorCode;
 import project.backend.global.exception.errorcode.MemberErrorCode;
 
 @Service
@@ -41,11 +43,11 @@ public class ChatMessageService {
 			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
 		ChatRoom room = chatRoomRepository.findById(roomId)
-			.orElseThrow(() -> new ChatException(ChatErrorCode.CHATROOM_NOT_FOUND));
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
 		ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
 				sender, room)
-			.orElseThrow(() -> new ChatException(ChatErrorCode.NOT_PARTICIPANT));
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
 		ChatMessage message = messageMapper.toEntity(room, participant, request);
 		chatMessageRepository.save(message);
@@ -56,6 +58,9 @@ public class ChatMessageService {
 	@Transactional(readOnly = true)
 	public Page<ChatMessageSearchResponse> searchMessages(Long roomId,
 		ChatMessageSearchRequest request) {
+		if (request.getKeyword() == null || request.getKeyword().trim().length() < 2) {
+			throw new ChatMessageException(ChatMessageErrorCode.INVALID_KEYWORD_LENGTH);
+		}
 		PageRequest pageable = PageRequest.of(request.getPage(), request.getPageSize());
 
 		Page<ChatMessage> resultPage = chatMessageRepository.searchByKeywordAndRoomId(
