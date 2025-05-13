@@ -16,8 +16,8 @@ import project.backend.domain.member.dto.MemberUpdateRequest;
 import project.backend.domain.member.dto.SignUpRequest;
 import project.backend.domain.member.entity.Member;
 import project.backend.domain.member.mapper.MemberMapper;
-import project.backend.global.exception.MemberException;
 import project.backend.global.exception.errorcode.MemberErrorCode;
+import project.backend.global.exception.ex.MemberException;
 
 @Slf4j
 @Service
@@ -37,6 +37,7 @@ public class MemberService {
 
         ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
                 "/profile/default-profile.png");
+
         request.setProfile_image(defaultProfileImg);
         request.setPassword(passwordEncoder.encode(request.getPassword()));
 
@@ -53,10 +54,19 @@ public class MemberService {
         return memberRepository.findByEmail(email).isPresent();
     }
 
+    public Member loginByEmail(String email) {
+        try {
+            return findMemberByEmail(email);
+        } catch (MemberException e) {
+            log.info("존재하지 않는 유저");
+            throw new UsernameNotFoundException("존재하지 않는 유저입니다.");
+        }
+    }
+
     public Member findMemberByEmail(String email) {
 
         return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 유저입니다."));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
 

@@ -13,6 +13,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
+import project.backend.global.exception.ErrorResponse;
+import project.backend.global.exception.errorcode.ErrorCode;
+import project.backend.global.exception.errorcode.LoginErrorCode;
 
 import java.io.IOException;
 import java.util.Map;
@@ -23,24 +26,29 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+        LoginErrorCode loginErrorCode = getLoginErrorCode(exception);
+
+        response.setStatus(loginErrorCode.getStatus().value());
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        String errorMessage;
+        ErrorResponse errorResponse = ErrorResponse.toResponse(loginErrorCode);
 
-        if (exception instanceof BadCredentialsException || exception instanceof InternalAuthenticationServiceException) {
-            errorMessage = "이메일 또는 비밀번호가 일치하지 않습니다. 다시 확인해 주십시오";
-        } else if (exception instanceof DisabledException) {
-            errorMessage = "계정이 비활성화 되었습니다. 관리자에게 문의하세요.";
-        } else if (exception instanceof CredentialsExpiredException) {
-            errorMessage = "비밀번호 유효기간이 만료 되었습니다. 관리자에게 문의하세요.";
-        } else {
-            errorMessage = "알 수 없는 이유로 로그인에 실패하였습니다. 관리자에게 문의하세요.";
-        }
-
-        String json = new ObjectMapper().writeValueAsString(Map.of("message", errorMessage));
+        String json = new ObjectMapper().writeValueAsString(errorResponse);
         response.getWriter().write(json);
         response.getWriter().flush();
+    }
+
+    private LoginErrorCode getLoginErrorCode(AuthenticationException exception) {
+        if (exception instanceof BadCredentialsException || exception instanceof InternalAuthenticationServiceException) {
+            return LoginErrorCode.BAD_CREDENTIALS;
+        } else if (exception instanceof DisabledException) {
+            return LoginErrorCode.DISABLED;
+        } else if (exception instanceof CredentialsExpiredException) {
+            return LoginErrorCode.CREDENTIALS_EXPIRED;
+        } else {
+            return LoginErrorCode.UNKNOWN;
+        }
     }
 }

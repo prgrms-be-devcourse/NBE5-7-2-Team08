@@ -5,16 +5,15 @@ import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import project.backend.global.exception.ImageFileException;
+import project.backend.global.exception.ex.ImageFileException;
+import project.backend.global.exception.errorcode.ImageFileErrorCode;
 
 @Service
 @Transactional

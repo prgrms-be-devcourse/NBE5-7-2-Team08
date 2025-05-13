@@ -4,7 +4,7 @@ import { Stomp } from '@stomp/stompjs';
 import { useParams } from 'react-router-dom'
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
-import Sidebar from '../fragments/SideBar';
+import Sidebar from '../components/SideBar';
 import Header from '../components/header';
 
 const ChatRoom = () => {
