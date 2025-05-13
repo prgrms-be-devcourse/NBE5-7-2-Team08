@@ -25,7 +25,8 @@ const ChatRoom = () => {
     try {
       const res = await fetch(`http://localhost:8080/chat-rooms/invite/${roomId}`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
       });
       if (!res.ok) throw new Error('초대 URL을 가져오지 못했습니다.');
       const { inviteUrl } = await res.json();

@@ -28,6 +28,7 @@ const Sidebar = () => {
       const res = await fetch('http://localhost:8080/chat-rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ name: roomName, repositoryUrl: repoUrl })
       });
       if (!res.ok) throw new Error('채팅방 생성에 실패했습니다.');
@@ -48,6 +49,7 @@ const Sidebar = () => {
       const res = await fetch('http://localhost:8080/chat-rooms/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ inviteCode })
       });
       if (!res.ok) throw new Error('방 입장에 실패했습니다.');
