@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
+import project.backend.domain.chat.chatmessage.entity.GitMessage;
 import project.backend.domain.member.entity.Member;
 
 @Entity
@@ -44,5 +45,8 @@ public class ChatRoom {
 
     @OneToMany(mappedBy = "chatRoom")
     private List<ChatParticipant> participants = new ArrayList<>();
+
+    @OneToMany(mappedBy = "chatRoom")
+    private List<GitMessage> gitMessages = new ArrayList<>();
 
 }
