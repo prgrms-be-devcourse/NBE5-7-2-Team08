@@ -11,26 +11,22 @@ import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomResponse2;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
-import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper2;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
 
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
-import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
-import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
+
 import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
-import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper;
 import project.backend.global.exception.errorcode.MemberErrorCode;
 import project.backend.global.exception.ex.ChatRoomException;
 import project.backend.global.exception.errorcode.ChatRoomErrorCode;
 import project.backend.global.exception.ex.MemberException;
+
 
 
 @Service
@@ -102,7 +98,7 @@ public class ChatRoomService {
 	}
 
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public Long getMostRecentRoomId(String email) {
 
 		// 1순위: 가장 최근 메시지가 도착한 채팅방
@@ -123,7 +119,7 @@ public class ChatRoomService {
 
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public Page<ChatRoomResponse> findAllByMemberId(Long memberId, Pageable pageable) {
 
 		chatRoomRepository.findById(memberId)

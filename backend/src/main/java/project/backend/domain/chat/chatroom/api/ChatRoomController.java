@@ -1,12 +1,12 @@
 package project.backend.domain.chat.chatroom.api;
 
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +28,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
+import project.backend.domain.member.dto.MemberDetails;
 
 @Slf4j
 @RestController
@@ -40,25 +41,25 @@ public class ChatRoomController {
 	@PostMapping
 	@ResponseBody
 	@ResponseStatus(HttpStatus.CREATED)
-	public ChatRoomResponse2 createChatRoom(@Valid @RequestBody ChatRoomRequest request) {
-	//	Long ownerId = memberDetails.getId();
+	public ChatRoomResponse2 createChatRoom(@Valid @RequestBody ChatRoomRequest request,
+		@AuthenticationPrincipal MemberDetails memberDetails) {
+		Long ownerId = memberDetails.getId();
 
-		Long ownerId = 2L;
 		log.info("채팅방생성");
 		return chatRoomService.createChatRoom(request, ownerId);
 	}
 
 	@GetMapping("/invite/{roomId}")
 	@ResponseBody
-	public InviteCodeResponse getInviteUrl(@PathVariable Long roomId
-		//@AuthenticationPrincipal MemberDetails memberDetails
+	public InviteCodeResponse getInviteUrl(@PathVariable Long roomId,
+		@AuthenticationPrincipal MemberDetails memberDetails
 	) {
 
-//		if (memberDetails == null) {
-//			throw new AccessDeniedException("로그인한 사용자만 초대 URL을 복사할 수 있습니다.");
-//		}
+		if (memberDetails == null) {
+			throw new AccessDeniedException("로그인한 사용자만 초대 URL을 복사할 수 있습니다.");
+		}
 
-	//	Long memberId = memberDetails.getId();
+		Long memberId = memberDetails.getId();
 		boolean isParticipant = chatRoomService.isParticipant(roomId, 2L);
 
 		if (!isParticipant) {
@@ -67,28 +68,21 @@ public class ChatRoomController {
 
 		String inviteCode = chatRoomService.getInviteCode(roomId);
 
-//		String inviteUrl = UriComponentsBuilder
-//			.fromUriString("http://localhost:3000")
-//			.path("/chat/{roomId}")
-//			.queryParam("inviteCode", inviteCode)
-//			.buildAndExpand(roomId)
-//			.toUriString();
-
 		return new InviteCodeResponse(inviteCode);
 	}
 
 
 	@PostMapping("/join")
 	@ResponseStatus(HttpStatus.OK)
-	public InviteJoinResponse joinChatRoom(@RequestBody InviteJoinRequest request
-	//	@AuthenticationPrincipal MemberDetails memberDetails
+	public InviteJoinResponse joinChatRoom(@RequestBody InviteJoinRequest request,
+		@AuthenticationPrincipal MemberDetails memberDetails
 	) {
-//		if (memberDetails == null) {
-//			throw new AccessDeniedException("로그인한 사용자만 입장할 수 있습니다.");
-//		}
+		if (memberDetails == null) {
+			throw new AccessDeniedException("로그인한 사용자만 입장할 수 있습니다.");
+		}
 
-		Long tempId = 3L;
-		Long roomId = chatRoomService.joinChatRoom(request.getInviteCode(), tempId);
+
+		Long roomId = chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
 		return new InviteJoinResponse(roomId);
 	}
 
