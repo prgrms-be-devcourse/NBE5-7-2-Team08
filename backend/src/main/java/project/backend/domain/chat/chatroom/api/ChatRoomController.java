@@ -29,6 +29,8 @@ import org.springframework.data.web.PageableDefault;
 import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
 import project.backend.domain.member.dto.MemberDetails;
+import project.backend.global.exception.errorcode.AuthErrorCode;
+import project.backend.global.exception.ex.AuthException;
 
 @Slf4j
 @RestController
@@ -56,14 +58,14 @@ public class ChatRoomController {
 	) {
 
 		if (memberDetails == null) {
-			throw new AccessDeniedException("로그인한 사용자만 초대 URL을 복사할 수 있습니다.");
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
 		}
 
 		Long memberId = memberDetails.getId();
-		boolean isParticipant = chatRoomService.isParticipant(roomId, 2L);
+		boolean isParticipant = chatRoomService.isParticipant(roomId, memberId);
 
 		if (!isParticipant) {
-			throw new AccessDeniedException("해당 채팅방에 참여 중인 사용자만 초대 URL을 복사할 수 있습니다.");
+			throw new AuthException(AuthErrorCode.FORBIDDEN_PARTICIPANT);
 		}
 
 		String inviteCode = chatRoomService.getInviteCode(roomId);
@@ -78,9 +80,8 @@ public class ChatRoomController {
 		@AuthenticationPrincipal MemberDetails memberDetails
 	) {
 		if (memberDetails == null) {
-			throw new AccessDeniedException("로그인한 사용자만 입장할 수 있습니다.");
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
 		}
-
 
 		Long roomId = chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
 		return new InviteJoinResponse(roomId);

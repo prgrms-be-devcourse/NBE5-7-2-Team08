@@ -28,7 +28,6 @@ import project.backend.global.exception.errorcode.ChatRoomErrorCode;
 import project.backend.global.exception.ex.MemberException;
 
 
-
 @Service
 @RequiredArgsConstructor
 public class ChatRoomService {
@@ -42,16 +41,13 @@ public class ChatRoomService {
 	@Transactional
 	public ChatRoomResponse2 createChatRoom(ChatRoomRequest request, Long ownerId) {
 		Member owner = memberRepository.findById(ownerId)
-			.orElseThrow(() -> new IllegalArgumentException("없는 사용자 입니다"));
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
 		ChatRoom chatRoom = chatRoomMapper.toEntity(request, owner);
 
 		ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
 
-		ChatParticipant chatParticipant = ChatParticipant.builder()
-			.participant(owner)
-			.chatRoom(savedRoom)
-			.build();
+		ChatParticipant chatParticipant = ChatParticipant.of(owner, chatRoom);
 
 		chatParticipantRepository.save(chatParticipant);
 
@@ -61,7 +57,7 @@ public class ChatRoomService {
 	@Transactional
 	public String getInviteCode(Long roomId) {
 		ChatRoom room = chatRoomRepository.findById(roomId)
-			.orElseThrow(() -> new EntityNotFoundException("채팅방이 없습니다"));
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
 		return room.getInviteCode();
 	}
@@ -75,22 +71,19 @@ public class ChatRoomService {
 	@Transactional
 	public Long joinChatRoom(String inviteCode, Long memberId) {
 		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
-			.orElseThrow(() -> new EntityNotFoundException("존재하지 않는 초대코드입니다"));
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_CODE_NOT_FOUND));
 
 		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new IllegalArgumentException("없는 사용자 입니다"));
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
 		boolean isAlreadyParticipant = chatParticipantRepository
 			.existsByParticipantIdAndChatRoomId(memberId, room.getId());
 
 		if (isAlreadyParticipant) {
-			throw new IllegalStateException("이미 채팅방에 참여 중입니다");
+			throw new ChatRoomException(ChatRoomErrorCode.ALREADY_PARTICIPANT);
 		}
 
-		ChatParticipant chatParticipant = ChatParticipant.builder()
-			.participant(member)
-			.chatRoom(room)
-			.build();
+		ChatParticipant chatParticipant = ChatParticipant.of(member, room);
 
 		chatParticipantRepository.save(chatParticipant);
 

@@ -39,5 +39,13 @@ public class ChatParticipant {
 		this.participant = participant;
 		this.chatRoom = chatRoom;
 	}
+
+	public static ChatParticipant of(Member participant, ChatRoom chatRoom) {
+		return ChatParticipant.builder()
+			.participant(participant)
+			.chatRoom(chatRoom)
+			.build();
+	}
+
 }
 
