@@ -14,10 +14,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import project.backend.domain.member.entity.Member;
 
+
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
 @Getter
 public class ChatParticipant {
 
@@ -34,4 +33,11 @@ public class ChatParticipant {
 	@JoinColumn(name = "room_id")
 	private ChatRoom chatRoom;
 
+	@Builder
+	public ChatParticipant(Long id, Member participant, ChatRoom chatRoom) {
+		this.id = id;
+		this.participant = participant;
+		this.chatRoom = chatRoom;
+	}
 }
+

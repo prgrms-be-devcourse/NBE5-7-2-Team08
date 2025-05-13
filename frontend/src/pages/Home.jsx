@@ -7,17 +7,17 @@ const Home = () => {
   const [loading, setLoading] = useState(true); // 로딩 상태
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken'); // 또는 sessionStorage
 
-    if (!token) {
-      navigate('/login'); // 토큰 없으면 로그인
-      return;
-    }
+    // const token = localStorage.getItem('accessToken'); // 또는 sessionStorage
+
+    // if (!token) {
+    //   navigate('/login'); // 토큰 없으면 로그인
+    //   return;
+    // }
 
     axios.get(`http://localhost:8080/chat-rooms/recent`, { 
-        headers: {
-            Authorization: `Bearer ${token}` // ✅ JWT 토큰을 헤더에 첨부
-        }
+        withCredentials: true,
+
     })
       .then(res => {
         const roomId = res.data.roomId;
@@ -36,7 +36,9 @@ const Home = () => {
         } else if (status === 401) {
           navigate('/login'); // 인증 필요
         } else {
-          console.error('채팅방 이동 실패:', err);
+          console.error('채팅방 이동 실패:', status);
+          alert(err);
+
         }
       })
       .finally(() => {

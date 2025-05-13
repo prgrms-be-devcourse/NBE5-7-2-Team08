@@ -1,24 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  FaChevronRight,
-  FaChevronDown,
-  FaUser,
-  FaComments,
-  FaRegCommentDots,
-  FaPlus
-} from 'react-icons/fa';
+import { FaChevronRight, FaChevronDown, FaUser, FaComments, FaRegCommentDots, FaPlus } from 'react-icons/fa';
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const [expandedRoom, setExpandedRoom] = useState(null);
 
-  // Create Chat Room modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
 
-  // Join Chat Room modal state
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
 
@@ -28,10 +19,9 @@ const Sidebar = () => {
   ];
 
   const toggleRoom = (id) => {
-    setExpandedRoom(prev => (prev === id ? null : id));
+    setExpandedRoom(prev => prev === id ? null : id);
   };
 
-  // Create Chat Room handler
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -52,26 +42,17 @@ const Sidebar = () => {
     }
   };
 
-  // Join Chat Room handler
- // Join Chat Room handler
-const handleJoin = async (e) => {
+  const handleJoin = async (e) => {
     e.preventDefault();
     try {
-      // 1) 채팅방 입장 API 호출 → 방 ID를 응답받음
       const res = await fetch('http://localhost:8080/chat-rooms/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ inviteCode })
       });
-  
       if (!res.ok) throw new Error('방 입장에 실패했습니다.');
-  
-      const { id: roomId } = await res.json(); // ← roomId 꺼냄
-  
-      // 2) 해당 방으로 이동
+      const { id: roomId } = await res.json();
       navigate(`/chat/${roomId}`);
-  
-      // 3) 모달 초기화
       setShowJoinModal(false);
       setInviteCode('');
     } catch (err) {
@@ -79,57 +60,27 @@ const handleJoin = async (e) => {
       alert(err.message);
     }
   };
-  
 
   return (
     <>
-      <div
-        style={{
-          width: '200px',
-          height: '100%',
-          justifyContent: 'space-between',
-          backgroundColor: '#2588F1',
-          color: 'white',
-          display: 'flex',
-          flexDirection: 'column',
-          boxSizing: 'border-box'
-        }}
-      >
+      <div style={{ width: '200px', height: '100%', justifyContent: 'space-between', backgroundColor: '#2588F1', color: 'white', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
         <div>
-          <h3 style={{ marginBottom: '20px', marginLeft: '10px' }}>
-            Chat Rooms
-          </h3>
+          <h3 style={{ marginTop: '20px', marginBottom: '20px', marginLeft: '10px' }}>Chat Rooms</h3>
           {chatRooms.map(room => (
             <div key={room.id} style={{ padding: '10px' }}>
               <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  cursor: 'pointer'
-                }}
+                style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
                 onClick={() => toggleRoom(room.id)}
               >
                 <FaRegCommentDots style={{ marginRight: '8px' }} />
                 <span style={{ flex: 1 }}>{room.name}</span>
-                {expandedRoom === room.id ? (
-                  <FaChevronDown />
-                ) : (
-                  <FaChevronRight />
-                )}
+                {expandedRoom === room.id ? <FaChevronDown /> : <FaChevronRight />}
               </div>
 
               {expandedRoom === room.id && (
                 <div style={{ paddingLeft: '20px', marginTop: '5px' }}>
                   {room.participants.map((p, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        marginBottom: '5px',
-                        fontSize: '14px'
-                      }}
-                    >
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', fontSize: '14px' }}>
                       <FaUser style={{ marginRight: '6px' }} />
                       {p}
                     </div>
@@ -140,10 +91,7 @@ const handleJoin = async (e) => {
           ))}
         </div>
 
-        <div
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-        >
-          {/* Join Chat Room 버튼 */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <button
             style={{
               width: '90%',
@@ -161,7 +109,6 @@ const handleJoin = async (e) => {
             Join Chat Room
           </button>
 
-          {/* New Chat Room 버튼 */}
           <button
             style={{
               width: '90%',
@@ -182,7 +129,6 @@ const handleJoin = async (e) => {
         </div>
       </div>
 
-      {/* Create Modal */}
       {showCreateModal && (
         <div
           style={{
@@ -205,7 +151,7 @@ const handleJoin = async (e) => {
               borderRadius: '8px',
               width: '320px',
               boxSizing: 'border-box'
-            }}  
+            }}
           >
             <h2 style={{ margin: '0 0 16px' }}>New Chat Room</h2>
             <form onSubmit={handleCreate}>
@@ -259,7 +205,6 @@ const handleJoin = async (e) => {
         </div>
       )}
 
-      {/* Join Modal */}
       {showJoinModal && (
         <div
           style={{
@@ -282,7 +227,7 @@ const handleJoin = async (e) => {
               borderRadius: '8px',
               width: '320px',
               boxSizing: 'border-box'
-            }}  
+            }}
           >
             <h2 style={{ margin: '0 0 16px' }}>Join Chat Room</h2>
             <form onSubmit={handleJoin}>
@@ -319,7 +264,9 @@ const handleJoin = async (e) => {
                     borderRadius: '4px',
                     cursor: 'pointer'
                   }}
-                >입장</button>
+                >
+                  입장
+                </button>
               </div>
             </form>
           </div>
