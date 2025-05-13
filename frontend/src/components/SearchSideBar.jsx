@@ -5,6 +5,7 @@ const SearchSidebar = ({
   searchKeyword, 
   searchResults, 
   isSearching, 
+  errorMessage,
   currentPage, 
   totalPages,
   totalElements,
@@ -46,6 +47,17 @@ const SearchSidebar = ({
 
       {isSearching ? (
         <div style={{ textAlign: 'center', padding: '20px' }}>검색 중...</div>
+      ) : errorMessage ? (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '20px', 
+          color: '#d93025', 
+          backgroundColor: '#fce8e6', 
+          borderRadius: '4px',
+          border: '1px solid #f7c6c5'
+        }}>
+          {errorMessage}
+        </div>
       ) : totalElements === 0 ? (
         <div style={{ textAlign: 'center', padding: '20px' }}>검색 결과가 없습니다.</div>
       ) : (

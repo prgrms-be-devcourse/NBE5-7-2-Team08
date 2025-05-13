@@ -24,6 +24,7 @@ const ChatRoom = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [errorMessage, setErrorMessage] = useState(null); // 선언 추가
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -83,25 +84,34 @@ const ChatRoom = () => {
     }
   };
 
-  const handleSearch = async (keyword, page = 0) => {
-    setIsSearching(true);
-    setShowSearchSidebar(true);
-    setSearchKeyword(keyword);
-    try {
-      const response = await fetch(
-        `http://localhost:8080/chat/${roomId}/search?keyword=${keyword}&page=${page}`
-      );
-      const data = await response.json();
-      setSearchResults(data.content);
-      setCurrentPage(data.pageable.pageNumber);
-      setTotalPages(data.totalPages);
-      setTotalElements(data.totalElements);
-    } catch (err) {
-      console.error('Search error:', err);
-    } finally {
-      setIsSearching(false);
+const handleSearch = async (keyword, page = 0) => {
+  setIsSearching(true);
+  setShowSearchSidebar(true);
+  setSearchKeyword(keyword);
+  setErrorMessage(null); // 이전 에러 메시지 초기화
+
+  try {
+    const response = await fetch(
+      `http://localhost:8080/chat/${roomId}/search?keyword=${keyword}&page=${page}`
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json(); // 👈 에러 응답 파싱
+      throw new Error(errorData.message || '검색 중 알 수 없는 오류가 발생했습니다.');
     }
-  };
+
+    const data = await response.json();
+    setSearchResults(data.content);
+    setCurrentPage(data.pageable.pageNumber);
+    setTotalPages(data.totalPages);
+    setTotalElements(data.totalElements);
+  } catch (err) {
+    console.error('Search error:', err);
+    setErrorMessage(err.message); // 👈 백엔드에서 내려준 메시지를 표시
+  } finally {
+    setIsSearching(false);
+  }
+};
 
   // 버튼 스타일 공통화
   const buttonStyle = {
@@ -415,6 +425,7 @@ const ChatRoom = () => {
             searchKeyword={searchKeyword}
             searchResults={searchResults}
             isSearching={isSearching}
+            errorMessage={errorMessage}
             currentPage={currentPage}
             totalPages={totalPages}
             totalElements={totalElements}
