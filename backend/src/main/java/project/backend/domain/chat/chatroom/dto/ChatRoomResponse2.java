@@ -5,14 +5,14 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class ChatRoomResponse {
+public class ChatRoomResponse2 {
 
 	private Long id;
 	private String name;
 	private String repositoryUrl;
 	private Long ownerId;
 
-	public static ChatRoomResponse of(Long id, String name, String repositoryUrl, Long ownerId) {
-		return new ChatRoomResponse(id, name, repositoryUrl, ownerId);
+	public static ChatRoomResponse2 of(Long id, String name, String repositoryUrl, Long ownerId) {
+		return new ChatRoomResponse2(id, name, repositoryUrl, ownerId);
 	}
 }

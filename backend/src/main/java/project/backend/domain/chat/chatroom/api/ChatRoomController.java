@@ -1,6 +1,5 @@
 package project.backend.domain.chat.chatroom.api;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -8,10 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,15 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
-import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
+import project.backend.domain.chat.chatroom.dto.ChatRoomResponse2;
 import project.backend.domain.chat.chatroom.dto.InviteCodeResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinRequest;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
-import project.backend.domain.member.dto.MemberDetails;
 
 
 @Slf4j
@@ -42,7 +34,7 @@ public class ChatRoomController {
 	@PostMapping
 	@ResponseBody
 	@ResponseStatus(HttpStatus.CREATED)
-	public ChatRoomResponse createChatRoom(@Valid @RequestBody ChatRoomRequest request) {
+	public ChatRoomResponse2 createChatRoom(@Valid @RequestBody ChatRoomRequest request) {
 	//	Long ownerId = memberDetails.getId();
 
 		Long ownerId = 2L;

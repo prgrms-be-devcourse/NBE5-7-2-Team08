@@ -7,11 +7,10 @@ import org.springframework.stereotype.Service;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
-import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
-import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
+import project.backend.domain.chat.chatroom.dto.ChatRoomResponse2;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
-import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper;
+import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper2;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
 
@@ -21,15 +20,15 @@ public class ChatRoomService {
 
 	private final ChatRoomRepository chatRoomRepository;
 	private final MemberRepository memberRepository;
-	private final ChatRoomMapper chatRoomMapper;
+	private final ChatRoomMapper2 chatRoomMapper2;
 	private final ChatParticipantRepository chatParticipantRepository;
 
 	@Transactional
-	public ChatRoomResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
+	public ChatRoomResponse2 createChatRoom(ChatRoomRequest request, Long ownerId) {
 		Member owner = memberRepository.findById(ownerId)
 			.orElseThrow(() -> new IllegalArgumentException("없는 사용자 입니다"));
 
-		ChatRoom chatRoom = chatRoomMapper.toEntity(request, owner);
+		ChatRoom chatRoom = chatRoomMapper2.toEntity(request, owner);
 
 		ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
 
@@ -40,7 +39,7 @@ public class ChatRoomService {
 
 		chatParticipantRepository.save(chatParticipant);
 
-		return chatRoomMapper.toResponse(savedRoom);
+		return chatRoomMapper2.toResponse(savedRoom);
 	}
 
 	@Transactional
