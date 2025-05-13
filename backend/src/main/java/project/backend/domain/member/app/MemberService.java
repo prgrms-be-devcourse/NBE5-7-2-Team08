@@ -40,21 +40,13 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
 
-<<<<<<< HEAD
-        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
-                "/profile/default-profile.png");
-
-        request.setProfile_image(defaultProfileImg);
-        request.setPassword(passwordEncoder.encode(request.getPassword()));
-=======
         ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(defaultProfilePath);
->>>>>>> feat/5-member-crud
 
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
         Member newMember = memberRepository.save(
                 MemberMapper.toEntity(request, encryptedPassword, defaultProfileImg));
-        
+
         return MemberMapper.toResponse(newMember);
     }
 
