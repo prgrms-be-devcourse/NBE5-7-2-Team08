@@ -52,7 +52,7 @@ public class ImageFileService {
     }
 
     private void checkFileExtensionIsImage(String extension) {
-        List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", "webp");
+        List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp");
         if (!imageExtensions.contains(extension)) {
             throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
         }
