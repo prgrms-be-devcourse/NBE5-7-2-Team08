@@ -6,6 +6,7 @@ import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
 import Sidebar from '../components/SideBar';
 import Header from '../components/header';
+import SearchSidebar from '../components/SearchSideBar';
 
 const ChatRoom = () => {
   const [messages, setMessages]=useState([]);
@@ -15,6 +16,14 @@ const ChatRoom = () => {
   const [language, setLanguage] = useState("java");
   const stompClientRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  const [showSearchSidebar, setShowSearchSidebar] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,62 +83,193 @@ const ChatRoom = () => {
     }
   };
 
+  const handleSearch = async (keyword, page = 0) => {
+    setIsSearching(true);
+    setShowSearchSidebar(true);
+    setSearchKeyword(keyword);
+    try {
+      const response = await fetch(
+        `http://localhost:8080/chat/${roomId}/search?keyword=${keyword}&page=${page}`
+      );
+      const data = await response.json();
+      setSearchResults(data.content);
+      setCurrentPage(data.pageable.pageNumber);
+      setTotalPages(data.totalPages);
+      setTotalElements(data.totalElements);
+    } catch (err) {
+      console.error('Search error:', err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 버튼 스타일 공통화
+  const buttonStyle = {
+    backgroundColor: '#4a6cf7',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    padding: '0 20px',
+    height: '40px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+  };
+
+  // 입력 필드 스타일 공통화
+  const inputStyle = {
+    fontSize: '14px',
+    padding: '10px 14px',
+    border: '1px solid #e0e4e8',
+    borderRadius: '4px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+  };
+
   return (
-    <div style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
+    <div style={{ 
+      backgroundColor: '#f5f7fa', 
+      height: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      boxSizing: 'border-box',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+    }}>
 
       {/* Top Bar */}
       <Header></Header>
 
       {/* 본문 전체 영역 */}
-      <div style={{ flex:1, display: 'flex', overflow: 'hidden'}}>
+      <div style={{ flex:1, display: 'flex', overflow: 'hidden', padding: '16px' }}>
         <Sidebar />
 
         {/* Chat area */}
         <div style={{
           flex: 1,
           width: '700px',
-          backgroundColor: '#f9f9f9',
-          borderRadius: '8px',
+          backgroundColor: '#ffffff',
+          borderRadius: '12px',
           display: 'flex',
           flexDirection: 'column',
-          padding: '20px',
-          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          overflow: 'hidden'
         }}>
+          
+          {/* 채팅방 헤더 - 상단에 고정 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 24px',
+            borderBottom: '1px solid #eaedf0',
+            backgroundColor: '#fff'
+          }}>
+            <div style={{ 
+              fontWeight: '600', 
+              fontSize: '18px',
+              color: '#2d3748'
+            }}>
+              채팅방 #{roomId}
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="메시지 검색"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch(e.target.value);
+                  }
+                }}
+                style={{
+                  ...inputStyle,
+                  width: '220px',
+                  backgroundColor: '#f9fafc',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+          </div>
 
           {/* 메시지 목록 */}
           <div style={{
             flex: 1,
             overflowY: 'auto',
+            padding: '20px 24px',
             backgroundColor: '#fff',
-            padding: '15px',
-            border: '1px solid #ccc',
-            borderRadius: '5px',
-            marginBottom: '15px',
             minHeight: 0
           }}>
             {messages.map((msg, index) => (
-              <div key={index} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
-                {/*프로필 이미지 출력*/}
+              <div key={index} style={{ 
+                marginBottom: '18px', 
+                display: 'flex',
+                alignItems: 'flex-start'
+              }}>
+                {/* 프로필 이미지 */}
                 <div style={{
-                  width: '30px',
-                  height: '30px',
+                  width: '38px',
+                  height: '38px',
                   borderRadius: '50%',
-                  backgroundColor: '#7ec8e3',
-                  marginRight: '10px'
+                  backgroundColor: '#4a6cf7',
+                  marginRight: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  flexShrink: 0
                 }}>
+                  {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>
-                    {msg.senderName}
-                    <span style={{ fontWeight: 'normal', fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                <div style={{ flex: 1, maxWidth: 'calc(100% - 50px)' }}>
+                  <div style={{ 
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    marginBottom: '6px'
+                  }}>
+                    <span style={{ 
+                      fontWeight: '600',
+                      fontSize: '15px',
+                      color: '#2d3748'
+                    }}>
+                      {msg.senderName}
+                    </span>
+                    <span style={{ 
+                      fontWeight: 'normal', 
+                      fontSize: '12px', 
+                      color: '#718096', 
+                      marginLeft: '8px' 
+                    }}>
                       {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                   {msg.type === 'CODE' || msg.content.startsWith('```') ? (
-                    <HighlightedCode content={msg.content.replace(/```/g, '')} language={msg.language || 'java'} />
-                ) : (
-                  <div>{msg.content}</div>
-                )}
+                    <div style={{ 
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      border: '1px solid #e2e8f0'
+                    }}>
+                      <HighlightedCode 
+                        content={msg.content.replace(/```/g, '')} 
+                        language={msg.language || 'java'} 
+                      />
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      color: '#4a5568',
+                      wordBreak: 'break-word'
+                    }}>
+                      {msg.content}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -138,52 +278,97 @@ const ChatRoom = () => {
 
           {/* 메시지 입력 폼 */}
           <div style={{
-            backgroundColor: '#d3d3d3',
-            border: '1px solid black',
-            borderRadius: '3px',
-            padding: '10px',
+            backgroundColor: '#fbfbfd',
+            borderTop: '1px solid #eaedf0',
+            padding: '16px 24px',
             display: 'flex',
             flexDirection: 'column'
           }}>
-            <div style={{ marginBottom: '5px' }}>
-            <span
-              onClick={() => {
-                if (inputMode === 'IMAGE') {
-                  setInputMode('TEXT');
-                } else {
-                  setInputMode('IMAGE');
-                }
-              }}
-              style={{ marginRight: '10px', cursor: 'pointer', fontWeight: inputMode === 'IMAGE' ? 'bold' : 'normal' }}
-            >사진</span>
-            <span
-              onClick={() => {
-                if (inputMode === 'CODE') {
-                  setInputMode('TEXT');
-                  setContent('');
-                } else {
-                  setInputMode('CODE');
-                  // setContent('```\n```');
-                }
-              }}
-              style={{ cursor: 'pointer', fontWeight: inputMode === 'CODE' ? 'bold' : 'normal' }}
-            >코드</span>
-            {inputMode === 'CODE' && (
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                style={{ marginLeft: '10px' }}
-              >
-                <option value="javascript">JavaScript</option>
-                <option value="java">Java</option>
-                <option value="python">Python</option>
-                <option value="html">HTML</option>
-                <option value="css">CSS</option>
-              </select>
-            )}
+            <div style={{ 
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <div style={{
+                display: 'flex',
+                backgroundColor: '#f1f5f9',
+                borderRadius: '6px',
+                padding: '2px',
+                marginRight: '12px'
+              }}>
+                <span
+                  onClick={() => {
+                    if (inputMode === 'IMAGE') {
+                      setInputMode('TEXT');
+                    } else {
+                      setInputMode('IMAGE');
+                    }
+                  }}
+                  style={{ 
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    cursor: 'pointer', 
+                    fontWeight: '500',
+                    fontSize: '13px',
+                    backgroundColor: inputMode === 'IMAGE' ? '#ffffff' : 'transparent',
+                    color: inputMode === 'IMAGE' ? '#4a6cf7' : '#64748b',
+                    boxShadow: inputMode === 'IMAGE' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  사진
+                </span>
+                <span
+                  onClick={() => {
+                    if (inputMode === 'CODE') {
+                      setInputMode('TEXT');
+                      setContent('');
+                    } else {
+                      setInputMode('CODE');
+                    }
+                  }}
+                  style={{ 
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '13px',
+                    backgroundColor: inputMode === 'CODE' ? '#ffffff' : 'transparent',
+                    color: inputMode === 'CODE' ? '#4a6cf7' : '#64748b',
+                    boxShadow: inputMode === 'CODE' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  코드
+                </span>
+              </div>
+              
+              {/* 언어 선택 옵션을 코드 버튼 바로 옆으로 이동 */}
+              {inputMode === 'CODE' && (
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  style={{ 
+                    ...inputStyle,
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '4px',
+                    padding: '6px 10px',
+                    fontSize: '13px',
+                    color: '#475569',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="javascript">JavaScript</option>
+                  <option value="java">Java</option>
+                  <option value="python">Python</option>
+                  <option value="html">HTML</option>
+                  <option value="css">CSS</option>
+                </select>
+              )}
             </div>
             
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', gap: '10px' }}>
               <textarea
                 value={content}
                 onChange={handleInputChange}
@@ -193,27 +378,30 @@ const ChatRoom = () => {
                     sendMessage();      // 메시지 전송
                   }
                 }}
-                placeholder={inputMode === 'CODE' ? "코드를 입력하세요." : "메시지를 입력하세요."}
+                placeholder={inputMode === 'CODE' ? "코드를 입력하세요..." : "메시지를 입력하세요..."}
                 style={{
                   flex: 1,
-                  height: '30px',
+                  // 입력창 높이 증가 - 이전: 40px
+                  height: '80px',
                   resize: 'none',
-                  padding: '15px',
-                  fontSize: '16px',
-                  backgroundColor: inputMode === 'CODE' ? '#F1F3F4' : 'white',
-                  border: 'none',
-                  borderRadius: '4px'
+                  padding: '12px 16px',
+                  fontSize: '14px',
+                  backgroundColor: inputMode === 'CODE' ? '#f8fafc' : 'white',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  lineHeight: '1.5',
+                  color: '#4a5568',
+                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
+                  transition: 'border-color 0.2s'
                 }}
               />
 
               <button
                 onClick={sendMessage}
                 style={{
-                  backgroundColor: '#2c2f7e',
-                  color: 'white',
-                  padding: '15px 20px',
-                  border: 'none',
-                  fontSize: '16px'
+                  ...buttonStyle,
+                  // 버튼 높이도 입력창에 맞게 조정
+                  height: '80px'
                 }}
               >
                 전송
@@ -221,6 +409,19 @@ const ChatRoom = () => {
             </div>
           </div>
         </div>
+        
+        {showSearchSidebar && (
+          <SearchSidebar
+            searchKeyword={searchKeyword}
+            searchResults={searchResults}
+            isSearching={isSearching}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            onClose={() => setShowSearchSidebar(false)}
+            onPageChange={(page) => handleSearch(searchKeyword, page)}
+          />
+        )}
       </div>
     </div>
   );
