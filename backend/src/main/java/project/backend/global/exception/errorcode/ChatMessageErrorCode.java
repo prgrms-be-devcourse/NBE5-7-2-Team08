@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ChatMessageErrorCode implements ErrorCode {
 
-	INVALID_KEYWORD_LENGTH("INVALID_KEYWORD_LENGTH", "검색어는 최소 2자 이상이어야 합니다.",
+	INVALID_KEYWORD_LENGTH("CME-001", "검색어는 최소 2자 이상이어야 합니다.",
 		HttpStatus.BAD_REQUEST);
 
 	private final String code;
