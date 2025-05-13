@@ -25,7 +25,7 @@ import project.backend.domain.member.dto.MemberResponse;
 import project.backend.domain.member.dto.SignUpRequest;
 import project.backend.domain.member.entity.Member;
 import project.backend.domain.member.mapper.MemberMapper;
-import project.backend.global.exception.MemberException;
+import project.backend.global.exception.ex.MemberException;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)

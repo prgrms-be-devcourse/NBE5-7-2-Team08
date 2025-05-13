@@ -1,5 +1,5 @@
 import React from 'react';
-import SideBar from '../fragments/SideBar';
+import SideBar from '../components/SideBar';
 import Header from '../components/header'
 
 const BlankRoom = () => {

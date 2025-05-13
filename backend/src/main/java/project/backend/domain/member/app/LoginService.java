@@ -20,7 +20,7 @@ public class LoginService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Member foundMember = memberService.findMemberByEmail(email);
+        Member foundMember = memberService.loginByEmail(email);
         log.info("로그인 시도 = {}", foundMember);
         return new MemberDetails(foundMember);
     }
