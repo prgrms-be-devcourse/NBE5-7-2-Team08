@@ -4,6 +4,10 @@ spring:
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
     url: jdbc:mysql://localhost:3306/FLYING_TRUCK_PROJECT
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
 
   jpa:
@@ -13,3 +17,8 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+
+
+file:
+  profile-path: img/
+  default-profile: /profile/default-profile.png

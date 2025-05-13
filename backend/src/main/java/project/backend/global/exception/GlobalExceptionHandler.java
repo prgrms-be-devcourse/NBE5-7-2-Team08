@@ -13,7 +13,8 @@ public class GlobalExceptionHandler {
         ErrorResponse response = ErrorResponse.toResponse(ex.getErrorCode());
 
         return ResponseEntity
-            .status(ex.getStatus())
-            .body(response);
+                .status(ex.getStatus())
+                .body(response);
+
     }
 }
