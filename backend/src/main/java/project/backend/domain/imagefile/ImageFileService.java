@@ -43,12 +43,7 @@ public class ImageFileService {
 
             file.transferTo(savePath.toFile());
 
-            return imageFileRepository.save(ImageFile.builder()
-                    .uploadFileName(uploadFileName)
-                    .storeFileName(storeFileName)
-                    .imageType(ImageType.PROFILE_IMAGE)
-                    .build()
-            );
+            return imageFileRepository.save(ImageFile.ofProfile(storeFileName, uploadFileName));
 
         } catch (IOException e) {
             throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);

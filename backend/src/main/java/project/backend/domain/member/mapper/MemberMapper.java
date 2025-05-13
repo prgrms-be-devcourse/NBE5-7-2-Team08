@@ -2,6 +2,7 @@ package project.backend.domain.member.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.member.dto.MemberResponse;
 import project.backend.domain.member.dto.SignUpRequest;
 import project.backend.domain.member.entity.Member;
@@ -9,12 +10,12 @@ import project.backend.domain.member.entity.Member;
 @RequiredArgsConstructor
 public class MemberMapper {
 
-    public static Member toEntity(SignUpRequest request) {
+    public static Member toEntity(SignUpRequest request, String encryptedPassword, ImageFile defaultProfileImg) {
         return Member.builder()
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(encryptedPassword)
                 .nickname(request.getNickname())
-                .profileImage(request.getProfile_image())
+                .profileImage(defaultProfileImg)
                 .build();
     }
 

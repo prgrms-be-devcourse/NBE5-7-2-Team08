@@ -3,6 +3,7 @@ package project.backend.domain.member.app;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,19 +30,23 @@ public class MemberService {
     private final ImageFileService imageFileService;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${file.default-profile}")
+    private String defaultProfilePath;
+
     public MemberResponse saveMember(SignUpRequest request) {
+
         if (checkIfMemberExists(request.getEmail())) {
             log.info("예외 = {}", "이미 존재하는 email");
             throw new MemberException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
 
-        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
-                "/profile/default-profile.png");
+        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(defaultProfilePath);
 
-        request.setProfile_image(defaultProfileImg);
-        request.setPassword(passwordEncoder.encode(request.getPassword()));
+        String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
-        Member newMember = memberRepository.save(MemberMapper.toEntity(request));
+        Member newMember = memberRepository.save(
+                MemberMapper.toEntity(request, encryptedPassword, defaultProfileImg));
+        
         return MemberMapper.toResponse(newMember);
     }
 
