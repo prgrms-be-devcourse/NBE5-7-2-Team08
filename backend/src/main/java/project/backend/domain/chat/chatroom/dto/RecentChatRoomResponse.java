@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class RecentChatRoomResponse {
 
-    private Long roomdId;
+    private Long roomId;
 
 }

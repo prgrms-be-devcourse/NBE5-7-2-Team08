@@ -4,7 +4,12 @@ import { Stomp } from '@stomp/stompjs';
 import { useParams } from 'react-router-dom'
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
+<<<<<<< HEAD:frontend/src/pages/ChatRoom.js
 import Sidebar from '../fragments/SideBar';
+=======
+import Sidebar from '../components/SideBar';
+import Header from '../components/header';
+>>>>>>> main:frontend/src/pages/ChatRoom.jsx
 
 const ChatRoom = () => {
   const [messages, setMessages]=useState([]);
@@ -77,6 +82,7 @@ const ChatRoom = () => {
     <div style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
 
       {/* Top Bar */}
+<<<<<<< HEAD:frontend/src/pages/ChatRoom.js
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '10px', marginTop: '10px' }}>
 
         <div style={{ display: 'flex', gap: '10px', marginRight: '10px'}}>
@@ -106,6 +112,9 @@ const ChatRoom = () => {
           </button>
         </div>
       </div>
+=======
+      <Header></Header>
+>>>>>>> main:frontend/src/pages/ChatRoom.jsx
 
       {/* 본문 전체 영역 */}
       <div style={{ flex:1, display: 'flex', overflow: 'hidden'}}>

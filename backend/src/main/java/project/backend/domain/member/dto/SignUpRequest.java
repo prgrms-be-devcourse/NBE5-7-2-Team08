@@ -1,5 +1,24 @@
 package project.backend.domain.member.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import project.backend.domain.imagefile.ImageFile;
+
+@Data
 public class SignUpRequest {
 
+    @NotBlank(message = "이메일은 필수입니다.")
+    @Email(message = "올바른 이메일 형식이어야 합니다.")
+    private String email;
+
+    @NotBlank(message = "비밀번호는 필수입니다.")
+    @Size(min = 12, message = "비밀번호는 최소 12자 이상이여야 합니다.")
+    private String password;
+
+    @NotBlank(message = "닉네임은 필수입니다.")
+    private String nickname;
+
+    private ImageFile profile_image;
 }
