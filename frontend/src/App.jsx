@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import BlankRoom from './pages/BlankRoom'
 import Login from "./pages/login-form"
 import Signup from "./pages/signup"
+import MyPage from "./pages/profile"
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/blank" element={<BlankRoom />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/profile/:memberId" element={<MyPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -20,6 +20,8 @@ import project.backend.domain.member.mapper.MemberMapper;
 import project.backend.global.exception.errorcode.MemberErrorCode;
 import project.backend.global.exception.ex.MemberException;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 @Transactional
@@ -53,6 +55,13 @@ public class MemberService {
     public MemberResponse getMemberDetails(Authentication auth) {
         MemberDetails member = (MemberDetails) auth.getPrincipal();
         return MemberDetails.toResponse(member);
+    }
+
+    public MemberResponse findMemberById(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        return MemberMapper.toResponse(member);
     }
 
     private boolean checkIfMemberExists(String email) {

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import "./header.css"
 
 export function Header() {
+  const [memberId, setMemberId] = useState(null)
   const [profileImage, setProfileImage] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -26,6 +27,7 @@ export function Header() {
 
         const data = await response.json()
         setProfileImage(data.profileImg)
+        setMemberId(data.id)
         setIsLoading(false)
       } catch (err) {
         console.error("Error fetching profile image:", err)
@@ -65,11 +67,13 @@ export function Header() {
               </svg>
             </div>
           ) : (
+            <a href= {`/profile/${memberId}`}>
             <img 
               src={`http://localhost:8080${profileImage}`}
               alt="User profile"
               className="profile-image"
             />
+            </a>
           )}
           <button
             className="logout-text"

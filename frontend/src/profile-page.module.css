@@ -1,0 +1,232 @@
+/* profile-page.css */
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #e0e0e0;
+  margin: 0;
+}
+
+/* App container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Content wrapper - contains sidebar and main content */
+.content-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f5f5f5;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Profile container */
+.profile-container {
+  display: flex;
+  gap: 20px;
+  height: calc(100% - 60px); /* Subtract page title height */
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    flex-direction: column;
+  }
+}
+
+/* Profile section (left side) */
+.profile-section {
+  width: 350px;
+  min-width: 300px;
+}
+
+.profile-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-image-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.profile-image-in-page {
+  width: 12vw;
+  height: 12vw;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.profile-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.edit-image-button {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-image-button:hover {
+  background-color: #2563eb;
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.profile-email {
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.edit-profile-button {
+  width: 100%;
+  background-color: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.edit-profile-button:hover {
+  background-color: #2563eb;
+}
+
+/* Rooms section (right side) */
+.rooms-section {
+  flex: 1;
+  background-color: white;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden; /* Important for containing the scrollable area */
+}
+
+.rooms-title {
+  font-size: 20px;
+  font-weight: bold;
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: white;
+}
+
+.rooms-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.room-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 0;
+}
+
+.room-item:last-child {
+  border-bottom: none;
+}
+
+.room-info {
+  display: flex;
+  align-items: center;
+}
+
+.room-icon {
+  width: 48px;
+  height: 48px;
+  background-color: #dbeafe;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+}
+
+.room-icon svg {
+  color: #3b82f6;
+}
+
+.room-title {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.room-members {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.room-members svg {
+  margin-right: 4px;
+}
+
+.join-button {
+  padding: 4px 16px;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+  background-color: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.join-button:hover {
+  background-color: #eff6ff;
+}
+
+.empty-rooms {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  color: #6b7280;
+}
