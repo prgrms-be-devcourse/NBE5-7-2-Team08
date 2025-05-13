@@ -5,6 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
+//임창인
 public class ChatRoomResponse2 {
 
 	private Long id;
