@@ -1,11 +1,15 @@
 package project.backend.domain.imagefile;
 
 import jakarta.transaction.Transactional;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,42 +21,66 @@ import project.backend.global.exception.ImageFileException;
 @RequiredArgsConstructor
 public class ImageFileService {
 
-  private final ImageFileRepository imageFileRepository;
+    private final ImageFileRepository imageFileRepository;
 
-  @Value("${file.profile-path}")
-  private String profilePath;
+    @Value("${file.profile-path}")
+    private String profilePath;
 
-  public ImageFile saveProfileImageFile(MultipartFile file) {
+    public ImageFile saveProfileImageFile(MultipartFile file) {
 
-    try {
-      String uploadFileName = file.getOriginalFilename();
+        try {
+            String uploadFileName = file.getOriginalFilename();
 
-      if (uploadFileName == null || !uploadFileName.contains(".")) {
-        throw new IllegalArgumentException("파일명에 확장자가 없습니다.");
-      }
-      String extension = uploadFileName.substring(uploadFileName.lastIndexOf("."));
-      String storeFileName = UUID.randomUUID() + extension;
+            checkExtension(uploadFileName);
+            checkFileTypeIsImage(file.getContentType());
 
-      Path savePath = Paths.get(profilePath, storeFileName);
+            String extension = uploadFileName.substring(uploadFileName.lastIndexOf(".")).toLowerCase();
 
-      file.transferTo(savePath.toFile());
+            checkFileExtensionIsImage(extension);
 
-      return imageFileRepository.save(ImageFile.builder()
-          .uploadFileName(uploadFileName)
-          .storeFileName(storeFileName)
-          .imageType(ImageType.PROFILE_IMAGE)
-          .build()
-      );
+            String storeFileName = UUID.randomUUID() + extension;
 
-    } catch (IOException e) {
-      throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
+            Path savePath = Paths.get(profilePath, storeFileName);
+
+            file.transferTo(savePath.toFile());
+
+            return imageFileRepository.save(ImageFile.builder()
+                    .uploadFileName(uploadFileName)
+                    .storeFileName(storeFileName)
+                    .imageType(ImageType.PROFILE_IMAGE)
+                    .build()
+            );
+
+        } catch (IOException e) {
+            throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
+        }
+
     }
 
-  }
+    private void checkFileExtensionIsImage(String extension) {
+        List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", "webp");
+        if (!imageExtensions.contains(extension)) {
+            throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
+        }
+    }
 
-  public ImageFile getProfileImageByStoreFileName(String storeFileName) {
-    return imageFileRepository.findByUploadFileName(storeFileName)
-        .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
-  }
+
+    private void checkFileTypeIsImage(String fileType) {
+        if (fileType == null || !fileType.startsWith("image/")) {
+            throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
+        }
+    }
+
+    private void checkExtension(String fileName) {
+        if (fileName == null || !fileName.contains(".")) {
+            throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
+        }
+    }
+
+
+    public ImageFile getProfileImageByStoreFileName(String storeFileName) {
+        return imageFileRepository.findByUploadFileName(storeFileName)
+                .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
+    }
 
 }
