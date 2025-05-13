@@ -38,7 +38,7 @@ public class ChatMessageMapper {
 		return ChatMessageSearchResponse.builder()
 			.messageId(message.getId())
 			.content(message.getContent())
-			.senderId(message.getSender().getParticipant().getNickname())
+			.senderName(message.getSender().getParticipant().getNickname())
 			.sendAt(message.getSendAt())
 			.type(message.getType())
 			.build();

@@ -4,6 +4,7 @@ import { Stomp } from '@stomp/stompjs';
 import { useParams } from 'react-router-dom'
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
+import Sidebar from '../fragments/SideBar';
 
 const ChatRoom = () => {
   const [messages, setMessages]=useState([]);
@@ -73,40 +74,12 @@ const ChatRoom = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#e0e0e0', height: '100vh', padding: '20px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
+    <div style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box'}}>
 
       {/* Top Bar */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '10px' }}>
-        {/* 방 생성 & 참가 그룹 */}
-        <div style={{ display: 'flex', gap: '10px', marginRight: '20px' }}>
-          <button
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#888',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-            onClick={() => window.location.href = '/create'}
-          >
-            방 생성
-          </button>
-          <button
-            style={{
-              padding: '10px 15px',
-              backgroundColor: '#aaa',
-              color: 'black',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-            onClick={() => window.location.href = '/join'}
-          >
-            방 참가
-          </button>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '10px', marginTop: '10px' }}>
 
-        {/* 로그아웃 & 마이페이지 그룹 */}
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginRight: '10px'}}>
           <button
             style={{
               padding: '10px 15px',
@@ -136,19 +109,11 @@ const ChatRoom = () => {
 
       {/* 본문 전체 영역 */}
       <div style={{ flex:1, display: 'flex', overflow: 'hidden'}}>
-        {/* Sidebar */}
-        <div style={{ width: '200px', padding: '10px', backgroundColor: '#ffffff' }}>
-          <h3 style={{ color: 'black', fontWeight: 'bold' }}>채팅방 목록</h3>
-          <div style={{ backgroundColor: '#2c2f7e', color: 'white', padding: '10px', borderRadius: '4px', marginTop: '10px' }}>
-            {/* <p style={{ margin: 0 }}>{roomName}</p> 채팅방 조회 로직 필요*/}
-            <p style={{ margin: 0 }}>핸고8</p>
-          </div>
-        </div>
+        <Sidebar />
 
         {/* Chat area */}
         <div style={{
           flex: 1,
-          marginLeft: '20px',
           width: '700px',
           backgroundColor: '#f9f9f9',
           borderRadius: '8px',
@@ -157,28 +122,6 @@ const ChatRoom = () => {
           padding: '20px',
           boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)'
         }}>
-
-          {/* 방 제목 + 드롭다운 */}
-          {/* <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <h2>{roomName}</h2>
-            <button
-              onClick={() => setShowParticipants(prev => !prev)}
-              style={{ padding: '5px 10px', fontSize: '14px' }}
-            >
-              참여자 ▼
-            </button>
-          </div> */}
-
-          {/* 참여자 목록 (토글) */}
-          {/* {showParticipants && (
-            <div style={{ marginBottom: '10px', paddingLeft: '10px' }}>
-              <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                {participants.map((name, i) => (
-                  <li key={i}>{name}</li>
-                ))}
-              </ul>
-            </div>
-          )} */}
 
           {/* 메시지 목록 */}
           <div style={{
@@ -193,13 +136,15 @@ const ChatRoom = () => {
           }}>
             {messages.map((msg, index) => (
               <div key={index} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
+                {/*프로필 이미지 출력*/}
                 <div style={{
                   width: '30px',
                   height: '30px',
                   borderRadius: '50%',
                   backgroundColor: '#7ec8e3',
                   marginRight: '10px'
-                }}></div>
+                }}>
+                </div>
                 <div>
                   <div style={{ fontWeight: 'bold' }}>
                     {msg.senderName}
@@ -228,9 +173,6 @@ const ChatRoom = () => {
             flexDirection: 'column'
           }}>
             <div style={{ marginBottom: '5px' }}>
-              {/* <span style={{ marginRight: '10px' }}>사진</span>
-              <span>코드</span> */}
-
             <span
               onClick={() => {
                 if (inputMode === 'IMAGE') {
@@ -281,7 +223,7 @@ const ChatRoom = () => {
                 placeholder={inputMode === 'CODE' ? "코드를 입력하세요." : "메시지를 입력하세요."}
                 style={{
                   flex: 1,
-                  height: '50px',
+                  height: '30px',
                   resize: 'none',
                   padding: '15px',
                   fontSize: '16px',

@@ -15,7 +15,7 @@ public class ChatMessageSearchResponse {
 
 	private MessageType type;
 
-	private String senderId;
+	private String senderName;
 
 	private LocalDateTime sendAt;
 }

@@ -1,0 +1,17 @@
+package project.backend.global.exception.errorcode;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@AllArgsConstructor
+public enum ChatMessageErrorCode implements ErrorCode {
+
+	INVALID_KEYWORD_LENGTH("INVALID_KEYWORD_LENGTH", "검색어는 최소 2자 이상이어야 합니다.",
+		HttpStatus.BAD_REQUEST);
+
+	private final String code;
+	private final String message;
+	private final HttpStatus status;
+}
