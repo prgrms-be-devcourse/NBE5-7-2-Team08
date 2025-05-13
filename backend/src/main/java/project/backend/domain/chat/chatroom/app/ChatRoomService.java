@@ -8,6 +8,7 @@ import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
+import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper;
@@ -57,7 +58,7 @@ public class ChatRoomService {
 
 
 	@Transactional
-	public void joinChatRoom(String inviteCode, Long memberId) {
+	public Long joinChatRoom(String inviteCode, Long memberId) {
 		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
 			.orElseThrow(() -> new EntityNotFoundException("존재하지 않는 초대코드입니다"));
 
@@ -77,6 +78,9 @@ public class ChatRoomService {
 			.build();
 
 		chatParticipantRepository.save(chatParticipant);
+
+		return room.getId();
 	}
+
 }
 

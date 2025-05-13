@@ -7,4 +7,5 @@ import project.backend.domain.chat.chatroom.entity.ChatRoom;
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
 	Optional<ChatRoom> findByInviteCode(String inviteCode);
+
 }

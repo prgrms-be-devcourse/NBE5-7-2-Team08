@@ -13,3 +13,13 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+
+  security:
+    user:
+      name: test
+      password: test
+      roles: ADMIN
+
+  # src/main/resources/application.yml
+  client:
+    base-url: http://localhost:3000
