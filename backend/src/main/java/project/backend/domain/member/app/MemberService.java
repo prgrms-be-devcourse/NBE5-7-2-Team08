@@ -41,12 +41,12 @@ public class MemberService {
         request.setPassword(passwordEncoder.encode(request.getPassword()));
 
         Member newMember = memberRepository.save(MemberMapper.toEntity(request));
-        return MemberMapper.toDto(newMember);
+        return MemberMapper.toResponse(newMember);
     }
 
     public MemberResponse getMemberDetails(Authentication auth) {
         MemberDetails member = (MemberDetails) auth.getPrincipal();
-        return MemberDetails.toDto(member);
+        return MemberDetails.toResponse(member);
     }
 
     private boolean checkIfMemberExists(String email) {
@@ -77,7 +77,7 @@ public class MemberService {
             targetMember.setProfileImage(newProfile);
         }
 
-        return MemberMapper.toDto(targetMember);
+        return MemberMapper.toResponse(targetMember);
     }
 
 }

@@ -36,7 +36,7 @@ public class MemberDetails implements UserDetails {
         return this.email;
     }
 
-    public static MemberResponse toDto(MemberDetails memberDetails) {
+    public static MemberResponse toResponse(MemberDetails memberDetails) {
         return MemberResponse.builder()
                 .id(memberDetails.getId())
                 .email(memberDetails.getEmail())

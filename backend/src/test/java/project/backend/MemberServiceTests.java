@@ -128,12 +128,12 @@ public class MemberServiceTests {
         when(memberRepository.findByEmail(targetEmail)).thenReturn(Optional.of(member));
 
         //when
-        MemberResponse response = MemberMapper.toDto(memberService.findMemberByEmail(targetEmail));
+        MemberResponse response = MemberMapper.toResponse(memberService.findMemberByEmail(targetEmail));
 
         //then
         assertThat(response.getEmail()).isEqualTo(targetEmail);
         assertThat(response.getNickname()).isEqualTo("nickname");
-        assertThat(response.getMemberId()).isEqualTo(1L);
+        assertThat(response.getId()).isEqualTo(1L);
     }
 
 

@@ -18,7 +18,7 @@ public class MemberMapper {
                 .build();
     }
 
-    public static MemberResponse toDto(Member member) {
+    public static MemberResponse toResponse(Member member) {
         return MemberResponse.builder()
                 .id(member.getId())
                 .email(member.getEmail())
