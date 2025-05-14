@@ -22,7 +22,7 @@ public class MemberController {
         return memberService.getMemberDetails(authentication);
     }
 
-    //사용안함 추후에 사용 가능 (edit profile)을 안보여주는 페이지 띄울때
+    //사용안함 추후에 사용 가능 (edit profile)을 안보여주는 유저 정보 페이지 띄울때
     @Deprecated()
     @GetMapping("/details/{memberId}")
     public MemberResponse getMemberDetails(@PathVariable Long memberId, Authentication authentication) {

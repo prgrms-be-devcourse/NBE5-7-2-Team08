@@ -59,6 +59,7 @@ const ProfilePage = () => {
     const fetchUserRooms = async () => {
       if (stopRequestRef.current) return;
 
+
       try {
         const response = await fetch(`http://localhost:8080/chat-rooms/mine/${userDetails.id}`, {
           method: "GET",
@@ -92,13 +93,17 @@ const ProfilePage = () => {
     fetchUserRooms();
   }, [userDetails ,navigate]);
 
-  
+
+  const handleJoinClick = (roomId) => {
+    navigate(`/chat/${roomId}`);
+  };
 
   if (!userDetails) {
     return <div>Loading...</div>;
   }
 
   return (
+    
     <div className={styles["app-container"]}>
       <Header />
       <div className={styles["content-wrapper"]}>
@@ -156,7 +161,8 @@ const ProfilePage = () => {
                           </div>
                         </div>
                       </div>
-                      <button className={styles["join-button"]}>Join</button>
+                      <button className={styles["join-button"]}
+                      onClick={() => handleJoinClick(room.roomId)}>Join</button>
                     </div>
                   ))
                 ) : (
