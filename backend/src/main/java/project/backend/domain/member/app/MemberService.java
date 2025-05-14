@@ -20,8 +20,6 @@ import project.backend.domain.member.mapper.MemberMapper;
 import project.backend.global.exception.errorcode.MemberErrorCode;
 import project.backend.global.exception.ex.MemberException;
 
-import java.util.Optional;
-
 @Slf4j
 @Service
 @Transactional
@@ -52,51 +50,12 @@ public class MemberService {
         return MemberMapper.toResponse(newMember);
     }
 
-    public MemberResponse getMemberDetails(Authentication auth) {
-        MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
-        Long memberId = loginMember.getId();
-
-        Member member = findMemberById(memberId);
-        return MemberMapper.toResponse(member);
-    }
-
-    public MemberResponse returnMemberById(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-
-        return MemberMapper.toResponse(member);
-    }
-
-
-    private boolean checkIfMemberExists(String email) {
-        return memberRepository.findByEmail(email).isPresent();
-    }
-
-    public Member loginByEmail(String email) {
-        try {
-            return findMemberByEmail(email);
-        } catch (MemberException e) {
-            log.info("존재하지 않는 유저");
-            throw new UsernameNotFoundException("존재하지 않는 유저입니다.");
-        }
-    }
-
-    public Member findMemberByEmail(String email) {
-
-        return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
-
-    private Member findMemberById(Long id) {
-        return memberRepository.findById(id)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
 
     public MemberResponse updateMember(Authentication auth, MemberUpdateRequest request) {
 
         MemberDetails memberDetails = (MemberDetails) auth.getPrincipal();
 
-        Member targetMember = findMemberById(memberDetails.getId());
+        Member targetMember = getMemberById(memberDetails.getId());
 
         if (request.getNickname() != null) {
             targetMember.setNickname(request.getNickname());
@@ -114,4 +73,40 @@ public class MemberService {
         return MemberMapper.toResponse(targetMember);
     }
 
+    // Spring Security에서 UsernameNotFoundException을 처리하도록 유도하는 메서드
+    public Member loginByEmail(String email) {
+        try {
+            return getMemberByEmail(email);
+        } catch (MemberException e) {
+            log.info("존재하지 않는 이메일로 로그인 시도: {}", email);
+            throw new UsernameNotFoundException("존재하지 않는 유저입니다: " + email, e);
+        }
+    }
+
+    public Member getMemberByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private Member getMemberById(Long id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    public MemberResponse getMemberResponseById(Long memberId) {
+        Member member = getMemberById(memberId);
+        return MemberMapper.toResponse(member);
+    }
+
+    private boolean checkIfMemberExists(String email) {
+        return memberRepository.findByEmail(email).isPresent();
+    }
+
+    public MemberResponse getMemberDetails(Authentication auth) {
+        MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
+        Long memberId = loginMember.getId();
+
+        Member member = getMemberById(memberId);
+        return MemberMapper.toResponse(member);
+    }
 }

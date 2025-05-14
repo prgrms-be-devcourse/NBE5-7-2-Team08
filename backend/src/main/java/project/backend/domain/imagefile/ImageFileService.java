@@ -63,7 +63,6 @@ public class ImageFileService {
         }
     }
 
-
     private void checkFileTypeIsImage(String fileType) {
         if (fileType == null || !fileType.startsWith("image/")) {
             throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
@@ -75,7 +74,6 @@ public class ImageFileService {
             throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
         }
     }
-
 
     public ImageFile getProfileImageByStoreFileName(String storeFileName) {
         return imageFileRepository.findByUploadFileName(storeFileName)

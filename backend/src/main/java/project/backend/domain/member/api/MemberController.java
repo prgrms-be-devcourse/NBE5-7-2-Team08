@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import project.backend.domain.member.app.MemberService;
 import project.backend.domain.member.dto.MemberResponse;
 import project.backend.domain.member.dto.MemberUpdateRequest;
-import project.backend.domain.member.entity.Member;
 
 @Slf4j
 @RestController
@@ -32,6 +31,6 @@ public class MemberController {
     @Deprecated()
     @GetMapping("/details/{memberId}")
     public MemberResponse getMemberDetails(@PathVariable Long memberId, Authentication authentication) {
-        return memberService.returnMemberById(memberId);
+        return memberService.getMemberResponseById(memberId);
     }
 }
