@@ -48,7 +48,26 @@ const ChatRoom = () => {
 
   const HighlightedCode = ({ content, language }) => {
     return (
-      <Highlight className={language}>{content}</Highlight>
+      <Highlight className={language} style={{ whiteSpace: 'pre-line' }}>{content}</Highlight> //이거 되나?? 
+    );
+  };
+
+  const renderWithLink = (text) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split(urlRegex).map((part, i) =>
+      urlRegex.test(part) ? (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: '#0366d6', textDecoration: 'underline' }}
+        >
+          {part}
+        </a>
+      ) : (
+        part
+      )
     );
   };
 
@@ -177,22 +196,30 @@ const ChatRoom = () => {
                   {/* GitHub 메시지 UI */}
                   {msg.type === 'GIT' ? (
                     <div style={{
-                      // backgroundColor: '#f6f8fa',/
-                      // border: '1px solid #d1d5da',
-                      // borderRadius: '6px',
-                      padding: '12px 15px',
-                      whiteSpace: 'pre-wrap',
+                      backgroundColor: '#f6f8fa',
+                      borderRadius: '6px',
                       color: '#24292e',
                       display: 'flex'
                     }}>
                       {/* 왼쪽 검정색 선 */}
                       <div style={{
-                        width: '4px',
+                        width: '6px',
                         backgroundColor: '#000',
                         marginRight: '10px',
                         borderRadius: '2px'
                       }} />
-                      {msg.content}
+                      {/* <div style={{ whiteSpace: 'pre-line', padding: '10px' }}>{msg.content}</div> */}
+                      <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', padding: '10px' }}>
+                        <strong style={{ display: 'block', marginBottom: '6px' }}>
+                          {msg.content.split('\n')[0]}
+                        </strong>
+                        {msg.content.split('\n').slice(1).map((line, i) => (
+                          <React.Fragment key={i}>
+                            {renderWithLink(line)}
+                            <br />
+                          </React.Fragment>
+                        ))}
+                      </div>
                     </div>
                   ): msg.type === 'CODE' || msg.content.startsWith('```') ? (
                     <HighlightedCode content={msg.content.replace(/```/g, '')} language={msg.language || 'java'} />
