@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaChevronRight, FaChevronDown, FaUser, FaCrown, FaComments, FaRegCommentDots, FaPlus, FaCopy } from 'react-icons/fa';
+import { FaChevronRight, FaChevronDown, FaUser, FaCrown, FaComments, FaRegCommentDots, FaPlus } from 'react-icons/fa';
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const [expandedRoom, setExpandedRoom] = useState(null);
-  const [showNotification, setShowNotification] = useState(false);
   const [chatRooms, setChatRooms] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,26 +48,6 @@ const Sidebar = () => {
   const toggleRoom = (id) => {
     setExpandedRoom(prev => prev === id ? null : id);
     navigate(`/chat/${id}`);
-  };
-
-  const copyInviteUrl = async () => {
-    if (!roomId) return; // roomId가 없는 경우 실행하지 않음
-    
-    try {
-      const res = await fetch(`http://localhost:8080/chat-rooms/invite/${roomId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('초대 URL을 가져오지 못했습니다.');
-      const { inviteUrl } = await res.json();
-      await navigator.clipboard.writeText(inviteUrl);
-      setShowNotification(true); // 알림 표시
-      setTimeout(() => setShowNotification(false), 2000); // 2초 뒤 닫기
-    } catch (err) {
-      console.error(err);
-      alert('초대 URL 복사 중 오류가 발생했습니다.');
-    }
   };
 
   const handleCreate = async (e) => {
@@ -176,29 +155,6 @@ const Sidebar = () => {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* 초대 코드 복사 버튼 */}
-          {roomId && (
-            <button
-              style={{
-                width: '90%',
-                marginTop: '20px',
-                padding: '10px',
-                backgroundColor: '#2377FF',
-                color: 'white',
-                border: '1px solid #5AAAFF',
-                cursor: 'pointer',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onClick={copyInviteUrl}
-            >
-              <FaCopy style={{ marginRight: '8px' }} />
-              초대 코드 복사
-            </button>
-          )}
-
           <button
             style={{
               width: '90%',
@@ -236,22 +192,6 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {showNotification && (
-        <div style={{
-          position: 'fixed',
-          top: '15px',
-          right: '15px',
-          backgroundColor: '#333',
-          color: '#fff',
-          padding: '10px 16px',
-          borderRadius: '6px',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-          zIndex: 1000
-        }}>
-          초대 코드가 복사되었습니다
-        </div>
-      )}
-
       {showCreateModal && (
         <div
           style={{
@@ -276,7 +216,7 @@ const Sidebar = () => {
               boxSizing: 'border-box'
             }}
           >
-            <h2 style={{ margin: '0 0 16px' }}>New Chat Room</h2>
+            <h2 style={{ margin: '0 0 16px' }}>채팅방 생성</h2>
             <form onSubmit={handleCreate}>
               <input
                 type="text"
@@ -352,7 +292,7 @@ const Sidebar = () => {
               boxSizing: 'border-box'
             }}
           >
-            <h2 style={{ margin: '0 0 16px' }}>Join Chat Room</h2>
+            <h2 style={{ margin: '0 0 16px' }}>채팅방 참가</h2>
             <form onSubmit={handleJoin}>
               <input
                 type="text"
