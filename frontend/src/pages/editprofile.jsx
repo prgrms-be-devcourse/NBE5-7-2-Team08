@@ -13,9 +13,11 @@ const EditProfilePage = () => {
   const [nickname, setNickname] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [imageFile, setImageFile] = useState(null)
+
   const alertShownRef = useRef(false)
   const stopRequestRef = useRef(false)
-  const [selectedImage, setSelectedImage] = useState(null)
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -56,23 +58,33 @@ const EditProfilePage = () => {
     fetchUserDetails()
   }, [navigate])
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const imageUrl = URL.createObjectURL(file)
+      setSelectedImage(imageUrl)
+      setImageFile(file)
+    }
+  }
+
   const handleSave = async () => {
     if (password !== confirmPassword) {
       alert("비밀번호가 일치하지 않습니다.")
       return
     }
 
+    const formData = new FormData()
+    formData.append("nickname", nickname)
+    formData.append("password", password)
+    if (imageFile) {
+      formData.append("profileImg", imageFile) // 백엔드 필드명에 따라 변경 가능
+    }
+
     try {
       const response = await fetch("http://localhost:8080/user/update", {
-        method: "POST",
+        method: "PUT",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nickname,
-          password,
-        }),
+        body: formData,
       })
 
       if (!response.ok) {
@@ -85,14 +97,6 @@ const EditProfilePage = () => {
       navigate("/myprofile")
     } catch (error) {
       alert("요청 실패")
-    }
-  }
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      const imageUrl = URL.createObjectURL(file)
-      setSelectedImage(imageUrl)
     }
   }
 
@@ -121,11 +125,8 @@ const EditProfilePage = () => {
                   }}
                 />
                 <div className={styles["edit-icon"]}>
-         
-                    <Edit2 size={20} style={{ cursor: "pointer" }} />
-          
+                  <Edit2 size={20} style={{ pointerEvents: "none" }} />
                   <input
-                    id="file-input"
                     type="file"
                     accept="image/*"
                     className={styles["file-input"]}

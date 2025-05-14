@@ -57,12 +57,13 @@ public class MemberService {
         return MemberDetails.toResponse(member);
     }
 
-    public MemberResponse findMemberById(Long memberId) {
+    public MemberResponse returnMemberById(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         return MemberMapper.toResponse(member);
     }
+
 
     private boolean checkIfMemberExists(String email) {
         return memberRepository.findByEmail(email).isPresent();
@@ -83,21 +84,27 @@ public class MemberService {
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
+    private Member findMemberById(Long id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
 
-    public MemberResponse updateMember(Long id, MemberUpdateRequest request) {
-        Member targetMember = memberRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 유저입니다."));
+    public MemberResponse updateMember(Authentication auth, MemberUpdateRequest request) {
+
+        MemberDetails memberDetails = (MemberDetails) auth.getPrincipal();
+
+        Member targetMember = findMemberById(memberDetails.getId());
 
         if (request.getNickname() != null) {
             targetMember.setNickname(request.getNickname());
         }
 
         if (request.getPassword() != null) {
-            targetMember.setPassword(request.getPassword());
+            targetMember.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        if (request.getProfile() != null) {
-            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getProfile());
+        if (request.getProfileImg() != null) {
+            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getProfileImg());
             targetMember.setProfileImage(newProfile);
         }
 

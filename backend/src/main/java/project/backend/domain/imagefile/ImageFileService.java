@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import project.backend.global.exception.ex.ImageFileException;
 import project.backend.global.exception.errorcode.ImageFileErrorCode;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class ImageFileService {
     public ImageFile saveProfileImageFile(MultipartFile file) {
 
         try {
+            log.info("Saving profile image file");
             String uploadFileName = file.getOriginalFilename();
 
             checkExtension(uploadFileName);
@@ -41,11 +44,13 @@ public class ImageFileService {
 
             Path savePath = Paths.get(profilePath, storeFileName);
 
-            file.transferTo(savePath.toFile());
+            log.info("📁 저장 경로: {}", savePath.toAbsolutePath());
+            file.transferTo(savePath);
 
             return imageFileRepository.save(ImageFile.ofProfile(storeFileName, uploadFileName));
 
         } catch (IOException e) {
+            log.error("파일 저장 중 IOException 발생", e);
             throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
         }
 
