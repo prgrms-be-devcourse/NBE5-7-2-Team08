@@ -130,7 +130,8 @@ const ProfilePage = () => {
                 </div>
                 <h2 className={styles["profile-name"]}>{userDetails.nickname}</h2>
                 <p className={styles["profile-email"]}>{userDetails.email}</p>
-                <button className={styles["edit-profile-button"]}>Edit Profile</button>
+                <button className={styles["edit-profile-button"]}
+                onClick={() => navigate("/myprofile/edit")}>Edit Profile</button>
               </div>
             </div>
 
