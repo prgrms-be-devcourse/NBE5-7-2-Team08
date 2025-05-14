@@ -8,14 +8,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import project.backend.domain.member.entity.Member;
 
-@Getter
+
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class ChatParticipant {
 
 	@Id
@@ -37,5 +39,13 @@ public class ChatParticipant {
 		this.participant = participant;
 		this.chatRoom = chatRoom;
 	}
+
+	public static ChatParticipant of(Member participant, ChatRoom chatRoom) {
+		return ChatParticipant.builder()
+			.participant(participant)
+			.chatRoom(chatRoom)
+			.build();
+	}
+
 }
 

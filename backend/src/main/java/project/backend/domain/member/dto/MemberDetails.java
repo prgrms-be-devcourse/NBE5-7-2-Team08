@@ -44,4 +44,5 @@ public class MemberDetails implements UserDetails {
                 .profileImg(memberDetails.getProfileImg())
                 .build();
     }
+
 }
