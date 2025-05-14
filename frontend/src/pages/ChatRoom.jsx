@@ -37,7 +37,7 @@ const ChatRoom = () => {
 
   const HighlightedCode = ({ content, language }) => {
     return (
-      <Highlight className={language} style={{ whiteSpace: 'pre-line' }}>{content}</Highlight> //이거 되나?? 
+      <Highlight className={language}>{content}</Highlight>
     );
   };
 
@@ -273,7 +273,6 @@ const handleSearch = async (keyword, page = 0) => {
             width: '38px',
             height: '38px',
             borderRadius: '50%',
-            backgroundColor: '#4a6cf7',
             marginRight: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -281,7 +280,12 @@ const handleSearch = async (keyword, page = 0) => {
             color: 'white',
             fontWeight: '600',
             fontSize: '16px',
-            flexShrink: 0
+            flexShrink: 0,
+            backgroundImage: msg.type === 'GIT'
+            ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
+            : undefined,
+            backgroundColor: msg.type === 'GIT' ? 'transparent' : '#4a6cf7',
+            backgroundSize: 'cover'
           }}>
             {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : 'U'}
           </div>
@@ -307,7 +311,36 @@ const handleSearch = async (keyword, page = 0) => {
                 {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
-            {msg.type === 'CODE' || msg.content.startsWith('```') ? (
+
+            {/* GitHub 메시지 UI */}
+            {msg.type === 'GIT' ? (
+              <div style={{
+                backgroundColor: '#f6f8fa',
+                borderRadius: '6px',
+                color: '#24292e',
+                display: 'flex'
+              }}>
+                {/* 왼쪽 검정색 선 */}
+                <div style={{
+                  width: '6px',
+                  backgroundColor: '#000',
+                  marginRight: '10px',
+                  borderRadius: '2px'
+                }} />
+                {/* <div style={{ whiteSpace: 'pre-line', padding: '10px' }}>{msg.content}</div> */}
+                <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', padding: '10px' }}>
+                  <strong style={{ display: 'block', marginBottom: '6px' }}>
+                    {msg.content.split('\n')[0]}
+                  </strong>
+                  {msg.content.split('\n').slice(1).map((line, i) => (
+                    <React.Fragment key={i}>
+                      {renderWithLink(line)}
+                      <br />
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            ): msg.type === 'CODE' || msg.content.startsWith('```') ? (
               <div style={{ 
                 borderRadius: '6px',
                 overflow: 'hidden',
@@ -325,7 +358,7 @@ const handleSearch = async (keyword, page = 0) => {
                 color: '#4a5568',
                 wordBreak: 'break-word'
               }}>
-                {msg.content}
+                <div style={{ whiteSpace: 'pre-line' }}>{msg.content}</div>
               </div>
             )}
           </div>
@@ -436,82 +469,6 @@ const handleSearch = async (keyword, page = 0) => {
             backgroundColor: '#fff',
             minHeight: 0
           }}>
-
-            {/* 초대 URL 복사 버튼 */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-              <button
-                style={{
-                  padding: '10px 15px',
-                  backgroundColor: '#fff',
-                  color: '#2588F1',
-                  border: '1px solid #5AAAFF',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-                onClick={copyInviteUrl}
-              >
-                초대 코드 복사
-              </button>
-            </div>
-
-            {messages.map((msg, index) => (
-              <div key={index} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
-                {/*프로필 이미지 출력*/}
-                <div style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  marginRight: '10px',
-                  backgroundImage: msg.type === 'GIT'
-                  ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
-                  : undefined,
-                  backgroundColor: msg.type === 'GIT' ? 'transparent' : '#7ec8e3',
-                  backgroundSize: 'cover'
-                }} />
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>
-                    {msg.senderName}
-                    <span style={{ fontWeight: 'normal', fontSize: '12px', color: '#666', marginLeft: '8px' }}>
-                      {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-
-                  {/* GitHub 메시지 UI */}
-                  {msg.type === 'GIT' ? (
-                    <div style={{
-                      backgroundColor: '#f6f8fa',
-                      borderRadius: '6px',
-                      color: '#24292e',
-                      display: 'flex'
-                    }}>
-                      {/* 왼쪽 검정색 선 */}
-                      <div style={{
-                        width: '6px',
-                        backgroundColor: '#000',
-                        marginRight: '10px',
-                        borderRadius: '2px'
-                      }} />
-                      {/* <div style={{ whiteSpace: 'pre-line', padding: '10px' }}>{msg.content}</div> */}
-                      <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', padding: '10px' }}>
-                        <strong style={{ display: 'block', marginBottom: '6px' }}>
-                          {msg.content.split('\n')[0]}
-                        </strong>
-                        {msg.content.split('\n').slice(1).map((line, i) => (
-                          <React.Fragment key={i}>
-                            {renderWithLink(line)}
-                            <br />
-                          </React.Fragment>
-                        ))}
-                      </div>
-                    </div>
-                  ): msg.type === 'CODE' || msg.content.startsWith('```') ? (
-                    <HighlightedCode content={msg.content.replace(/```/g, '')} language={msg.language || 'java'} />
-                  ) : (
-                    <div style={{ whiteSpace: 'pre-line' }}>{msg.content}</div>
-                  )}
-                </div>
-              </div>
-            ))}
             {renderMessagesWithDateSeparators()}
             <div ref={messagesEndRef} />
           </div>
