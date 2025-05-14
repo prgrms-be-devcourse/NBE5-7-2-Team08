@@ -29,6 +29,7 @@ const ChatRoom = () => {
     e.preventDefault();
     setContextMenuVisible(true);
     setContextMenuPosition({ x: e.pageX, y: e.pageY });
+
   };
 
   useEffect(() => {
