@@ -436,7 +436,6 @@ const handleSearch = async (keyword, page = 0) => {
             backgroundColor: '#fff',
             minHeight: 0
           }}>
-<<<<<<< HEAD
 
             {/* 초대 URL 복사 버튼 */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
@@ -513,9 +512,7 @@ const handleSearch = async (keyword, page = 0) => {
                 </div>
               </div>
             ))}
-=======
             {renderMessagesWithDateSeparators()}
->>>>>>> dev
             <div ref={messagesEndRef} />
           </div>
 
