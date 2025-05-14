@@ -15,6 +15,7 @@ const EditProfilePage = () => {
   const [confirmPassword, setConfirmPassword] = useState("")
   const alertShownRef = useRef(false)
   const stopRequestRef = useRef(false)
+  const [selectedImage, setSelectedImage] = useState(null)
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -42,7 +43,7 @@ const EditProfilePage = () => {
 
         const data = await response.json()
         setUserDetails(data)
-        setNickname(data.nickname) // 기존 닉네임 기본값으로 설정
+        setNickname(data.nickname)
       } catch (error) {
         if (!alertShownRef.current) {
           alertShownRef.current = true
@@ -87,6 +88,14 @@ const EditProfilePage = () => {
     }
   }
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const imageUrl = URL.createObjectURL(file)
+      setSelectedImage(imageUrl)
+    }
+  }
+
   if (!userDetails) {
     return <div className={styles["loading"]}>Loading...</div>
   }
@@ -103,7 +112,7 @@ const EditProfilePage = () => {
             <div className={styles["profile-picture-section"]}>
               <div className={styles["profile-picture"]}>
                 <img
-                  src={`http://localhost:8080${userDetails.profileImg}`}
+                  src={selectedImage || `http://localhost:8080${userDetails.profileImg}`}
                   alt="Profile"
                   className={styles["profile-image"]}
                   onError={(e) => {
@@ -112,7 +121,16 @@ const EditProfilePage = () => {
                   }}
                 />
                 <div className={styles["edit-icon"]}>
-                  <Edit2 size={20} />
+         
+                    <Edit2 size={20} style={{ cursor: "pointer" }} />
+          
+                  <input
+                    id="file-input"
+                    type="file"
+                    accept="image/*"
+                    className={styles["file-input"]}
+                    onChange={handleImageChange}
+                  />
                 </div>
               </div>
             </div>
