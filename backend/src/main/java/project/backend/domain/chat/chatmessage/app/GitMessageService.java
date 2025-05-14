@@ -32,7 +32,6 @@ public class GitMessageService {
         switch (eventType) {
             case "issues" -> handleIssueOpen(roomId, payload);
             case "pull_request" -> handlePullRequest(roomId, payload);
-            case "issue_comment" -> handleComment(roomId, payload);
             case "pull_request_review" -> handlePullRequestReview(roomId, payload);
             default -> log.info("Unhandled event: " + eventType);
         }
@@ -119,7 +118,7 @@ public class GitMessageService {
 
         GitMessageDto dto = GitMessageDto.create(room, GitEventType.PR_REVIEW, reviewer,
             content);
-        
+
         sendGitMessage(roomId, dto);
     }
 
