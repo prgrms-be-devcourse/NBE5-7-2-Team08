@@ -83,7 +83,12 @@ public class GitMessageService {
             type = GitEventType.PR_OPEN;
         } else if (action.equals("closed") && Boolean.TRUE.equals(
             pr.get("merged"))) { //pr이 merge된 경우
-            content = "[PR merged] " + title + " by " + author + "\n" + url;
+            String fromBranch = ((Map<String, Object>) pr.get("head")).get("ref").toString();
+            String toBranch = ((Map<String, Object>) pr.get("base")).get("ref").toString();
+
+            content = "[PR merged] " + title + " by " + author + "\n"
+                + "merged to " + toBranch + " from " + fromBranch + "\n"
+                + url;
             type = GitEventType.PR_MERGED;
         } else {
             return;
