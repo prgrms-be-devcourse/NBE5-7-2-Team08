@@ -292,7 +292,7 @@ const Sidebar = () => {
               boxSizing: 'border-box'
             }}
           >
-            <h2 style={{ margin: '0 0 16px' }}>Join Chat Room</h2>
+            <h2 style={{ margin: '0 0 16px' }}>채팅방 참가</h2>
             <form onSubmit={handleJoin}>
               <input
                 type="text"

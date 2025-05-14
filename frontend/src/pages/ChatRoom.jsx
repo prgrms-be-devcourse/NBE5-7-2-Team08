@@ -582,7 +582,7 @@ const handleSearch = async (keyword, page = 0) => {
           boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
           zIndex: 1000
         }}>
-          초대 코드가 복사되었습니다
+          초대 코드가 복사되었습니다.
         </div>
       )}
     </div>
