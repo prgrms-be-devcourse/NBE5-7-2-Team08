@@ -50,27 +50,30 @@ public class ChatRoomController {
 		return chatRoomService.createChatRoom(request, ownerId);
 	}
 
-	@GetMapping("/invite/{inviteCode}")
-	@ResponseBody
-	public InviteCodeResponse getInviteUrl(@PathVariable String inviteCode,
-		@AuthenticationPrincipal MemberDetails memberDetails
-	) {
+	//개발하다보니 사용을 안 하게 됨.
+//	@GetMapping("/invite/{inviteCode}")
+//	@ResponseBody
+//	public InviteCodeResponse getInviteUrl(@PathVariable String inviteCode,
+//		@AuthenticationPrincipal MemberDetails memberDetails
+//	) {
+//
+//		if (memberDetails == null) {
+//			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+//		}
+//
+//		Long roomId = chatRoomService.getRoomId(inviteCode);
+//		Long memberId = memberDetails.getId();
+//		boolean isParticipant = chatRoomService.isParticipant(roomId, memberId);
+//
+//		if (!isParticipant) {
+//			throw new AuthException(AuthErrorCode.FORBIDDEN_PARTICIPANT);
+//		}
+//
+//		String url = "http://localhost:3000/chat/" + inviteCode;
+//		return new InviteCodeResponse(url);
+//	}
 
-		if (memberDetails == null) {
-			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
-		}
 
-		Long roomId = chatRoomService.getRoomId(inviteCode);
-		Long memberId = memberDetails.getId();
-		boolean isParticipant = chatRoomService.isParticipant(roomId, memberId);
-
-		if (!isParticipant) {
-			throw new AuthException(AuthErrorCode.FORBIDDEN_PARTICIPANT);
-		}
-
-		String url = "http://localhost:3000/chat/" + inviteCode;
-		return new InviteCodeResponse(url);
-	}
 
 
 	@PostMapping("/join")
@@ -87,9 +90,10 @@ public class ChatRoomController {
 
 
 	@GetMapping("/recent")
-	public RecentChatRoomResponse getRecentRoomId(Principal principal) {
-		Long roomId = chatRoomService.getMostRecentRoomId(principal.getName());
-		return new RecentChatRoomResponse(roomId);
+	public RecentChatRoomResponse getRecentRoomId(@AuthenticationPrincipal MemberDetails memberDetails) {
+		Long roomId = chatRoomService.getMostRecentRoomId(memberDetails.getEmail());
+		String inviteCode = chatRoomService.getInviteCode(roomId);
+		return new RecentChatRoomResponse(roomId, inviteCode);
 	}
 
 	@GetMapping // URL 매핑 -> 추후 인증객체 id로 조회 예정
