@@ -1,6 +1,7 @@
 package project.backend.domain.chat.chatroom.app;
 
 
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +9,7 @@ import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
+import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.member.dao.MemberRepository;
@@ -61,6 +63,14 @@ public class ChatRoomService {
 		return room.getInviteCode();
 	}
 
+	@Transactional
+	public Long getRoomId(String inviteCode) {
+		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+
+		return room.getId();
+	}
+
 	@Transactional(readOnly = true)
 	public boolean isParticipant(Long roomId, Long memberId) {
 		return chatParticipantRepository.existsByParticipantIdAndChatRoomId(memberId, roomId);
@@ -68,7 +78,7 @@ public class ChatRoomService {
 
 
 	@Transactional
-	public Long joinChatRoom(String inviteCode, Long memberId) {
+	public InviteJoinResponse joinChatRoom(String inviteCode, Long memberId) {
 		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_CODE_NOT_FOUND));
 
@@ -86,7 +96,7 @@ public class ChatRoomService {
 
 		chatParticipantRepository.save(chatParticipant);
 
-		return room.getId();
+		return new InviteJoinResponse(room.getId(),room.getInviteCode());
 	}
 
 

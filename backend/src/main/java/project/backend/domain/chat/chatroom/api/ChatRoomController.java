@@ -50,9 +50,9 @@ public class ChatRoomController {
 		return chatRoomService.createChatRoom(request, ownerId);
 	}
 
-	@GetMapping("/invite/{roomId}")
+	@GetMapping("/invite/{inviteCode}")
 	@ResponseBody
-	public InviteCodeResponse getInviteUrl(@PathVariable Long roomId,
+	public InviteCodeResponse getInviteUrl(@PathVariable String inviteCode,
 		@AuthenticationPrincipal MemberDetails memberDetails
 	) {
 
@@ -60,6 +60,7 @@ public class ChatRoomController {
 			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
 		}
 
+		Long roomId = chatRoomService.getRoomId(inviteCode);
 		Long memberId = memberDetails.getId();
 		boolean isParticipant = chatRoomService.isParticipant(roomId, memberId);
 
@@ -67,9 +68,8 @@ public class ChatRoomController {
 			throw new AuthException(AuthErrorCode.FORBIDDEN_PARTICIPANT);
 		}
 
-		String inviteCode = chatRoomService.getInviteCode(roomId);
-
-		return new InviteCodeResponse(inviteCode);
+		String url = "http://localhost:3000/chat/" + inviteCode;
+		return new InviteCodeResponse(url);
 	}
 
 
@@ -82,8 +82,7 @@ public class ChatRoomController {
 			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
 		}
 
-		Long roomId = chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
-		return new InviteJoinResponse(roomId);
+		return chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
 	}
 
 

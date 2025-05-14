@@ -10,36 +10,62 @@ import Header from '../components/header';
 const ChatRoom = () => {
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState("");
-  const { roomId } = useParams();
+  const { roomId, inviteCode } = useParams();
 
   const [inputMode, setInputMode] = useState("TEXT");
   const [language, setLanguage] = useState("java");
   const stompClientRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  const [showModal, setShowModal] = useState(false); // 모달 상태
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
 
-  //임창인
-  const copyInviteUrl = async () => {
+  const [showModal, setShowModal] = useState(false);
+  const [showUrlCopiedModal, setShowUrlCopiedModal] = useState(false); // 우클릭 초대 URL 복사용
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 }); // 모달 위치 저장
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    setContextMenuVisible(true);
+    setContextMenuPosition({ x: e.pageX, y: e.pageY });
+  };
+
+  useEffect(() => {
+    const handleClick = () => setContextMenuVisible(false);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  //임창인(초대 코드만 복사 join chat room으로 입장해야함)
+  const copyInviteCode = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/chat-rooms/invite/${roomId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('초대 URL을 가져오지 못했습니다.');
-      const { inviteUrl } = await res.json();
-      await navigator.clipboard.writeText(inviteUrl);
-      setShowModal(true); // 모달 표시
-      setTimeout(() => setShowModal(false), 2000); // 2초 뒤 닫기
+      await navigator.clipboard.writeText(inviteCode); // 백엔드 없이 바로 복사
+      setShowModal(true);
+      setTimeout(() => setShowModal(false), 2000);
+    } catch (err) {
+      console.error(err);
+      alert('초대 코드 복사 중 오류가 발생했습니다.');
+    }
+  };
+
+  //공유용 전체 url 복사
+  const copyInviteUrl = async () => {  // 변경: 전체 URL 복사
+    try {
+      const fullUrl = `${window.location.origin}/chat/${roomId}/${inviteCode}`;
+      await navigator.clipboard.writeText(fullUrl);
+      setModalPosition(contextMenuPosition);
+      setShowUrlCopiedModal(true);
+      setTimeout(() => setShowModal(false), 2000);
     } catch (err) {
       console.error(err);
       alert('초대 URL 복사 중 오류가 발생했습니다.');
     }
+    setContextMenuVisible(false);  // 메뉴 닫기
   };
 
-  // --- 여기까지 ---
+
+
 
 
   const scrollToBottom = () => {
@@ -102,7 +128,7 @@ const ChatRoom = () => {
 
   return (
 
-    <div style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+    <div onContextMenu={handleContextMenu} style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
 
       {/* Top Bar */}
       <Header></Header>
@@ -146,7 +172,7 @@ const ChatRoom = () => {
                   borderRadius: '4px',
                   cursor: 'pointer'
                 }}
-                onClick={copyInviteUrl}
+                onClick={copyInviteCode}
               >
                 초대 코드 복사
               </button>
@@ -269,6 +295,40 @@ const ChatRoom = () => {
         </div>
       </div>
 
+
+
+      {/* 우클릭 컨텍스트 메뉴 */}
+      {contextMenuVisible && (
+        <div
+          style={{
+            position: 'absolute',
+            top: contextMenuPosition.y,
+            left: contextMenuPosition.x,
+            backgroundColor: '#fff',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            zIndex: 1000
+          }}
+        >
+          <button
+            onClick={copyInviteUrl}
+            style={{
+              display: 'block',
+              padding: '8px 12px',
+              background: 'none',
+              border: 'none',
+              width: '100%',
+              textAlign: 'left',
+              cursor: 'pointer'
+            }}
+          >
+            공유 초대 링크 복사
+          </button>
+        </div>
+      )}
+
+      {/* 모달 */}
       {showModal && (
         <div style={{
           position: 'fixed',
@@ -284,6 +344,25 @@ const ChatRoom = () => {
           초대 코드가 복사되었습니다
         </div>
       )}
+
+      {showUrlCopiedModal && (
+        <div style={{
+          position: 'absolute',
+          top: modalPosition.y,
+          left: modalPosition.x,
+          transform: 'translateY(-100%)', // 모달이 클릭 위치 위로 뜨도록
+          backgroundColor: '#333',
+          color: 'white',
+          padding: '10px 16px',
+          borderRadius: '6px',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+          zIndex: 2000
+        }}>
+         공유 초대 링크가 복사되었습니다
+        </div>
+      )}
+
+
 
     </div>
   );

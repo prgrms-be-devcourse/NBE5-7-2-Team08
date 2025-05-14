@@ -4,7 +4,6 @@ import Home from './pages/Home'
 import BlankRoom from './pages/BlankRoom'
 import Login from "./pages/login-form"
 import Signup from "./pages/signup"
-import JoinPage from './pages/JoinPage';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
@@ -12,11 +11,10 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />}/>
-        <Route path="/chat/:roomId" element={<ChatRoom />} />
+        <Route path="/chat/:roomId/:inviteCode" element={<ChatRoom />} />
         <Route path="/blank" element={<BlankRoom />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/join" element={<JoinPage />} />
       </Routes>
     </BrowserRouter>
   );

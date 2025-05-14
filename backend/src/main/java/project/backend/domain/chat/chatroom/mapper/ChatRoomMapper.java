@@ -55,7 +55,8 @@ public class ChatRoomMapper {
 			entity.getId(),
 			entity.getName(),
 			entity.getRepositoryUrl(),
-			entity.getOwner().getId()
+			entity.getOwner().getId(),
+			entity.getInviteCode()
 		);
 	}
 

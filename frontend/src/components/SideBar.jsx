@@ -36,7 +36,7 @@ const Sidebar = () => {
       setShowCreateModal(false);
       setRoomName('');
       setRepoUrl('');
-      navigate(`/chat/${created.id}`);
+      navigate(`/chat/${created.id}/${created.inviteCode}`);
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -53,8 +53,9 @@ const Sidebar = () => {
         body: JSON.stringify({ inviteCode })
       });
       if (!res.ok) throw new Error('방 입장에 실패했습니다.');
-      const { id: roomId } = await res.json();
-      navigate(`/chat/${roomId}`);
+      const { id: roomId, inviteCode: returnedInviteCode } = await res.json();
+      navigate(`/chat/${roomId}/${returnedInviteCode}`);
+      
       setShowJoinModal(false);
       setInviteCode('');
     } catch (err) {

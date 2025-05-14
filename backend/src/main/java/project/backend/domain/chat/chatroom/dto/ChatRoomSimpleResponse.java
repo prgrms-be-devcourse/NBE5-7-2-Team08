@@ -12,8 +12,9 @@ public class ChatRoomSimpleResponse {
 	private String name;
 	private String repositoryUrl;
 	private Long ownerId;
+	private String inviteCode;
 
-	public static ChatRoomSimpleResponse of(Long id, String name, String repositoryUrl, Long ownerId) {
-		return new ChatRoomSimpleResponse(id, name, repositoryUrl, ownerId);
+	public static ChatRoomSimpleResponse of(Long id, String name, String repositoryUrl, Long ownerId, String inviteCode) {
+		return new ChatRoomSimpleResponse(id, name, repositoryUrl, ownerId, inviteCode);
 	}
 }
