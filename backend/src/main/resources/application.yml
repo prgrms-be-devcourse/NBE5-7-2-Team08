@@ -18,6 +18,11 @@ spring:
         show_sql: true
         format_sql: true
 
+  security:
+    user:
+      name: ziening
+      password: 1234
+
 
 file:
   profile-path: img/

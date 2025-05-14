@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,38 +23,38 @@ import project.backend.domain.chat.chatroom.entity.ChatRoom;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatMessage {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "message_id")
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "message_id")
+    private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "sender_id")
-	private ChatParticipant sender;
+    @ManyToOne
+    @JoinColumn(name = "sender_id")
+    private ChatParticipant sender;
 
-	@ManyToOne
-	@JoinColumn(name = "room_id")
-	private ChatRoom chatRoom;
+    @ManyToOne
+    @JoinColumn(name = "room_id")
+    private ChatRoom chatRoom;
 
-	private String content;
+    private String content;
 
-	private LocalDateTime sendAt = LocalDateTime.now();
+    private LocalDateTime sendAt = LocalDateTime.now();
 
-	@Enumerated(EnumType.STRING)
-	private MessageType type = MessageType.TEXT;
+    @Enumerated(EnumType.STRING)
+    private MessageType type = MessageType.TEXT;
 
-	private String codeLanguage; //추가, 문법마다 다르게 하이라이팅을 하기 위함
+    private String codeLanguage; //추가, 문법마다 다르게 하이라이팅을 하기 위함
 
-	@Builder
-	public ChatMessage(ChatParticipant sender, ChatRoom chatRoom, String content,
-		LocalDateTime sendAt,
-		MessageType type, String codeLanguage) {
-		this.sender = sender;
-		this.chatRoom = chatRoom;
-		this.content = content;
-		this.sendAt = sendAt;
-		this.type = type;
-		this.codeLanguage = codeLanguage;
-	}
+    @Builder
+    public ChatMessage(ChatParticipant sender, ChatRoom chatRoom, String content,
+        LocalDateTime sendAt,
+        MessageType type, String codeLanguage) {
+        this.sender = sender;
+        this.chatRoom = chatRoom;
+        this.content = content;
+        this.sendAt = sendAt;
+        this.type = type;
+        this.codeLanguage = codeLanguage;
+    }
 
 }

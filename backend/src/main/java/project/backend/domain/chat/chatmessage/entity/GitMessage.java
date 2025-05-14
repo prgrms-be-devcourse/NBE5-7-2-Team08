@@ -7,13 +7,11 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.chat.chatmessage.dto.git.GitEventType;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -30,10 +28,6 @@ public class GitMessage {
     private String url;
 
     private String title;
-
-    @ManyToOne
-    @JoinColumn(name = "room_id")
-    private ChatRoom chatRoom;
 
     private LocalDateTime sendAt = LocalDateTime.now();
 

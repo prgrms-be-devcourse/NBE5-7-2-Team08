@@ -22,8 +22,8 @@ public class ChatRoom {
     @Column(name = "room_id")
     private Long id;
 
-	@Column(nullable = false)
-	private String name;
+    @Column(nullable = false)
+    private String name;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -33,27 +33,25 @@ public class ChatRoom {
     @JoinColumn(name = "owner_id")
     private Member owner;
 
-	@OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<ChatMessage> messages = new ArrayList<>();
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatMessage> messages = new ArrayList<>();
 
-	@OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<ChatParticipant> participants = new ArrayList<>();
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatParticipant> participants = new ArrayList<>();
 
-	@Builder
-	public ChatRoom(String name, LocalDateTime createdAt, String repositoryUrl, Member owner,
-		List<ChatMessage> messages, List<ChatParticipant> participants) {
-		this.name = name;
-		this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
-		this.repositoryUrl = repositoryUrl;
-		this.owner = owner;
-		if (messages != null) {
-			this.messages = messages;
-		}
-		if (participants != null) {
-			this.participants = participants;
-		}
-	}
-    @OneToMany(mappedBy = "chatRoom")
-    private List<GitMessage> gitMessages = new ArrayList<>();
+    @Builder
+    public ChatRoom(String name, LocalDateTime createdAt, String repositoryUrl, Member owner,
+        List<ChatMessage> messages, List<ChatParticipant> participants) {
+        this.name = name;
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
+        this.repositoryUrl = repositoryUrl;
+        this.owner = owner;
+        if (messages != null) {
+            this.messages = messages;
+        }
+        if (participants != null) {
+            this.participants = participants;
+        }
+    }
 
 }
