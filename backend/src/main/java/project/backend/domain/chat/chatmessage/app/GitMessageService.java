@@ -57,7 +57,7 @@ public class GitMessageService {
         ChatRoom room = chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
-        GitMessageDto gitMessageDto = GitMessageDto.create(room, GitEventType.ISSUE_OPEN, author,
+        GitMessageDto gitMessageDto = GitMessageDto.of(room, GitEventType.ISSUE_OPEN, author,
             content);
 
         sendGitMessage(roomId, gitMessageDto);
@@ -94,7 +94,7 @@ public class GitMessageService {
             return;
         }
 
-        GitMessageDto gitMessageDto = GitMessageDto.create(room, type, author,
+        GitMessageDto gitMessageDto = GitMessageDto.of(room, type, author,
             content);
 
         sendGitMessage(roomId, gitMessageDto);
@@ -127,7 +127,7 @@ public class GitMessageService {
         ChatRoom room = chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
-        GitMessageDto dto = GitMessageDto.create(room, GitEventType.PR_REVIEW, reviewer,
+        GitMessageDto dto = GitMessageDto.of(room, GitEventType.PR_REVIEW, reviewer,
             content);
 
         sendGitMessage(roomId, dto);

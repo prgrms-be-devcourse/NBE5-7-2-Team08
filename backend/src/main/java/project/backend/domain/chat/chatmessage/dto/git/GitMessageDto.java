@@ -13,7 +13,7 @@ public class GitMessageDto {
     private String content;
     private ChatRoom room;
 
-    public static GitMessageDto create(ChatRoom room, GitEventType type, String actor,
+    public static GitMessageDto of(ChatRoom room, GitEventType type, String actor,
         String content) {
         return GitMessageDto.builder()
             .room(room)
