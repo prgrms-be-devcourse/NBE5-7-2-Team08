@@ -93,10 +93,14 @@ public class ChatRoomController {
 		return new RecentChatRoomResponse(roomId);
 	}
 
-	@GetMapping // URL 매핑 -> 추후 인증객체 id로 조회 예정
-	public Page<ChatRoomDetailResponse> findAllChatRooms(@PathVariable Long memberId,
+	@GetMapping
+	public Page<ChatRoomDetailResponse> findAllChatRooms(
+		@AuthenticationPrincipal MemberDetails memberDetails,
 		@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-		log.info("chatRoom 조회 요청 들어옴: memberId = " + memberId);
+		if (memberDetails == null) {
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+		}
+		Long memberId = memberDetails.getId();
 		// 채팅방 목록 리스트로 가져오기
 		return chatRoomService.findAllByMemberId(memberId, pageable);
 	}

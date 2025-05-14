@@ -114,13 +114,13 @@ public class ChatRoomService {
 	@Transactional(readOnly = true)
 	public Page<ChatRoomDetailResponse> findAllByMemberId(Long memberId, Pageable pageable) {
 
-		chatRoomRepository.findById(memberId)
-			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+		Page<ChatRoom> chatRooms = chatRoomRepository.findByParticipants_Participant_Id(memberId,
+			pageable);
 
-		Page<ChatRoom> chatRooms = chatRoomRepository.findAllRoomsByMemberId(memberId, pageable);
 		if (chatRooms.isEmpty()) {
 			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
 		}
+
 		return chatRooms.map(ChatRoomMapper::toDetailResponse);
 	}
 
