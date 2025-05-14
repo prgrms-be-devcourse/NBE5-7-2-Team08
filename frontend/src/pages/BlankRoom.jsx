@@ -2,6 +2,7 @@ import React from 'react';
 import SideBar from '../components/SideBar';
 import Header from '../components/header'
 
+
 const BlankRoom = () => {
 
   return (
@@ -9,6 +10,7 @@ const BlankRoom = () => {
 
       {/* Top Bar */}
       <Header></Header>
+
 
       {/* 본문 전체 영역 */}
       <div style={{ flex:1, display: 'flex', overflow: 'hidden' }}>

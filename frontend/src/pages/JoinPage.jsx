@@ -5,13 +5,13 @@ import { useParams } from 'react-router-dom'
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
 import Sidebar from '../components/SideBar';
-import Header from '../components/header';
+
+
 
 const ChatRoom = () => {
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState("");
   const { roomId } = useParams();
-
   const [inputMode, setInputMode] = useState("TEXT");
   const [language, setLanguage] = useState("java");
   const stompClientRef = useRef(null);
@@ -40,7 +40,6 @@ const ChatRoom = () => {
   };
 
   // --- 여기까지 ---
-
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -101,11 +100,52 @@ const ChatRoom = () => {
   };
 
   return (
-
     <div style={{ backgroundColor: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
 
       {/* Top Bar */}
-      <Header></Header>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '10px', marginTop: '10px' }}>
+
+        <div style={{ display: 'flex', gap: '10px', marginRight: '10px' }}>
+          <button
+            style={{
+              padding: '10px 15px',
+              backgroundColor: '#eee',
+              color: 'black',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            onClick={() => window.location.href = '/logout'}
+          >
+            로그아웃
+          </button>
+          <button
+            style={{
+              padding: '10px 15px',
+              backgroundColor: '#f5f5f5',
+              color: 'black',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            onClick={() => window.location.href = '/mypage'}
+          >
+            마이페이지
+          </button>
+          {/* 임창인 새로 추가된 초대 URL 복사 버튼 */}
+          <button
+            style={{
+              padding: '10px 15px',
+              backgroundColor: '#fff',
+              color: '#2588F1',
+              border: '1px solid #5AAAFF',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+            onClick={copyInviteUrl}
+          >
+            초대 URL 복사
+          </button>
+        </div>
+      </div>
 
       {/* 본문 전체 영역 */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
@@ -134,24 +174,6 @@ const ChatRoom = () => {
             marginBottom: '15px',
             minHeight: 0
           }}>
-
-            {/* 초대 URL 복사 버튼 */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-              <button
-                style={{
-                  padding: '10px 15px',
-                  backgroundColor: '#fff',
-                  color: '#2588F1',
-                  border: '1px solid #5AAAFF',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-                onClick={copyInviteUrl}
-              >
-                초대 코드 복사
-              </button>
-            </div>
-
             {messages.map((msg, index) => (
               <div key={index} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
                 {/*프로필 이미지 출력*/}
@@ -172,7 +194,6 @@ const ChatRoom = () => {
                   </div>
                   {msg.type === 'CODE' || msg.content.startsWith('```') ? (
                     <HighlightedCode content={msg.content.replace(/```/g, '')} language={msg.language || 'java'} />
-
                   ) : (
                     <div>{msg.content}</div>
                   )}
@@ -268,7 +289,6 @@ const ChatRoom = () => {
           </div>
         </div>
       </div>
-
       {showModal && (
         <div style={{
           position: 'fixed',
@@ -290,5 +310,3 @@ const ChatRoom = () => {
 };
 
 export default ChatRoom;
-
-

@@ -7,6 +7,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true); // 로딩 상태
 
   useEffect(() => {
+
     // const token = localStorage.getItem('accessToken'); // 또는 sessionStorage
 
     // if (!token) {
@@ -16,6 +17,7 @@ const Home = () => {
 
     axios.get(`http://localhost:8080/chat-rooms/recent`, { 
         withCredentials: true,
+
     })
       .then(res => {
         const roomId = res.data.roomId;
@@ -36,6 +38,7 @@ const Home = () => {
         } else {
           console.error('채팅방 이동 실패:', status);
           alert(err);
+
         }
       })
       .finally(() => {
