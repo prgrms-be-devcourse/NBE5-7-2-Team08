@@ -110,7 +110,7 @@ public class GitMessageService {
         String reviewUrl = (String) review.get("html_url");
         String prTitle = (String) pr.get("title");
 
-        String content = "[PR review: " + state + "]" + prTitle + " review by " + reviewer + "\n"
+        String content = "[PR review: " + state + "] " + prTitle + " review by " + reviewer + "\n"
             + body + "\n" + reviewUrl;
 
         ChatRoom room = chatRoomRepository.findById(roomId)
