@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import BlankRoom from './pages/BlankRoom'
 import Login from "./pages/login-form"
 import Signup from "./pages/signup"
+import JoinPage from './pages/JoinPage';
 import MyPage from "./pages/profile"
 import EditProfilePage from "./pages/editprofile"
 
@@ -22,6 +23,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/myprofile" element={<MyPage />} />
         <Route path="/myprofile/edit" element={<EditProfilePage />} />
+        <Route path="/join" element={<JoinPage />} />
       </Routes>
     </BrowserRouter>
   );

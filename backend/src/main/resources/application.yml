@@ -22,6 +22,16 @@ spring:
         show_sql: true
         format_sql: true
 
+<<<<<<< HEAD
 file:
   profile-path: profiles/
   default-profile: default-profile.png
+=======
+
+
+
+file:
+  profile-path: img/
+  default-profile: /profile/default-profile.png
+
+>>>>>>> dev
