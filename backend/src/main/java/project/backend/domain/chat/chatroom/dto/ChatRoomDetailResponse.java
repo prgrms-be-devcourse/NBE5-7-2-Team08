@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatRoomResponse {
+//강현님꺼
+public class ChatRoomDetailResponse {
 
 	private String roomName;
 

@@ -24,6 +24,9 @@ spring:
       password: 1234
 
 
+
+
 file:
   profile-path: img/
   default-profile: /profile/default-profile.png
+

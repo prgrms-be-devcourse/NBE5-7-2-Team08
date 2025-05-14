@@ -4,10 +4,8 @@ import Home from './pages/Home'
 import BlankRoom from './pages/BlankRoom'
 import Login from "./pages/login-form"
 import Signup from "./pages/signup"
-
+import JoinPage from './pages/JoinPage';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
-
 
 function App() {
   return (
@@ -18,6 +16,7 @@ function App() {
         <Route path="/blank" element={<BlankRoom />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/join" element={<JoinPage />} />
       </Routes>
     </BrowserRouter>
   );
