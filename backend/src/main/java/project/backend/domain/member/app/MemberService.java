@@ -53,8 +53,11 @@ public class MemberService {
     }
 
     public MemberResponse getMemberDetails(Authentication auth) {
-        MemberDetails member = (MemberDetails) auth.getPrincipal();
-        return MemberDetails.toResponse(member);
+        MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
+        Long memberId = loginMember.getId();
+
+        Member member = findMemberById(memberId);
+        return MemberMapper.toResponse(member);
     }
 
     public MemberResponse returnMemberById(Long memberId) {

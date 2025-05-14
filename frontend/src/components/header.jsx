@@ -37,6 +37,7 @@ export function Header() {
     }
 
     fetchProfileImage()
+    
   }, [])
 
   return (
@@ -69,7 +70,7 @@ export function Header() {
           ) : (
             <a href= {"/myprofile"}>
             <img 
-              src={`http://localhost:8080${profileImage}`}
+              src={`http://localhost:8080/profile/${profileImage}`}
               alt="User profile"
               className="profile-image"
             />

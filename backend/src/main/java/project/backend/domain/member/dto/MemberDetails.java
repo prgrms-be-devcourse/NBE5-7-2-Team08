@@ -23,7 +23,7 @@ public class MemberDetails implements UserDetails {
         this.email = member.getEmail();
         this.password = member.getPassword();
         this.nickname = member.getNickname();
-        this.profileImg = member.getProfileImage().getUploadFileName();
+        this.profileImg = member.getProfileImage().getStoreFileName();
     }
 
     @Override

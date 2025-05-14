@@ -24,4 +24,4 @@ spring:
 
 file:
   profile-path: profiles/
-  default-profile: /profile/default-profile.png
+  default-profile: default-profile.png

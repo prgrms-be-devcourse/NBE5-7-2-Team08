@@ -93,6 +93,7 @@ const EditProfilePage = () => {
         return
       }
 
+
       alert("프로필이 성공적으로 수정되었습니다!")
       navigate("/myprofile")
     } catch (error) {
@@ -116,7 +117,7 @@ const EditProfilePage = () => {
             <div className={styles["profile-picture-section"]}>
               <div className={styles["profile-picture"]}>
                 <img
-                  src={selectedImage || `http://localhost:8080${userDetails.profileImg}`}
+                  src={selectedImage || `http://localhost:8080/profile/${userDetails.profileImg}`}
                   alt="Profile"
                   className={styles["profile-image"]}
                   onError={(e) => {
