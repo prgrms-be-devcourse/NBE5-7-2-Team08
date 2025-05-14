@@ -16,6 +16,7 @@ const ChatRoom = () => {
   const [language, setLanguage] = useState("java");
   const stompClientRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const isComposingRef = useRef(false);
 
   const [showSearchSidebar, setShowSearchSidebar] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -24,10 +25,10 @@ const ChatRoom = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [errorMessage, setErrorMessage] = useState(null); // 선언 추가
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
   };
 
   const HighlightedCode = ({ content, language }) => {
@@ -46,43 +47,61 @@ const ChatRoom = () => {
   };
 
   useEffect(() => {
-    const socket = new SockJS('http://localhost:8080/ws');
-    const stompClient = Stomp.over(socket);
+  // WebSocket 연결 설정
+  const socket = new SockJS('http://localhost:8080/ws');
+  const stompClient = Stomp.over(socket);
 
-    stompClient.connect({}, () => {
-      console.log('Connected to WebSocket');
-
-      stompClient.subscribe(`/topic/chat/${roomId}`, (message) => {
-        const received = JSON.parse(message.body);
-        setMessages(prev => [...prev, received]);
-      });
-
-      stompClientRef.current = stompClient;
+  stompClient.connect({}, () => {
+    console.log('Connected to WebSocket');
+    stompClient.subscribe(`/topic/chat/${roomId}`, (message) => {
+      const received = JSON.parse(message.body);
+      setMessages((prev) => [...prev, received]);
     });
+  });
 
-    return () => {
-      stompClient.disconnect();
-      console.log('Disconnected');
-    };
-  }, [roomId]);
+  // 채팅방의 메시지 초기화
+  const fetchMessages = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/chat/messages/${roomId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data); // 메시지 데이터를 상태에 설정
+      } else {
+        console.error("Failed to fetch messages.");
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  fetchMessages(); // 컴포넌트 마운트 시 메시지 가져오기
+
+  stompClientRef.current = stompClient;
+
+  return () => {
+    stompClient.disconnect();
+    console.log('Disconnected');
+  };
+}, [roomId]);
 
   // 메시지가 업데이트될 때마다 아래로 스크롤
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = () => {
-    if (stompClientRef.current && content.trim() !== '') {
-      const chatMessage = {
-        content,
-        type: inputMode,
-        ...(inputMode === 'CODE' && { language }) // CODE일 경우에만 language 추가
-      };
-      stompClientRef.current.send(`/chat/send-message/${roomId}`, {}, JSON.stringify(chatMessage));
-      setContent('');
-      setInputMode('TEXT'); //초기화
-    }
-  };
+  const sendMessage = (text = content) => {
+  const trimmed = text.trim();
+  if (stompClientRef.current && trimmed !== '') {
+    const chatMessage = {
+      content: trimmed,
+      type: inputMode,
+      ...(inputMode === 'CODE' && { language })
+    };
+    stompClientRef.current.send(`/chat/send-message/${roomId}`, {}, JSON.stringify(chatMessage));
+    setContent('');
+    setInputMode('TEXT');
+  }
+};
 
 const handleSearch = async (keyword, page = 0) => {
   setIsSearching(true);
@@ -96,7 +115,7 @@ const handleSearch = async (keyword, page = 0) => {
     );
 
     if (!response.ok) {
-      const errorData = await response.json(); // 👈 에러 응답 파싱
+      const errorData = await response.json();
       throw new Error(errorData.message || '검색 중 알 수 없는 오류가 발생했습니다.');
     }
 
@@ -107,11 +126,21 @@ const handleSearch = async (keyword, page = 0) => {
     setTotalElements(data.totalElements);
   } catch (err) {
     console.error('Search error:', err);
-    setErrorMessage(err.message); // 👈 백엔드에서 내려준 메시지를 표시
+    setErrorMessage(err.message);
   } finally {
     setIsSearching(false);
   }
 };
+
+  // 날짜를 YYYY-MM-DD 형식으로 변환하는 함수
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit'
+    });
+  };
 
   // 버튼 스타일 공통화
   const buttonStyle = {
@@ -140,6 +169,127 @@ const handleSearch = async (keyword, page = 0) => {
     outline: 'none',
     transition: 'border-color 0.2s',
     boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+  };
+
+  // 메시지 데이터 처리 및 날짜 구분선 추가
+  const renderMessagesWithDateSeparators = () => {
+    if (!messages.length) return null;
+    
+    const result = [];
+    let currentDate = null;
+    
+    // 메시지를 순회하며 날짜별로 구분
+    messages.forEach((msg, index) => {
+      const messageDate = formatDate(msg.sendAt);
+      
+      // 날짜가 바뀌었다면 구분선 추가
+      if (messageDate !== currentDate) {
+        currentDate = messageDate;
+        result.push(
+          <div key={`date-${index}`} style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: '24px 0',
+            color: '#64748b',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}>
+            <div style={{
+              flex: '1',
+              height: '1px',
+              backgroundColor: '#e2e8f0'
+            }}></div>
+            <div style={{ 
+              margin: '0 16px',
+              padding: '4px 12px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0'
+            }}>
+              {messageDate}
+            </div>
+            <div style={{
+              flex: '1',
+              height: '1px',
+              backgroundColor: '#e2e8f0'
+            }}></div>
+          </div>
+        );
+      }
+      
+      // 메시지 추가
+      result.push(
+        <div key={`msg-${index}`} style={{ 
+          marginBottom: '18px', 
+          display: 'flex',
+          alignItems: 'flex-start'
+        }}>
+          {/* 프로필 이미지 */}
+          <div style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '50%',
+            backgroundColor: '#4a6cf7',
+            marginRight: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: '600',
+            fontSize: '16px',
+            flexShrink: 0
+          }}>
+            {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : 'U'}
+          </div>
+          <div style={{ flex: 1, maxWidth: 'calc(100% - 50px)' }}>
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'baseline',
+              marginBottom: '6px'
+            }}>
+              <span style={{ 
+                fontWeight: '600',
+                fontSize: '15px',
+                color: '#2d3748'
+              }}>
+                {msg.senderName}
+              </span>
+              <span style={{ 
+                fontWeight: 'normal', 
+                fontSize: '12px', 
+                color: '#718096', 
+                marginLeft: '8px' 
+              }}>
+                {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+            {msg.type === 'CODE' || msg.content.startsWith('```') ? (
+              <div style={{ 
+                borderRadius: '6px',
+                overflow: 'hidden',
+                border: '1px solid #e2e8f0'
+              }}>
+                <HighlightedCode 
+                  content={msg.content.replace(/```/g, '')} 
+                  language={msg.language || 'java'} 
+                />
+              </div>
+            ) : (
+              <div style={{ 
+                fontSize: '14px',
+                lineHeight: '1.5',
+                color: '#4a5568',
+                wordBreak: 'break-word'
+              }}>
+                {msg.content}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    });
+    
+    return result;
   };
 
   return (
@@ -214,75 +364,7 @@ const handleSearch = async (keyword, page = 0) => {
             backgroundColor: '#fff',
             minHeight: 0
           }}>
-            {messages.map((msg, index) => (
-              <div key={index} style={{ 
-                marginBottom: '18px', 
-                display: 'flex',
-                alignItems: 'flex-start'
-              }}>
-                {/* 프로필 이미지 */}
-                <div style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  backgroundColor: '#4a6cf7',
-                  marginRight: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: '600',
-                  fontSize: '16px',
-                  flexShrink: 0
-                }}>
-                  {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <div style={{ flex: 1, maxWidth: 'calc(100% - 50px)' }}>
-                  <div style={{ 
-                    display: 'flex',
-                    alignItems: 'baseline',
-                    marginBottom: '6px'
-                  }}>
-                    <span style={{ 
-                      fontWeight: '600',
-                      fontSize: '15px',
-                      color: '#2d3748'
-                    }}>
-                      {msg.senderName}
-                    </span>
-                    <span style={{ 
-                      fontWeight: 'normal', 
-                      fontSize: '12px', 
-                      color: '#718096', 
-                      marginLeft: '8px' 
-                    }}>
-                      {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  {msg.type === 'CODE' || msg.content.startsWith('```') ? (
-                    <div style={{ 
-                      borderRadius: '6px',
-                      overflow: 'hidden',
-                      border: '1px solid #e2e8f0'
-                    }}>
-                      <HighlightedCode 
-                        content={msg.content.replace(/```/g, '')} 
-                        language={msg.language || 'java'} 
-                      />
-                    </div>
-                  ) : (
-                    <div style={{ 
-                      fontSize: '14px',
-                      lineHeight: '1.5',
-                      color: '#4a5568',
-                      wordBreak: 'break-word'
-                    }}>
-                      {msg.content}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+            {renderMessagesWithDateSeparators()}
             <div ref={messagesEndRef} />
           </div>
 
@@ -382,16 +464,17 @@ const handleSearch = async (keyword, page = 0) => {
               <textarea
                 value={content}
                 onChange={handleInputChange}
+                onCompositionStart={() => (isComposingRef.current = true)}
+                onCompositionEnd={() => (isComposingRef.current = false)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault(); // 줄바꿈 막기
-                    sendMessage();      // 메시지 전송
+                  if (e.key === 'Enter' && !e.shiftKey && !isComposingRef.current) {
+                    e.preventDefault();
+                    sendMessage(e.target.value);
                   }
                 }}
                 placeholder={inputMode === 'CODE' ? "코드를 입력하세요..." : "메시지를 입력하세요..."}
                 style={{
                   flex: 1,
-                  // 입력창 높이 증가 - 이전: 40px
                   height: '80px',
                   resize: 'none',
                   padding: '12px 16px',
@@ -410,7 +493,6 @@ const handleSearch = async (keyword, page = 0) => {
                 onClick={sendMessage}
                 style={{
                   ...buttonStyle,
-                  // 버튼 높이도 입력창에 맞게 조정
                   height: '80px'
                 }}
               >
