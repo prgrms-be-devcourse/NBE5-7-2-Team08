@@ -6,14 +6,14 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 //임창인
-public class ChatRoomResponse2 {
+public class ChatRoomSimpleResponse {
 
 	private Long id;
 	private String name;
 	private String repositoryUrl;
 	private Long ownerId;
 
-	public static ChatRoomResponse2 of(Long id, String name, String repositoryUrl, Long ownerId) {
-		return new ChatRoomResponse2(id, name, repositoryUrl, ownerId);
+	public static ChatRoomSimpleResponse of(Long id, String name, String repositoryUrl, Long ownerId) {
+		return new ChatRoomSimpleResponse(id, name, repositoryUrl, ownerId);
 	}
 }

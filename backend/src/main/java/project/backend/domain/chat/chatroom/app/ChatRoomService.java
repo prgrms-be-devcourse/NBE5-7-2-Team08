@@ -1,14 +1,13 @@
 package project.backend.domain.chat.chatroom.app;
 
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
-import project.backend.domain.chat.chatroom.dto.ChatRoomResponse2;
+import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.member.dao.MemberRepository;
@@ -20,7 +19,7 @@ import org.springframework.data.domain.Pageable;
 
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
 
-import project.backend.domain.chat.chatroom.dto.ChatRoomResponse;
+import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
 import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper;
 import project.backend.global.exception.errorcode.MemberErrorCode;
 import project.backend.global.exception.ex.ChatRoomException;
@@ -39,7 +38,7 @@ public class ChatRoomService {
 	private final ChatRoomMapper chatRoomMapper;
 
 	@Transactional
-	public ChatRoomResponse2 createChatRoom(ChatRoomRequest request, Long ownerId) {
+	public ChatRoomSimpleResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
 		Member owner = memberRepository.findById(ownerId)
 			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
@@ -54,7 +53,7 @@ public class ChatRoomService {
 		return chatRoomMapper.toSimpleResponse(savedRoom);
 	}
 
-	@Transactional
+	@Transactional(readOnly = true)
 	public String getInviteCode(Long roomId) {
 		ChatRoom room = chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
@@ -62,7 +61,7 @@ public class ChatRoomService {
 		return room.getInviteCode();
 	}
 
-	@Transactional
+	@Transactional(readOnly = true)
 	public boolean isParticipant(Long roomId, Long memberId) {
 		return chatParticipantRepository.existsByParticipantIdAndChatRoomId(memberId, roomId);
 	}
@@ -91,7 +90,7 @@ public class ChatRoomService {
 	}
 
 
-	@Transactional
+	@Transactional(readOnly = true)
 	public Long getMostRecentRoomId(String email) {
 
 		// 1순위: 가장 최근 메시지가 도착한 채팅방
@@ -112,8 +111,8 @@ public class ChatRoomService {
 
 	}
 
-	@Transactional
-	public Page<ChatRoomResponse> findAllByMemberId(Long memberId, Pageable pageable) {
+	@Transactional(readOnly = true)
+	public Page<ChatRoomDetailResponse> findAllByMemberId(Long memberId, Pageable pageable) {
 
 		chatRoomRepository.findById(memberId)
 			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));

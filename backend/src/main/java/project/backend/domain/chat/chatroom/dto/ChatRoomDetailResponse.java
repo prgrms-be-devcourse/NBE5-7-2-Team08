@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 //강현님꺼
-public class ChatRoomResponse {
+public class ChatRoomDetailResponse {
 
 	private String roomName;
 
