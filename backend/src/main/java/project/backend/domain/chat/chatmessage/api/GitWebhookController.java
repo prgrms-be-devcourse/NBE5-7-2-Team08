@@ -17,13 +17,6 @@ public class GitWebhookController {
 
     private final GitMessageService gitMessageService;
 
-//    @PostMapping("/{roomId}")
-//    public Map<String, Object> receiveWebhook(@PathVariable Long roomId,
-//        @RequestBody Map<String, Object> payload) {
-//        gitMessageService.handleWebhook(roomId, payload);
-//        return payload;
-//    }
-
     @PostMapping("/{roomId}")
     public void handleWebhook(@PathVariable Long roomId,
         @RequestBody Map<String, Object> payload,

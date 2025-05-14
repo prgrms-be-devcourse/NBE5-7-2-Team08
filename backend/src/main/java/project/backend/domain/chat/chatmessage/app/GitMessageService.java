@@ -52,7 +52,7 @@ public class GitMessageService {
         String url = (String) issue.get("html_url");
         String author = (String) sender.get("login");
 
-        String content = "[issue " + action + "] " + title + " by " + author + "\n" + url;
+        String content = "[ISSUE " + action + "] " + title + " by " + author + "\n" + url;
 
         ChatRoom room = chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));

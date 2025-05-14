@@ -31,6 +31,7 @@ public class ChatMessageMapper {
             .chatRoom(dto.getRoom())
             .type(MessageType.GIT)
             .content(dto.getContent())
+            .sendAt(LocalDateTime.now())
             .build();
 
     }
