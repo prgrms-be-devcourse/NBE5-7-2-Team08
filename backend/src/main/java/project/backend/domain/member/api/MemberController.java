@@ -19,12 +19,13 @@ public class MemberController {
 
     @GetMapping("/details")
     public MemberResponse getMemberDetails(Authentication authentication) {
-        System.out.println("auth = " + authentication);
         return memberService.getMemberDetails(authentication);
     }
 
+    //사용안함 추후에 사용 가능 (edit profile)을 안보여주는 페이지 띄울때
+    @Deprecated()
     @GetMapping("/details/{memberId}")
-    public MemberResponse getMemberDetails(@PathVariable Long memberId) {
+    public MemberResponse getMemberDetails(@PathVariable Long memberId, Authentication authentication) {
         return memberService.findMemberById(memberId);
     }
 }

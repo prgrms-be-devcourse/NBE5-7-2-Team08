@@ -19,7 +19,7 @@ function App() {
         <Route path="/blank" element={<BlankRoom />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/profile/:memberId" element={<MyPage />} />
+        <Route path="/myprofile" element={<MyPage />} />
       </Routes>
     </BrowserRouter>
   );

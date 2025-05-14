@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/SideBar';
 import Header from '../components/header';
 import styles from "../profile-page.module.css";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { memberId } = useParams();
   const [userDetails, setUserDetails] = useState(null);
   const [userRooms, setUserRooms] = useState([]);
   const alertShownRef = useRef(false); // alert 여부 기억
@@ -17,7 +16,7 @@ const ProfilePage = () => {
 
     const fetchUserDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/user/details/${memberId}`, {
+        const response = await fetch("http://localhost:8080/user/details", {
           method: "GET",
           credentials: "include"
         });
@@ -50,11 +49,18 @@ const ProfilePage = () => {
       }
     };
 
+    fetchUserDetails();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!userDetails || stopRequestRef.current) return;
+
+
     const fetchUserRooms = async () => {
       if (stopRequestRef.current) return;
 
       try {
-        const response = await fetch(`http://localhost:8080/chat-rooms/mine/${memberId}`, {
+        const response = await fetch(`http://localhost:8080/chat-rooms/mine/${userDetails.id}`, {
           method: "GET",
           credentials: "include"
         });
@@ -83,9 +89,8 @@ const ProfilePage = () => {
       }
     };
 
-    fetchUserDetails();
     fetchUserRooms();
-  }, [memberId, navigate]);
+  }, [userDetails ,navigate]);
 
   
 

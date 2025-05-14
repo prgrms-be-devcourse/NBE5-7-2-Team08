@@ -67,7 +67,7 @@ export function Header() {
               </svg>
             </div>
           ) : (
-            <a href= {`/profile/${memberId}`}>
+            <a href= {"/myprofile"}>
             <img 
               src={`http://localhost:8080${profileImage}`}
               alt="User profile"
