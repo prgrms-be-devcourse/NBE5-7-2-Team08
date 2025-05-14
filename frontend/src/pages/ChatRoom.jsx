@@ -56,7 +56,7 @@ const ChatRoom = () => {
       await navigator.clipboard.writeText(fullUrl);
       setModalPosition(contextMenuPosition);
       setShowUrlCopiedModal(true);
-      setTimeout(() => setShowModal(false), 2000);
+      setTimeout(() => setShowUrlCopiedModal(false), 2000);
     } catch (err) {
       console.error(err);
       alert('초대 URL 복사 중 오류가 발생했습니다.');
