@@ -1,5 +1,6 @@
 package project.backend.domain.chat.chatmessage.mapper;
 
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
@@ -20,6 +21,7 @@ public class ChatMessageMapper {
             .content(request.getContent())
             .type(request.getType())
             .codeLanguage(request.getLanguage())
+            .sendAt(LocalDateTime.now())
             .build();
 
     }

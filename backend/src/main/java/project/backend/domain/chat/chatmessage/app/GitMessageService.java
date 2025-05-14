@@ -110,13 +110,19 @@ public class GitMessageService {
         Map<String, Object> pr = (Map<String, Object>) payload.get("pull_request");
 
         String reviewer = (String) ((Map<String, Object>) review.get("user")).get("login");
-        String body = (String) review.get("body");
         String state = (String) review.get("state"); // approved, commented, changes_requested
         String reviewUrl = (String) review.get("html_url");
         String prTitle = (String) pr.get("title");
+        String body = (String) review.get("body");
 
-        String content = "[PR review: " + state + "] " + prTitle + " review by " + reviewer + "\n"
-            + body + "\n" + reviewUrl;
+        String content;
+        if (body == null) {
+            content = "[PR review: " + state + "] " + prTitle + " review by " + reviewer + "\n"
+                + reviewUrl;
+        } else {
+            content = "[PR review: " + state + "] " + prTitle + " review by " + reviewer + "\n"
+                + body + "\n" + reviewUrl;
+        }
 
         ChatRoom room = chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
