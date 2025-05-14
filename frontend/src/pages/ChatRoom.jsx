@@ -159,10 +159,13 @@ const ChatRoom = () => {
                   width: '30px',
                   height: '30px',
                   borderRadius: '50%',
-                  backgroundColor: '#7ec8e3',
-                  marginRight: '10px'
-                }}>
-                </div>
+                  marginRight: '10px',
+                  backgroundImage: msg.type === 'GIT'
+                  ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
+                  : undefined,
+                  backgroundColor: msg.type === 'GIT' ? 'transparent' : '#7ec8e3',
+                  backgroundSize: 'cover'
+                }} />
                 <div>
                   <div style={{ fontWeight: 'bold' }}>
                     {msg.senderName}
@@ -170,11 +173,31 @@ const ChatRoom = () => {
                       {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  {msg.type === 'CODE' || msg.content.startsWith('```') ? (
-                    <HighlightedCode content={msg.content.replace(/```/g, '')} language={msg.language || 'java'} />
 
+                  {/* GitHub 메시지 UI */}
+                  {msg.type === 'GIT' ? (
+                    <div style={{
+                      // backgroundColor: '#f6f8fa',/
+                      // border: '1px solid #d1d5da',
+                      // borderRadius: '6px',
+                      padding: '12px 15px',
+                      whiteSpace: 'pre-wrap',
+                      color: '#24292e',
+                      display: 'flex'
+                    }}>
+                      {/* 왼쪽 검정색 선 */}
+                      <div style={{
+                        width: '4px',
+                        backgroundColor: '#000',
+                        marginRight: '10px',
+                        borderRadius: '2px'
+                      }} />
+                      {msg.content}
+                    </div>
+                  ): msg.type === 'CODE' || msg.content.startsWith('```') ? (
+                    <HighlightedCode content={msg.content.replace(/```/g, '')} language={msg.language || 'java'} />
                   ) : (
-                    <div>{msg.content}</div>
+                    <div style={{ whiteSpace: 'pre-line' }}>{msg.content}</div>
                   )}
                 </div>
               </div>
