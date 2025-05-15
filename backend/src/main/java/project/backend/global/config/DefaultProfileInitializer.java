@@ -20,7 +20,7 @@ public class DefaultProfileInitializer {
 
     @PostConstruct
     public void initializeDefaultProfile() {
-        boolean exists = imageFileRepository.existsByStoreFileName("/profile/default-profile.png");
+        boolean exists = imageFileRepository.existsByStoreFileName(defaultProfile);
 
         if (!exists) {
             imageFileRepository.save(ImageFile.builder()

@@ -2,15 +2,12 @@ package project.backend.global.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
-import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileRepository;
-import project.backend.domain.imagefile.ImageType;
 import project.backend.domain.member.app.MemberService;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.dto.SignUpRequest;
@@ -30,7 +27,7 @@ public class MockDataInitializer {
 
 
     @PostConstruct
-    public void initDefaultImage() {
+    public void MockDataGenerator() {
 
         // 1. 테스트용 멤버 생성
         List<String> emails = List.of(
