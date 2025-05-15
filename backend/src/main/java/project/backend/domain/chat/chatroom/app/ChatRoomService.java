@@ -4,6 +4,7 @@ package project.backend.domain.chat.chatroom.app;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
@@ -13,6 +14,7 @@ import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.member.app.MemberService;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
 import org.springframework.data.domain.Page;
@@ -25,12 +27,13 @@ import project.backend.global.exception.ex.ChatRoomException;
 import project.backend.global.exception.errorcode.ChatRoomErrorCode;
 import project.backend.global.exception.ex.MemberException;
 
-
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChatRoomService {
 
+    private final MemberService memberService;
     private final ChatRoomRepository chatRoomRepository;
     private final MemberRepository memberRepository;
     private final ChatMessageRepository chatMessageRepository;
@@ -112,35 +115,25 @@ public class ChatRoomService {
 
     public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
 
-        checkMemberExists(memberId);
-
-
         Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId, pageable);
-        if (allRoomsByOwnerId.isEmpty()) {
-            throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
-        }
+
+        log.info("allRoomsByOwnerId = {}", allRoomsByOwnerId);
         return allRoomsByOwnerId.map(ChatRoomMapper::toProfileResponse);
     }
 
 
-    private void checkMemberExists(Long memberId) {
-        chatRoomRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
-
-  
     @Transactional(readOnly = true)
     public Page<ChatRoomDetailResponse> findChatRoomsByParticipantId(Long memberId,
-      Pageable pageable) {
+                                                                     Pageable pageable) {
 
-      Page<ChatRoom> chatRooms = chatRoomRepository.findByParticipants_Participant_Id(memberId,
-        pageable);
+        Page<ChatRoom> chatRooms = chatRoomRepository.findByParticipants_Participant_Id(memberId,
+                pageable);
 
-      if (chatRooms.isEmpty()) {
-        throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
-      }
+        if (chatRooms.isEmpty()) {
+            throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
+        }
 
-      return chatRooms.map(ChatRoomMapper::toDetailResponse);
+        return chatRooms.map(ChatRoomMapper::toDetailResponse);
     }
 
 
