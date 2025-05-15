@@ -81,6 +81,11 @@ const ChatRoom = () => {
       // WebSocket 연결 설정
       const socket = new SockJS('http://localhost:8080/ws');
       const stompClient = Stomp.over(socket);
+      
+      stompClient.heartbeat.outgoing = 10000; // 내가 서버에게 보내는 ping 주기
+      stompClient.heartbeat.incoming = 10000; // 서버가 나에게 보내야 할 ping 주기
+
+      stompClient.reconnect_delay = 5000; // 연결 끊길 경우 5초 후 재연결
   
       stompClient.connect({}, () => {
         console.log('Connected to WebSocket');
@@ -93,6 +98,8 @@ const ChatRoom = () => {
           setMessages((prev) => [...prev, received]);
         });
       });
+
+      stompClientRef.current = stompClient;
   
       // 채팅방의 메시지 초기화
       const fetchMessages = async () => {
@@ -170,7 +177,23 @@ const ChatRoom = () => {
   };
 
   const sendMessage = (text = content) => {
-    const trimmed = text.trim();
+
+    //지은 시작
+    let raw = text;
+
+    // 객체면 JSON 문자열로 변환
+    if (typeof raw === 'object') {
+      try {
+        raw = JSON.stringify(raw, null, 2); // 예쁘게 포맷팅된 문자열
+      } catch (err) {
+        console.error('객체 직렬화 실패:', err);
+        return;
+      }
+    }
+
+    const trimmed = String(text).trim();
+    //지은 끝
+
     if (stompClientRef.current && trimmed !== '') {
       const chatMessage = {
         content: trimmed,
