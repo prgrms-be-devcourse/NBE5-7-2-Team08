@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
-import project.backend.domain.chat.chatroom.dto.InviteCodeResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinRequest;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
-import java.security.Principal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -49,32 +47,6 @@ public class ChatRoomController {
 		log.info("채팅방생성");
 		return chatRoomService.createChatRoom(request, ownerId);
 	}
-
-	//개발하다보니 사용을 안 하게 됨.
-//	@GetMapping("/invite/{inviteCode}")
-//	@ResponseBody
-//	public InviteCodeResponse getInviteUrl(@PathVariable String inviteCode,
-//		@AuthenticationPrincipal MemberDetails memberDetails
-//	) {
-//
-//		if (memberDetails == null) {
-//			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
-//		}
-//
-//		Long roomId = chatRoomService.getRoomId(inviteCode);
-//		Long memberId = memberDetails.getId();
-//		boolean isParticipant = chatRoomService.isParticipant(roomId, memberId);
-//
-//		if (!isParticipant) {
-//			throw new AuthException(AuthErrorCode.FORBIDDEN_PARTICIPANT);
-//		}
-//
-//		String url = "http://localhost:3000/chat/" + inviteCode;
-//		return new InviteCodeResponse(url);
-//	}
-
-
-
 
 	@PostMapping("/join")
 	public InviteJoinResponse joinChatRoom(@RequestBody InviteJoinRequest request,
