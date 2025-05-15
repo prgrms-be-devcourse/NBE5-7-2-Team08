@@ -1,5 +1,6 @@
 package project.backend.domain.member.api;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,7 @@ public class SignupController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public MemberResponse signup(@RequestBody SignUpRequest request) {
+    public MemberResponse signup(@RequestBody @Valid SignUpRequest request) {
         log.info("request = {}", request);
         return memberService.saveMember(request);
     }
