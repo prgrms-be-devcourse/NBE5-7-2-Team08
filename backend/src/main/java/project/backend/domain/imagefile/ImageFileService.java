@@ -81,7 +81,7 @@ public class ImageFileService {
     }
 
     public ImageFile getProfileImageByStoreFileName(String storeFileName) {
-        return imageFileRepository.findByUploadFileName(storeFileName)
+        return imageFileRepository.findByStoreFileName(storeFileName)
                 .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
     }
 
