@@ -155,7 +155,9 @@ const handleSearch = async (keyword, page = 0) => {
 
   try {
     const response = await fetch(
-      `http://localhost:8080/chat/${roomId}/search?keyword=${keyword}&page=${page}`
+      `http://localhost:8080/chat/search/${roomId}?keyword=${keyword}&page=${page}`, {
+        credentials: 'include'
+      }
     );
 
     if (!response.ok) {
