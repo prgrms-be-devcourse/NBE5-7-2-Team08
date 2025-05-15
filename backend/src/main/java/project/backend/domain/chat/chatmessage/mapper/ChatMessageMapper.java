@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchResponse;
-import project.backend.domain.chat.chatmessage.dto.git.GitMessageDto;
+import project.backend.domain.chat.chatmessage.dto.git.GitMessage;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
@@ -26,11 +26,11 @@ public class ChatMessageMapper {
 
     }
 
-    public ChatMessage toEntity(GitMessageDto dto) {
+    public ChatMessage toEntity(GitMessage gitMessage) {
         return ChatMessage.builder()
-            .chatRoom(dto.getRoom())
+            .chatRoom(gitMessage.getRoom())
             .type(MessageType.GIT)
-            .content(dto.getContent())
+            .content(gitMessage.getContent())
             .sendAt(LocalDateTime.now())
             .build();
 

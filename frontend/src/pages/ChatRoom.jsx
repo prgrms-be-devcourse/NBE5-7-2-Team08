@@ -18,7 +18,7 @@ const ChatRoom = () => {
   const stompClientRef = useRef(null);
   const messagesEndRef = useRef(null);
   const isComposingRef = useRef(false);
-
+  
   // 초대 코드 관련 상태 추가
   const [showNotification, setShowNotification] = useState(false);
 
