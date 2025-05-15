@@ -18,7 +18,6 @@ import project.backend.global.exception.errorcode.ImageFileErrorCode;
 
 @Slf4j
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class ImageFileService {
 
@@ -27,34 +26,40 @@ public class ImageFileService {
     @Value("${file.profile-path}")
     private String profilePath;
 
+    @Transactional
     public ImageFile saveProfileImageFile(MultipartFile file) {
 
+        log.info("Saving profile image file");
+        String uploadFileName = file.getOriginalFilename();
+
+        checkExtension(uploadFileName);
+        checkFileTypeIsImage(file.getContentType());
+
+        String extension = uploadFileName.substring(uploadFileName.lastIndexOf(".")).toLowerCase();
+
+        checkFileExtensionIsImage(extension);
+
+        String storeFileName = UUID.randomUUID() + extension;
+
+        Path savePath = Paths.get(profilePath, storeFileName);
+
+        ImageFile imageFile = ImageFile.ofProfile(storeFileName, uploadFileName);
+        imageFileRepository.saveAndFlush(imageFile);
+        log.info("Saved Metadata of profile image file");
+
         try {
-            log.info("Saving profile image file");
-            String uploadFileName = file.getOriginalFilename();
-
-            checkExtension(uploadFileName);
-            checkFileTypeIsImage(file.getContentType());
-
-            String extension = uploadFileName.substring(uploadFileName.lastIndexOf(".")).toLowerCase();
-
-            checkFileExtensionIsImage(extension);
-
-            String storeFileName = UUID.randomUUID() + extension;
-
-            Path savePath = Paths.get(profilePath, storeFileName);
-
             log.info("📁 저장 경로: {}", savePath.toAbsolutePath());
             file.transferTo(savePath);
-
-            return imageFileRepository.save(ImageFile.ofProfile(storeFileName, uploadFileName));
+            return imageFile;
 
         } catch (IOException e) {
+            imageFileRepository.delete(imageFile);
+            imageFileRepository.flush();
             log.error("파일 저장 중 IOException 발생", e);
             throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
         }
-
     }
+
 
     private void checkFileExtensionIsImage(String extension) {
         List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp");
