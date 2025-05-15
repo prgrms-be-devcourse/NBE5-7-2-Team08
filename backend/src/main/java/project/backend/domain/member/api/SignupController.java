@@ -12,17 +12,17 @@ import project.backend.domain.member.dto.SignUpRequest;
 
 @Slf4j
 @RestController
-@RequestMapping("/signup")
+@RequestMapping
 @RequiredArgsConstructor
 public class SignupController {
 
     private final MemberService memberService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/signup")
+    @ResponseStatus(HttpStatus.CREATED)
     public MemberResponse signup(@RequestBody @Valid SignUpRequest request) {
         log.info("request = {}", request);
         return memberService.saveMember(request);
     }
-    
+
 }
