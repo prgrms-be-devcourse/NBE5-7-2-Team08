@@ -50,49 +50,63 @@ public class MemberService {
         return MemberMapper.toResponse(newMember);
     }
 
-    public MemberResponse getMemberDetails(Authentication auth) {
-        MemberDetails member = (MemberDetails) auth.getPrincipal();
-        return MemberDetails.toResponse(member);
-    }
 
-    private boolean checkIfMemberExists(String email) {
-        return memberRepository.findByEmail(email).isPresent();
-    }
+    public MemberResponse updateMember(Authentication auth, MemberUpdateRequest request) {
 
-    public Member loginByEmail(String email) {
-        try {
-            return findMemberByEmail(email);
-        } catch (MemberException e) {
-            log.info("존재하지 않는 유저");
-            throw new UsernameNotFoundException("존재하지 않는 유저입니다.");
-        }
-    }
+        MemberDetails memberDetails = (MemberDetails) auth.getPrincipal();
 
-    public Member findMemberByEmail(String email) {
-
-        return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
-
-
-    public MemberResponse updateMember(Long id, MemberUpdateRequest request) {
-        Member targetMember = memberRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 유저입니다."));
+        Member targetMember = getMemberById(memberDetails.getId());
 
         if (request.getNickname() != null) {
             targetMember.setNickname(request.getNickname());
         }
 
         if (request.getPassword() != null) {
-            targetMember.setPassword(request.getPassword());
+            targetMember.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        if (request.getProfile() != null) {
-            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getProfile());
+        if (request.getProfileImg() != null) {
+            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getProfileImg());
             targetMember.setProfileImage(newProfile);
         }
 
         return MemberMapper.toResponse(targetMember);
     }
 
+    // Spring Security에서 UsernameNotFoundException을 처리하도록 유도하는 메서드
+    public Member loginByEmail(String email) {
+        try {
+            return getMemberByEmail(email);
+        } catch (MemberException e) {
+            log.info("존재하지 않는 이메일로 로그인 시도: {}", email);
+            throw new UsernameNotFoundException("존재하지 않는 유저입니다: " + email, e);
+        }
+    }
+
+    public Member getMemberByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private Member getMemberById(Long id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    public MemberResponse getMemberResponseById(Long memberId) {
+        Member member = getMemberById(memberId);
+        return MemberMapper.toResponse(member);
+    }
+
+    private boolean checkIfMemberExists(String email) {
+        return memberRepository.findByEmail(email).isPresent();
+    }
+
+    public MemberResponse getMemberDetails(Authentication auth) {
+        MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
+        Long memberId = loginMember.getId();
+
+        Member member = getMemberById(memberId);
+        return MemberMapper.toResponse(member);
+    }
 }

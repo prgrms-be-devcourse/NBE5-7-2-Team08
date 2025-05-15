@@ -1,8 +1,8 @@
 package project.backend.domain.chat.chatroom.api;
 
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,11 +20,14 @@ import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.InviteCodeResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinRequest;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
+
 import java.security.Principal;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
 import project.backend.domain.member.dto.MemberDetails;
@@ -105,5 +108,13 @@ public class ChatRoomController {
 		return chatRoomService.findChatRoomsByParticipantId(memberId, pageable);
 	}
 
+  // 자신이 만든 채팅방 가져오기 -> 주후 인증객체 id로 조회가능 할듯(Authentication)
+  @GetMapping("/mine/{memberId}")
+  public Page<MyChatRoomResponse> findMyAllChatRooms(@PathVariable Long memberId,
+                                                     @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    log.info("자신이 만든 채팅방 요청: memberId = {}", memberId);
+    return chatRoomService.findAllRoomsByOwnerId(memberId, pageable);
+
+  }
 
 }

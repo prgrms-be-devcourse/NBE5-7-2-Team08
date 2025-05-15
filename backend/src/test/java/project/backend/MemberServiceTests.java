@@ -107,7 +107,7 @@ public class MemberServiceTests {
 
     @Test
     @DisplayName("Member email로 찾기 성공 테스트")
-    void findMemberByEmailSuccess() throws Exception {
+    void getMemberByEmailSuccess() throws Exception {
         //given
         String targetEmail = "test@test.com";
 
@@ -128,7 +128,7 @@ public class MemberServiceTests {
         when(memberRepository.findByEmail(targetEmail)).thenReturn(Optional.of(member));
 
         //when
-        MemberResponse response = MemberMapper.toResponse(memberService.findMemberByEmail(targetEmail));
+        MemberResponse response = MemberMapper.toResponse(memberService.getMemberByEmail(targetEmail));
 
         //then
         assertThat(response.getEmail()).isEqualTo(targetEmail);
@@ -139,13 +139,13 @@ public class MemberServiceTests {
 
     @Test
     @DisplayName("Member email로 찾기 실패 테스트")
-    void findMemberByEmailFail() throws Exception {
+    void getMemberByEmailFail() throws Exception {
         //given
         String targetEmail = "already@test.com";
         when(memberRepository.findByEmail(targetEmail)).thenReturn(Optional.empty());
 
         //when&then
-        assertThatThrownBy(() -> memberService.findMemberByEmail(targetEmail))
+        assertThatThrownBy(() -> memberService.getMemberByEmail(targetEmail))
                 .isInstanceOf(UsernameNotFoundException.class);
     }
 }

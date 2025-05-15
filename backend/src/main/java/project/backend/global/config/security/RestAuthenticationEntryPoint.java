@@ -18,6 +18,6 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
         log.warn("인증되지 않은 사용자 접근: {}", request.getRequestURI());
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json; charset=utf-8");
-        response.getWriter().write("{\"message\":\"" + authException.getMessage() + "\"}");
+        response.getWriter().write("{\"message\":\"" + "로그인이 필요한 서비스입니다." + "\"}");
     }
 }

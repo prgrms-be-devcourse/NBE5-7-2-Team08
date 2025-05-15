@@ -8,7 +8,12 @@ spring:
     enabled: false
     baseline-on-migrate: true
     locations: classpath:db/migration
-
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  profiles:
+    active: dev
 
   jpa:
     hibernate:
@@ -19,6 +24,7 @@ spring:
         format_sql: true
 
 file:
-  profile-path: img/
-  default-profile: /profile/default-profile.png
+  profile-path: profiles/
+  default-profile: default-profile.png
+
 
