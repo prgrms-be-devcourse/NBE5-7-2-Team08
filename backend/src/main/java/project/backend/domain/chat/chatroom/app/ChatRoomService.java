@@ -96,7 +96,7 @@ public class ChatRoomService {
 
 		chatParticipantRepository.save(chatParticipant);
 
-		return new InviteJoinResponse(room.getId(),room.getInviteCode());
+		return new InviteJoinResponse(room.getId(),room.getInviteCode(),room.getName());
 	}
 
 

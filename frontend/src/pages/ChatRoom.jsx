@@ -46,14 +46,19 @@ const ChatRoom = () => {
         });
 
         if (res.status === 401) {
-          // 인증 안 됐으면 로그인 페이지로
-          // 로그인 후 이 URL로 돌아오게 redirect 쿼리 붙임
-          const redirectPath = `/chat/${roomId}/${inviteCode}`;
+          const data = await res.json();
+          console.log("[DEBUG] 401 응답 data:", data);
+          const redirectPath = `/chat/${data.details.roomId}/${data.details.inviteCode}`;
           navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
-
           return;
         }
-        if (!res.ok) throw new Error('채팅방 입장 실패');
+        
+        if (!res.ok) {
+          const text = await res.text(); // 응답 본문도 확인
+          console.error("[DEBUG] 실패 상태:", res.status, text);
+          throw new Error('채팅방 입장 실패');
+        }
+        
 
         // join 성공 → DB에 참가자 저장됨
         setJoined(true);
@@ -132,7 +137,7 @@ const ChatRoom = () => {
 
   useEffect(() => {
     //joined 되면 웹소캣 연결
-    if (!joined) return;
+   // if (!joined) return;
 
     const socket = new SockJS('http://localhost:8080/ws');
     const stompClient = Stomp.over(socket);

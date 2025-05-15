@@ -77,13 +77,14 @@ public class ChatRoomController {
 
 
 	@PostMapping("/join")
-	@ResponseStatus(HttpStatus.OK)
 	public InviteJoinResponse joinChatRoom(@RequestBody InviteJoinRequest request,
 		@AuthenticationPrincipal MemberDetails memberDetails
 	) {
 		if (memberDetails == null) {
-			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+			Long roomId = chatRoomService.getRoomId(request.getInviteCode());
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER, roomId, request.getInviteCode());
 		}
+
 		log.info("채팅방 입장");
 		return chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
 	}

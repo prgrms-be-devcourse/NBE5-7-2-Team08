@@ -46,6 +46,7 @@ public class SecurityConfig {
                             .requestMatchers("/signup", "/login", "/")
                             .anonymous()
 
+                            .requestMatchers("/chat-rooms/join").permitAll()
                             .anyRequest()
                             .authenticated();
                 })
