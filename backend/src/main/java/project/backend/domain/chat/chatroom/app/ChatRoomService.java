@@ -110,23 +110,10 @@ public class ChatRoomService {
 
     }
 
-
-    @Transactional(readOnly = true)
-    public Page<ChatRoomDetailResponse> findAllByMemberId(Long memberId, Pageable pageable) {
-
-        checkMemberExists(memberId);
-
-        Page<ChatRoom> chatRooms = chatRoomRepository.findAllRoomsByMemberId(memberId, pageable);
-        if (chatRooms.isEmpty()) {
-            throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
-        }
-        return chatRooms.map(ChatRoomMapper::toDetailResponse);
-    }
-
-
     public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
 
         checkMemberExists(memberId);
+
 
         Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId, pageable);
         if (allRoomsByOwnerId.isEmpty()) {
@@ -140,6 +127,22 @@ public class ChatRoomService {
         chatRoomRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
+
+  
+    @Transactional(readOnly = true)
+    public Page<ChatRoomDetailResponse> findChatRoomsByParticipantId(Long memberId,
+      Pageable pageable) {
+
+      Page<ChatRoom> chatRooms = chatRoomRepository.findByParticipants_Participant_Id(memberId,
+        pageable);
+
+      if (chatRooms.isEmpty()) {
+        throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
+      }
+
+      return chatRooms.map(ChatRoomMapper::toDetailResponse);
+    }
+
 
 }
 
