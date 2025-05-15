@@ -1,6 +1,7 @@
 package project.backend.domain.chat.chatmessage.api;
 
 import java.security.Principal;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -43,12 +44,13 @@ public class ChatMessageController {
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "20") int size
 	) {
-		ChatMessageSearchRequest request = ChatMessageSearchRequest.builder()
-			.keyword(keyword)
-			.page(page)
-			.pageSize(size)
-			.build();
+		ChatMessageSearchRequest request = ChatMessageSearchRequest.from(keyword, page, size);
 
 		return chatMessageService.searchMessages(roomId, request);
+	}
+
+	@GetMapping("/{roomId}/messages")
+	public List<ChatMessageResponse> getMessages(@PathVariable Long roomId) {
+		return chatMessageService.getMessagesByRoomId(roomId);
 	}
 }

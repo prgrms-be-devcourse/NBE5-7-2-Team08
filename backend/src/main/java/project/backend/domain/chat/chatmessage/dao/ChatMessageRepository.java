@@ -1,5 +1,6 @@
 package project.backend.domain.chat.chatmessage.dao;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 		AND MATCH(content) AGAINST (:keyword IN NATURAL LANGUAGE MODE)
 		""", nativeQuery = true)
 	Page<ChatMessage> searchByKeywordAndRoomId(String keyword, Long roomId, Pageable pageable);
+
+	List<ChatMessage> findByChatRoom_IdOrderBySendAtAsc(Long roomId);
 }

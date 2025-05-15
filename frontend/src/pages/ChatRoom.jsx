@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
 import Sidebar from '../components/SideBar';
@@ -13,6 +13,7 @@ const ChatRoom = () => {
   const [messages, setMessages]=useState([]);
   const[content, setContent]=useState("");
   const { roomId }=useParams();
+  const navigate = useNavigate(); // Added navigate hook
   const [inputMode, setInputMode] = useState("TEXT");
   const [language, setLanguage] = useState("java");
   const stompClientRef = useRef(null);
@@ -70,42 +71,77 @@ const ChatRoom = () => {
   };
 
   useEffect(() => {
-  // WebSocket 연결 설정
-  const socket = new SockJS('http://localhost:8080/ws');
-  const stompClient = Stomp.over(socket);
-
-  stompClient.connect({}, () => {
-    console.log('Connected to WebSocket');
-    stompClient.subscribe(`/topic/chat/${roomId}`, (message) => {
-      const received = JSON.parse(message.body);
-      setMessages((prev) => [...prev, received]);
-    });
-  });
-
-  // 채팅방의 메시지 초기화
-  const fetchMessages = async () => {
-    try {
-      const response = await fetch(`http://localhost:8080/chat/messages/${roomId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(data); // 메시지 데이터를 상태에 설정
-      } else {
-        console.error("Failed to fetch messages.");
+      // Make sure roomId exists before connecting
+      if (!roomId) {
+        console.error("No roomId available");
+        navigate("/"); // Redirect to home if no room ID is found
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    }
-  };
-
-  fetchMessages(); // 컴포넌트 마운트 시 메시지 가져오기
-
-  stompClientRef.current = stompClient;
-
-  return () => {
-    stompClient.disconnect();
-    console.log('Disconnected');
-  };
-}, [roomId]);
+    
+      // WebSocket 연결 설정
+      const socket = new SockJS('http://localhost:8080/ws');
+      const stompClient = Stomp.over(socket);
+  
+      stompClient.connect({}, () => {
+        console.log('Connected to WebSocket');
+        stompClient.subscribe(`/topic/chat/${roomId}`, (message) => {
+          const received = JSON.parse(message.body);
+          // 수신된 메시지의 sendAt이 유효한지 확인하고, 아니면 현재 시간으로 설정
+          if (!received.sendAt || new Date(received.sendAt).getFullYear() === 1970) {
+            received.sendAt = new Date().toISOString();
+          }
+          setMessages((prev) => [...prev, received]);
+        });
+      });
+  
+      // 채팅방의 메시지 초기화
+      const fetchMessages = async () => {
+        try {
+          // 컨트롤러 엔드포인트에 맞게 URL 수정
+          const response = await fetch(`http://localhost:8080/${roomId}/messages`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include' // 인증 정보 포함
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            // 서버에서 받은 모든 메시지의 날짜/시간 유효성 검사
+            const validatedData = data.map(msg => {
+              // sendAt이 유효하지 않으면(1970년) 현재 시간으로 설정
+              if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
+                return { ...msg, sendAt: new Date().toISOString() };
+              }
+              return msg;
+            });
+            
+            // 메시지 시간순으로 정렬 (오래된 메시지가 위에 오도록)
+            const sortedData = validatedData.sort((a, b) => 
+              new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+            );
+            
+            setMessages(sortedData);
+          } else {
+            console.error("Failed to fetch messages:", response.status);
+          }
+        } catch (error) {
+          console.error('Error fetching messages:', error);
+        }
+      };
+  
+      fetchMessages(); // 컴포넌트 마운트 시 메시지 가져오기
+  
+      stompClientRef.current = stompClient;
+  
+      return () => {
+        if (stompClientRef.current) {
+          stompClientRef.current.disconnect();
+          console.log('Disconnected');
+        }
+      };
+    }, [roomId, navigate]);
 
   // 메시지가 업데이트될 때마다 아래로 스크롤
   useEffect(() => {
@@ -134,58 +170,149 @@ const ChatRoom = () => {
   };
 
   const sendMessage = (text = content) => {
-  const trimmed = text.trim();
-  if (stompClientRef.current && trimmed !== '') {
-    const chatMessage = {
-      content: trimmed,
-      type: inputMode,
-      ...(inputMode === 'CODE' && { language })
-    };
-    stompClientRef.current.send(`/chat/send-message/${roomId}`, {}, JSON.stringify(chatMessage));
-    setContent('');
-    setInputMode('TEXT');
-  }
-};
+    const trimmed = text.trim();
+    if (stompClientRef.current && trimmed !== '') {
+      const chatMessage = {
+        content: trimmed,
+        type: inputMode,
+        // 현재 시간을 ISO 형식으로 설정 (백엔드에서 덮어쓸 수도 있지만 프론트에서도 설정)
+        sendAt: new Date().toISOString(),
+        ...(inputMode === 'CODE' && { language })
+      };
+      stompClientRef.current.send(`/chat/send-message/${roomId}`, {}, JSON.stringify(chatMessage));
+      setContent('');
+      setInputMode('TEXT');
+    }
+  };
 
-const handleSearch = async (keyword, page = 0) => {
-  setIsSearching(true);
-  setShowSearchSidebar(true);
-  setSearchKeyword(keyword);
-  setErrorMessage(null); // 이전 에러 메시지 초기화
-
-  try {
-    const response = await fetch(
-      `http://localhost:8080/chat/search/${roomId}?keyword=${keyword}&page=${page}`, {
-        credentials: 'include'
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || '검색 중 알 수 없는 오류가 발생했습니다.');
+  const handleSearch = async (keyword, page = 0) => {
+    // Check if roomId is defined before proceeding
+    if (!roomId) {
+      setErrorMessage('채팅방 ID가 유효하지 않습니다.');
+      return;
     }
 
-    const data = await response.json();
-    setSearchResults(data.content);
-    setCurrentPage(data.pageable.pageNumber);
-    setTotalPages(data.totalPages);
-    setTotalElements(data.totalElements);
-  } catch (err) {
-    console.error('Search error:', err);
-    setErrorMessage(err.message);
-  } finally {
-    setIsSearching(false);
-  }
-};
+    setIsSearching(true);
+    setShowSearchSidebar(true);
+    setSearchKeyword(keyword);
+    setErrorMessage(null); // 이전 에러 메시지 초기화
 
-  // 날짜를 YYYY-MM-DD 형식으로 변환하는 함수
+    try {
+      // 백엔드 API 엔드포인트 수정 - 작동하는 URL 패턴으로 변경
+      const response = await fetch(
+        `http://localhost:8080/chat/search/${roomId}?keyword=${keyword}&page=${page}&size=20`,
+        {
+          // Add credentials to include cookies for authentication
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Handle non-OK responses
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('로그인이 필요합니다. 인증 후 다시 시도해주세요.');
+        } else if (response.status === 404) {
+          throw new Error('검색 API 경로를 찾을 수 없습니다. 백엔드 API 주소를 확인해주세요.');
+        } 
+        
+        // Safely try to parse error response
+        let errorData;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            errorData = await response.json();
+          } catch (e) {
+            throw new Error(`서버 오류 (${response.status}): JSON 응답을 파싱할 수 없습니다.`);
+          }
+        } else {
+          throw new Error(`서버 오류 (${response.status}): 올바른 형식의 응답이 아닙니다.`);
+        }
+        
+        throw new Error(errorData?.message || '검색 중 알 수 없는 오류가 발생했습니다.');
+      }
+
+      // Parse successful response
+      const data = await response.json();
+      
+      // 검색 결과도 날짜/시간 유효성 검사
+      const validatedResults = (data.content || []).map(msg => {
+        if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
+          return { ...msg, sendAt: new Date().toISOString() };
+        }
+        return msg;
+      });
+      
+      setSearchResults(validatedResults);
+      setCurrentPage(data.pageable?.pageNumber || 0);
+      setTotalPages(data.totalPages || 0);
+      setTotalElements(data.totalElements || 0);
+    } catch (err) {
+      console.error('Search error:', err);
+      setErrorMessage(err.message || '검색 중 오류가 발생했습니다.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 날짜를 YYYY-MM-DD 형식으로 변환하는 함수 (수정됨)
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit'
-    });
+    try {
+      const date = new Date(dateString);
+      
+      // 유효한 날짜인지 확인 (1970년은 유효하지 않은 것으로 간주)
+      if (isNaN(date.getTime()) || date.getFullYear() === 1970) {
+        return new Date().toLocaleDateString('ko-KR', {
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit'
+        });
+      }
+      
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit'
+      });
+    } catch (error) {
+      console.error('날짜 형식 변환 오류:', error);
+      return new Date().toLocaleDateString('ko-KR', {
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit'
+      });
+    }
+  };
+
+  // 시간을 HH:MM 형식으로 변환하는 함수 (수정됨)
+  const formatTime = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      
+      // 유효한 날짜인지 확인
+      if (isNaN(date.getTime()) || date.getFullYear() === 1970) {
+        return new Date().toLocaleTimeString('ko-KR', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true  // 오전/오후 표시 활성화
+        });
+      }
+      
+      return date.toLocaleTimeString('ko-KR', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true  // 오전/오후 표시 활성화
+      });
+    } catch (error) {
+      console.error('시간 형식 변환 오류:', error);
+      return new Date().toLocaleTimeString('ko-KR', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true  // 오전/오후 표시 활성화
+      });
+    }
   };
 
   // 버튼 스타일 공통화
@@ -275,6 +402,7 @@ const handleSearch = async (keyword, page = 0) => {
             width: '38px',
             height: '38px',
             borderRadius: '50%',
+            backgroundColor: '#4a6cf7',
             marginRight: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -310,38 +438,37 @@ const handleSearch = async (keyword, page = 0) => {
                 color: '#718096', 
                 marginLeft: '8px' 
               }}>
-                {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                {formatTime(msg.sendAt)}
               </span>
             </div>
-
+            
             {/* GitHub 메시지 UI */}
             {msg.type === 'GIT' ? (
-              <div style={{
+                <div style={{
                 backgroundColor: '#f6f8fa',
                 borderRadius: '6px',
                 color: '#24292e',
                 display: 'flex'
-              }}>
+                }}>
                 {/* 왼쪽 검정색 선 */}
                 <div style={{
-                  width: '6px',
-                  backgroundColor: '#000',
-                  marginRight: '10px',
-                  borderRadius: '2px'
+                    width: '6px',
+                    backgroundColor: '#000',
+                    marginRight: '10px',
+                    borderRadius: '2px'
                 }} />
-                {/* <div style={{ whiteSpace: 'pre-line', padding: '10px' }}>{msg.content}</div> */}
                 <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', padding: '10px' }}>
-                  <strong style={{ display: 'block', marginBottom: '6px' }}>
+                    <strong style={{ display: 'block', marginBottom: '6px' }}>
                     {msg.content.split('\n')[0]}
-                  </strong>
-                  {msg.content.split('\n').slice(1).map((line, i) => (
+                    </strong>
+                    {msg.content.split('\n').slice(1).map((line, i) => (
                     <React.Fragment key={i}>
-                      {renderWithLink(line)}
-                      <br />
+                        {renderWithLink(line)}
+                        <br />
                     </React.Fragment>
-                  ))}
+                    ))}
                 </div>
-              </div>
+                </div>
             ): msg.type === 'CODE' || msg.content.startsWith('```') ? (
               <div style={{ 
                 borderRadius: '6px',
@@ -360,7 +487,7 @@ const handleSearch = async (keyword, page = 0) => {
                 color: '#4a5568',
                 wordBreak: 'break-word'
               }}>
-                <div style={{ whiteSpace: 'pre-line' }}>{msg.content}</div>
+                {msg.content}
               </div>
             )}
           </div>
@@ -385,7 +512,7 @@ const handleSearch = async (keyword, page = 0) => {
       <Header></Header>
 
       {/* 본문 전체 영역 */}
-      <div style={{ flex:1, display: 'flex', overflow: 'hidden', padding: '16px' }}>
+      <div style={{ flex:1, display: 'flex', overflow: 'hidden' }}>
         <Sidebar />
 
         {/* Chat area */}

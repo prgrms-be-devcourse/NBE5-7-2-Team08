@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 //강현님꺼
 public class ChatRoomDetailResponse {
 
+	private Long roomId;
+
 	private String roomName;
 
 	private Long ownerId;

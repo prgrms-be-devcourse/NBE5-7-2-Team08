@@ -2,31 +2,38 @@ import React from 'react';
 import 'highlight.js/styles/github.css';
 
 const SearchSidebar = ({ 
-  searchKeyword, 
-  searchResults, 
-  isSearching, 
+  searchKeyword,
+  searchResults,
+  isSearching,
   errorMessage,
-  currentPage, 
+  currentPage,
   totalPages,
   totalElements,
-  onClose, 
-  onPageChange 
+  onClose,
+  onPageChange
 }) => {
+  // 페이지당 10개씩 표시
+  const itemsPerPage = 10;
+  
+  // 총 페이지 수 계산 (10개씩 끊어서)
+  const calculatedTotalPages = Math.ceil(totalElements / itemsPerPage);
+  
   return (
-    <div style={{ 
-      width: '280px',
+    <div className="search-sidebar" style={{ 
+      width: '350px', // 더 넓게 수정
       marginLeft: '20px',
       backgroundColor: '#fff',
-      padding: '15px',
       borderRadius: '8px',
-      overflowY: 'auto',
-      boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)'
+      boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%' // 전체 높이 사용
     }}>
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '15px', 
+        alignItems: 'center',
+        padding: '15px',
         borderBottom: '1px solid #eee', 
         paddingBottom: '10px' 
       }}>
@@ -45,6 +52,20 @@ const SearchSidebar = ({
         </button>
       </div>
 
+      <div style={{ 
+        fontSize: '14px', 
+        color: '#666', 
+        padding: '10px 15px 5px',
+        borderBottom: '1px solid #f0f0f0'
+      }}>
+        최신순으로 정렬됨 • 전체 {totalElements}개의 결과
+      </div>
+
+      <div style={{ 
+        overflowY: 'auto', 
+        flex: 1,
+        padding: '0 15px' 
+      }}>
       {isSearching ? (
         <div style={{ textAlign: 'center', padding: '20px' }}>검색 중...</div>
       ) : errorMessage ? (
@@ -54,7 +75,8 @@ const SearchSidebar = ({
           color: '#d93025', 
           backgroundColor: '#fce8e6', 
           borderRadius: '4px',
-          border: '1px solid #f7c6c5'
+          border: '1px solid #f7c6c5',
+          margin: '15px 0'
         }}>
           {errorMessage}
         </div>
@@ -62,31 +84,27 @@ const SearchSidebar = ({
         <div style={{ textAlign: 'center', padding: '20px' }}>검색 결과가 없습니다.</div>
       ) : (
         <>
-          <div style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
-            최신순으로 정렬됨 • 전체 {totalElements}개의 결과
-          </div>
-
           {searchResults.map((msg, index) => (
             <div key={index} style={{ 
               marginBottom: '15px', 
-              padding: '10px', 
+              padding: '15px', // 패딩 증가
               backgroundColor: '#f8f8f8', 
               borderRadius: '5px',
               border: '1px solid #eee'
             }}>
               <div style={{ display: 'flex' }}>
                 <div style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '40px', // 크기 증가
+                  height: '40px', // 크기 증가
                   borderRadius: '50%',
                   backgroundColor: '#7ec8e3',
-                  marginRight: '10px',
+                  marginRight: '12px',
                   flexShrink: 0
                 }} />
                 <div style={{ width: '100%' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                    <strong style={{ fontSize: '15px', color: '#333' }}>{msg.senderName}</strong>
-                    <span style={{ fontSize: '11px', color: '#888' }}>
+                    <strong style={{ fontSize: '16px', color: '#333' }}>{msg.senderName}</strong>
+                    <span style={{ fontSize: '12px', color: '#888' }}>
                       {new Date(msg.sendAt).toLocaleString('ko-KR', { 
                         year: 'numeric', 
                         month: '2-digit', 
@@ -96,65 +114,84 @@ const SearchSidebar = ({
                       })}
                     </span>
                   </div>
-                  <div style={{ fontSize: '13px', marginTop: '5px', color: '#333' }}>
-                    {msg.type === 'CODE' || msg.content.startsWith('```') ? (
-                      <div style={{ backgroundColor: '#f1f3f4', padding: '6px', borderRadius: '4px', fontFamily: 'monospace' }}>
-                        <code style={{ whiteSpace: 'pre-wrap', fontSize: '12px' }}>
-                          {msg.content.replace(/```/g, '')}
+                  <div style={{ 
+                    fontSize: '14px', 
+                    marginTop: '8px', 
+                    color: '#333',
+                    maxHeight: '200px', // 최대 높이 제한
+                    overflowY: 'auto' // 내용이 많으면 스크롤
+                  }}>
+                    {msg.type === 'CODE' || (msg.content && msg.content.startsWith('```')) ? (
+                      <div style={{ 
+                        backgroundColor: '#f1f3f4', 
+                        padding: '10px', 
+                        borderRadius: '4px', 
+                        fontFamily: 'monospace',
+                        maxHeight: '180px',
+                        overflowY: 'auto'
+                      }}>
+                        <code style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>
+                          {msg.content ? msg.content.replace(/```/g, '') : ''}
                         </code>
                       </div>
                     ) : (
-                      <div>{msg.content}</div>
+                      <div style={{ lineHeight: '1.5' }}>{msg.content}</div>
                     )}
                   </div>
                 </div>
               </div>
             </div>
           ))}
-
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-              <button
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 0}
-                style={{ 
-                  margin: '0 5px', 
-                  padding: '5px 10px', 
-                  cursor: currentPage === 0 ? 'default' : 'pointer', 
-                  opacity: currentPage === 0 ? 0.5 : 1,
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                  backgroundColor: 'white'
-                }}
-              >
-                이전
-              </button>
-              <span style={{ 
-                margin: '0 10px', 
-                display: 'flex', 
-                alignItems: 'center',
-                fontSize: '14px'
-              }}>
-                {currentPage + 1} / {totalPages}
-              </span>
-              <button
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages - 1}
-                style={{ 
-                  margin: '0 5px', 
-                  padding: '5px 10px', 
-                  cursor: currentPage === totalPages - 1 ? 'default' : 'pointer', 
-                  opacity: currentPage === totalPages - 1 ? 0.5 : 1,
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                  backgroundColor: 'white'
-                }}
-              >
-                다음
-              </button>
-            </div>
-          )}
         </>
+      )}
+      </div>
+
+      {calculatedTotalPages > 1 && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          padding: '15px',
+          borderTop: '1px solid #f0f0f0'
+        }}>
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 0}
+            style={{ 
+              margin: '0 5px', 
+              padding: '8px 15px',
+              cursor: currentPage === 0 ? 'default' : 'pointer', 
+              opacity: currentPage === 0 ? 0.5 : 1,
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              backgroundColor: 'white'
+            }}
+          >
+            이전
+          </button>
+          <span style={{ 
+            margin: '0 10px', 
+            display: 'flex', 
+            alignItems: 'center',
+            fontSize: '14px'
+          }}>
+            {currentPage + 1} / {calculatedTotalPages}
+          </span>
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === calculatedTotalPages - 1}
+            style={{ 
+              margin: '0 5px', 
+              padding: '8px 15px',
+              cursor: currentPage === calculatedTotalPages - 1 ? 'default' : 'pointer', 
+              opacity: currentPage === calculatedTotalPages - 1 ? 0.5 : 1,
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              backgroundColor: 'white'
+            }}
+          >
+            다음
+          </button>
+        </div>
       )}
     </div>
   );
