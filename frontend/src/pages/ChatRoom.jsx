@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import SockJS from 'sockjs-client';
-import { Stomp } from '@stomp/stompjs';
+import { Client } from '@stomp/stompjs';
 import { useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
@@ -16,7 +16,7 @@ const ChatRoom = () => {
   const navigate = useNavigate(); // Added navigate hook
   const [inputMode, setInputMode] = useState("TEXT");
   const [language, setLanguage] = useState("java");
-  const stompClientRef = useRef(null);
+  
   const messagesEndRef = useRef(null);
   const isComposingRef = useRef(false);
   
@@ -70,6 +70,9 @@ const ChatRoom = () => {
     }
   };
 
+  const stompClientRef = useRef(null);
+  const subscriptionRef = useRef(null);
+  
   useEffect(() => {
       // Make sure roomId exists before connecting
       if (!roomId) {
@@ -77,31 +80,50 @@ const ChatRoom = () => {
         navigate("/"); // Redirect to home if no room ID is found
         return;
       }
-    
-      // WebSocket 연결 설정
-      const socket = new SockJS('http://localhost:8080/ws');
-      const stompClient = Stomp.over(socket);
-      
-      stompClient.heartbeat.outgoing = 10000; // 내가 서버에게 보내는 ping 주기
-      stompClient.heartbeat.incoming = 10000; // 서버가 나에게 보내야 할 ping 주기
 
-      stompClient.reconnect_delay = 5000; // 연결 끊길 경우 5초 후 재연결
-  
-      stompClient.connect({}, () => {
-        console.log('Connected to WebSocket');
-        stompClient.subscribe(`/topic/chat/${roomId}`, (message) => {
-          const received = JSON.parse(message.body);
-          // 수신된 메시지의 sendAt이 유효한지 확인하고, 아니면 현재 시간으로 설정
-          if (!received.sendAt || new Date(received.sendAt).getFullYear() === 1970) {
-            received.sendAt = new Date().toISOString();
+      const client = new Client({
+        webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+        reconnectDelay: 1000, // 5초 후 자동 재연결
+        heartbeatIncoming: 10000, // 서버에서 오는 ping
+        heartbeatOutgoing: 10000, // 클라이언트가 서버로 보내는 ping
+        debug: (str) => console.log(`[STOMP] ${str}`),
+
+        onConnect: () => {
+          console.log('✅ Connected to WebSocket');
+
+          // 기존 구독 제거
+          if (subscriptionRef.current) {
+            subscriptionRef.current.unsubscribe();
+            console.log("🔁 Previous subscription cleared.");
           }
-          setMessages((prev) => [...prev, received]);
-        });
+
+
+          subscriptionRef.current= client.subscribe(`/topic/chat/${roomId}`, (message) => {
+            try{
+              const received = JSON.parse(message.body);
+              if (!received.sendAt || new Date(received.sendAt).getFullYear() === 1970) {
+                received.sendAt = new Date().toISOString();
+              }
+              setMessages((prev) => [...prev, received]);
+            } catch(e){
+              console.eerror("📛 Failed to parse incoming message", e);
+            }
+          });
+        },
+
+        onWebSocketClose: () => {
+          console.warn("❌ WebSocket closed. Will attempt to reconnect...");
+        },
+
+        onStompError: (frame) => {
+          console.error("💥 STOMP error:", frame.headers['message']);
+        }
       });
 
-      stompClientRef.current = stompClient;
-  
-      // 채팅방의 메시지 초기화
+      client.activate(); // 연결 시작
+      stompClientRef.current = client;
+
+      // 최초 메세지 가져오기
       const fetchMessages = async () => {
         try {
           // 컨트롤러 엔드포인트에 맞게 URL 수정
@@ -140,15 +162,20 @@ const ChatRoom = () => {
   
       fetchMessages(); // 컴포넌트 마운트 시 메시지 가져오기
   
-      stompClientRef.current = stompClient;
-  
       return () => {
-        if (stompClientRef.current) {
-          stompClientRef.current.disconnect();
-          console.log('Disconnected');
+        console.log("🧹 Cleaning up WebSocket...");
+        if (subscriptionRef.current) {
+          subscriptionRef.current.unsubscribe();
+          console.log("🔌 Subscription unsubscribed.");
+        }
+        if (client && client.active) {
+          client.deactivate().then(() => {
+            console.log("🛑 Disconnected from WebSocket");
+          });
         }
       };
-    }, [roomId, navigate]);
+    }, [roomId]);
+
 
   // 메시지가 업데이트될 때마다 아래로 스크롤
   useEffect(() => {
@@ -194,7 +221,9 @@ const ChatRoom = () => {
     const trimmed = String(text).trim();
     //지은 끝
 
-    if (stompClientRef.current && trimmed !== '') {
+    const client = stompClientRef.current;
+
+    if (client && client.connected && trimmed !== '') {
       const chatMessage = {
         content: trimmed,
         type: inputMode,
@@ -202,9 +231,17 @@ const ChatRoom = () => {
         sendAt: new Date().toISOString(),
         ...(inputMode === 'CODE' && { language })
       };
-      stompClientRef.current.send(`/chat/send-message/${roomId}`, {}, JSON.stringify(chatMessage));
+
+      client.publish({
+        destination: `/chat/send-message/${roomId}`,
+        body: JSON.stringify(chatMessage),
+        headers: {}
+      });
+
       setContent('');
       setInputMode('TEXT');
+    }else{
+      console.warn('🛑 STOMP 연결되지 않음. 메시지를 보낼 수 없습니다.');
     }
   };
 
@@ -749,7 +786,7 @@ const ChatRoom = () => {
               />
 
               <button
-                onClick={sendMessage}
+                onClick={() => sendMessage()}
                 style={{
                   ...buttonStyle,
                   height: '80px'
