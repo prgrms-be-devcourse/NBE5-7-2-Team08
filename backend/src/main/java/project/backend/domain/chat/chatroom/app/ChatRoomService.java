@@ -112,7 +112,8 @@ public class ChatRoomService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<ChatRoomDetailResponse> findAllByMemberId(Long memberId, Pageable pageable) {
+	public Page<ChatRoomDetailResponse> findChatRoomsByParticipantId(Long memberId,
+		Pageable pageable) {
 
 		Page<ChatRoom> chatRooms = chatRoomRepository.findByParticipants_Participant_Id(memberId,
 			pageable);

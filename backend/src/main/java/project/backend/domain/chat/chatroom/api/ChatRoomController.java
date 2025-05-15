@@ -102,7 +102,7 @@ public class ChatRoomController {
 		}
 		Long memberId = memberDetails.getId();
 		// 채팅방 목록 리스트로 가져오기
-		return chatRoomService.findAllByMemberId(memberId, pageable);
+		return chatRoomService.findChatRoomsByParticipantId(memberId, pageable);
 	}
 
 
