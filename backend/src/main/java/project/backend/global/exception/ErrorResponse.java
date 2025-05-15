@@ -23,7 +23,7 @@ public class ErrorResponse {
 
     public static ErrorResponse toResponse(FieldError error) {
         return ErrorResponse.builder()
-                .code(error.getField() + "-" + error.getCode())
+                .code("VALIDATION_FAILED")
                 .message(error.getDefaultMessage())
                 .build();
     }

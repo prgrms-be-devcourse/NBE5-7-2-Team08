@@ -22,20 +22,32 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        FieldError fieldError = ex.getBindingResult().getFieldError();
 
-        if (fieldError == null) {
+        //필드 에러
+        if (!ex.getBindingResult().getFieldErrors().isEmpty()) {
+            FieldError fieldError = ex.getBindingResult().getFieldErrors().getFirst();
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.toResponse(fieldError));
+        }
+
+        //객체 에러(@AssertTrue 같은거)
+        if (!ex.getBindingResult().getGlobalErrors().isEmpty()) {
+            String message = ex.getBindingResult().getGlobalErrors().getFirst().getDefaultMessage();
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.builder()
-                            .code("unknown")
-                            .message("알 수 없는 이유로 유효성 검증에 실패했습니다.")
+                            .code("VALIDATION_FAILED")
+                            .message(message)
                             .build());
         }
 
-        ErrorResponse response = ErrorResponse.toResponse(fieldError);
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(response);
+                .body(ErrorResponse.builder()
+                        .code("UNEXPECTED_VALIDATION_FAILED")
+                        .message(ex.getMessage())
+                        .build());
     }
 }
