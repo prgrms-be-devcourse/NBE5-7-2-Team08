@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaChevronRight, FaChevronDown, FaUser, FaComments, FaRegCommentDots, FaPlus } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { FaChevronRight, FaChevronDown, FaUser, FaCrown, FaComments, FaRegCommentDots, FaPlus } from 'react-icons/fa';
 
 const Sidebar = () => {
   const navigate = useNavigate();
+  const { roomId } = useParams();
   const [expandedRoom, setExpandedRoom] = useState(null);
+  const [chatRooms, setChatRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [roomName, setRoomName] = useState('');
@@ -13,13 +16,38 @@ const Sidebar = () => {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
 
-  const chatRooms = [
-    { id: 1, name: '2차 프로젝트', participants: ['데브코스'] },
-    { id: 4, name: '채팅 프로젝트', participants: ['지은', '창인', '문성', '강현'] }
-  ];
+  // 채팅방 목록 가져오기
+  useEffect(() => {
+    const fetchChatRooms = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/chat-rooms', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        
+        if (!res.ok) throw new Error('채팅방 목록을 가져오지 못했습니다.');
+        
+        const data = await res.json();
+        setChatRooms(data);
+        
+        // 현재 열려있는 채팅방이 있으면 확장
+        if (roomId) {
+          setExpandedRoom(Number(roomId));
+        }
+      } catch (err) {
+        console.error('채팅방 목록 로딩 오류:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChatRooms();
+  }, [roomId]);
 
   const toggleRoom = (id) => {
     setExpandedRoom(prev => prev === id ? null : id);
+    navigate(`/chat/${id}`);
   };
 
   const handleCreate = async (e) => {
@@ -69,29 +97,62 @@ const Sidebar = () => {
       <div style={{ width: '200px', height: '100%', justifyContent: 'space-between', backgroundColor: '#2588F1', color: 'white', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
         <div>
           <h3 style={{ marginTop: '20px', marginBottom: '20px', marginLeft: '10px' }}>Chat Rooms</h3>
-          {chatRooms.map(room => (
-            <div key={room.id} style={{ padding: '10px' }}>
-              <div
-                style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                onClick={() => toggleRoom(room.id)}
-              >
-                <FaRegCommentDots style={{ marginRight: '8px' }} />
-                <span style={{ flex: 1 }}>{room.name}</span>
-                {expandedRoom === room.id ? <FaChevronDown /> : <FaChevronRight />}
-              </div>
-
-              {expandedRoom === room.id && (
-                <div style={{ paddingLeft: '20px', marginTop: '5px' }}>
-                  {room.participants.map((p, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', fontSize: '14px' }}>
-                      <FaUser style={{ marginRight: '6px' }} />
-                      {p}
-                    </div>
-                  ))}
+          
+          {loading ? (
+            <div style={{ padding: '10px', textAlign: 'center' }}>로딩 중...</div>
+          ) : chatRooms.length === 0 ? (
+            <div style={{ padding: '10px', textAlign: 'center' }}>채팅방이 없습니다</div>
+          ) : (
+            chatRooms.map(room => (
+              <div key={room.id} style={{ padding: '10px' }}>
+                <div
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    cursor: 'pointer',
+                    backgroundColor: Number(roomId) === room.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    padding: '5px',
+                    borderRadius: '4px'
+                  }}
+                  onClick={() => toggleRoom(room.id)}
+                >
+                  <FaRegCommentDots style={{ marginRight: '8px' }} />
+                  <span style={{ flex: 1 }}>{room.name}</span>
+                  {expandedRoom === room.id ? <FaChevronDown /> : <FaChevronRight />}
                 </div>
-              )}
-            </div>
-          ))}
+
+                {expandedRoom === room.id && (
+                  <div style={{ paddingLeft: '20px', marginTop: '5px' }}>
+                    {/* 방장 표시 */}
+                    <div 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        marginBottom: '5px', 
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        color: '#FFD700'
+                      }}
+                    >
+                      <FaCrown style={{ marginRight: '6px' }} />
+                      {room.owner?.nickname || '알 수 없음'}
+                    </div>
+                    
+                    {/* 참가자 목록 */}
+                    {room.participants && room.participants
+                      .filter(p => !room.owner || p.id !== room.owner.id) // 방장 제외
+                      .map((p, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', fontSize: '14px' }}>
+                          <FaUser style={{ marginRight: '6px' }} />
+                          {p.nickname || '알 수 없음'}
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -156,7 +217,7 @@ const Sidebar = () => {
               boxSizing: 'border-box'
             }}
           >
-            <h2 style={{ margin: '0 0 16px' }}>New Chat Room</h2>
+            <h2 style={{ margin: '0 0 16px' }}>채팅방 생성</h2>
             <form onSubmit={handleCreate}>
               <input
                 type="text"
@@ -232,7 +293,7 @@ const Sidebar = () => {
               boxSizing: 'border-box'
             }}
           >
-            <h2 style={{ margin: '0 0 16px' }}>Join Chat Room</h2>
+            <h2 style={{ margin: '0 0 16px' }}>채팅방 참가</h2>
             <form onSubmit={handleJoin}>
               <input
                 type="text"

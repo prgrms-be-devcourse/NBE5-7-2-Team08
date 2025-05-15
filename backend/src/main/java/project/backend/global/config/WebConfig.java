@@ -20,7 +20,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry
-                .addResourceHandler("/profile/**")          // 클라이언트 요청 URL
+                .addResourceHandler("profile/**")          // 클라이언트 요청 URL
                 .addResourceLocations("file:./profiles/");   // 실제 서버 폴더 경로
     }
 }

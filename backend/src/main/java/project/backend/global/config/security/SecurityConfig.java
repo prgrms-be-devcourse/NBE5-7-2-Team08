@@ -31,21 +31,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .formLogin(form -> {
-                    form.loginPage("/login")
-                            .usernameParameter("email")
-                            .passwordParameter("password")
-                            .failureHandler(failureHandler)
-                            .successHandler(successHandler)
-                            .permitAll();
-                })
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> {
-                    auth
-                            .requestMatchers("/signup", "/login", "/")
-                            .anonymous()
-
+            .formLogin(form -> {
+                form.loginPage("/login")
+                    .usernameParameter("email")
+                    .passwordParameter("password")
+                    .failureHandler(failureHandler)
+                    .successHandler(successHandler)
+                    .permitAll();
+            })
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
+            .authorizeHttpRequests(auth -> {
+                auth
+                    .requestMatchers("/signup", "/login", "/", "/github/**")
+                    .anonymous()
                             .requestMatchers("/chat-rooms/join").permitAll()
                             .anyRequest()
                             .authenticated();
@@ -59,5 +58,6 @@ public class SecurityConfig {
                 .exceptionHandling(exception ->
                         exception.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .build();
+
     }
 }

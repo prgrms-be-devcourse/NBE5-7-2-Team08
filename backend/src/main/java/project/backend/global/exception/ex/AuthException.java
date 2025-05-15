@@ -13,4 +13,12 @@ public class AuthException extends BaseException {
 		this.roomId = roomId;
 		this.inviteCode = inviteCode;
 	}
+
+	public AuthException(AuthErrorCode errorCode) {
+		super(errorCode);
+		this.roomId = null;
+		this.inviteCode = null;
+	}
+
 }
+

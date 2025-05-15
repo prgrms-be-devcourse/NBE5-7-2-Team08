@@ -1,8 +1,8 @@
 package project.backend.domain.chat.chatroom.api;
 
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
@@ -23,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
 import project.backend.domain.member.dto.MemberDetails;
@@ -38,7 +38,6 @@ public class ChatRoomController {
 	private final ChatRoomService chatRoomService;
 
 	@PostMapping
-	@ResponseBody
 	@ResponseStatus(HttpStatus.CREATED)
 	public ChatRoomSimpleResponse createChatRoom(@Valid @RequestBody ChatRoomRequest request,
 		@AuthenticationPrincipal MemberDetails memberDetails) {
@@ -69,13 +68,26 @@ public class ChatRoomController {
 		return new RecentChatRoomResponse(roomId, inviteCode);
 	}
 
-	@GetMapping // URL 매핑 -> 추후 인증객체 id로 조회 예정
-	public Page<ChatRoomDetailResponse> findAllChatRooms(@PathVariable Long memberId,
+	@GetMapping
+	public Page<ChatRoomDetailResponse> findAllChatRooms(
+		@AuthenticationPrincipal MemberDetails memberDetails,
 		@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-		log.info("chatRoom 조회 요청 들어옴: memberId = " + memberId);
+		if (memberDetails == null) {
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+		}
+		Long memberId = memberDetails.getId();
 		// 채팅방 목록 리스트로 가져오기
-		return chatRoomService.findAllByMemberId(memberId, pageable);
+		return chatRoomService.findChatRoomsByParticipantId(memberId, pageable);
 	}
 
+	// 자신이 만든 채팅방 가져오기 -> 주후 인증객체 id로 조회가능 할듯(Authentication)
+	@GetMapping("/mine/{memberId}")
+	public Page<MyChatRoomResponse> findMyAllChatRooms(@PathVariable Long memberId,
+		@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+		log.info("자신이 만든 채팅방 요청: memberId = {}", memberId);
+		return chatRoomService.findAllRoomsByOwnerId(memberId, pageable);
+
+	}
 
 }
+

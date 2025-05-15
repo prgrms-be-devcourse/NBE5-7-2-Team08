@@ -6,12 +6,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
+import project.backend.domain.chat.chatroom.dto.*;
 
-import project.backend.domain.chat.chatroom.dto.ChatParticipantResponse;
-import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
-import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
-import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.imagefile.ImageFile;
@@ -19,6 +18,7 @@ import project.backend.domain.member.entity.Member;
 
 @Component
 public class ChatRoomMapper {
+
 
 	// 강현님: 상세 응답 변환
 	public static ChatRoomDetailResponse toDetailResponse(ChatRoom chatRoom) {
@@ -60,6 +60,7 @@ public class ChatRoomMapper {
 		);
 	}
 
+
 	// 임창인 엔티티 변환
 	public ChatRoom toEntity(ChatRoomRequest dto, Member owner) {
 		return ChatRoom.builder()
@@ -70,6 +71,16 @@ public class ChatRoomMapper {
 			.owner(owner)
 			.build();
 	}
+
+	//문성이꺼
+	public static MyChatRoomResponse toProfileResponse(ChatRoom chatRoom) {
+		return MyChatRoomResponse.builder()
+			.roomId(chatRoom.getId())
+			.roomName(chatRoom.getName())
+			.participantCount(chatRoom.getParticipants().size())
+			.build();
+	}
+
 
 	private String generateInviteCode() {
 		return UUID.randomUUID().toString();
