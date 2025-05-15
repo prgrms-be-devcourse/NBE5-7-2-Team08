@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'; //
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
 import Sidebar from '../components/SideBar';
@@ -22,8 +22,50 @@ const ChatRoom = () => {
 
 
   const [showModal, setShowModal] = useState(false);
-  const [showUrlCopiedModal, setShowUrlCopiedModal] = useState(false); // 우클릭 초대 URL 복사용
-  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 }); // 모달 위치 저장
+  const [showUrlCopiedModal, setShowUrlCopiedModal] = useState(false);
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+
+  const navigate = useNavigate();           // ← 네비게이트 훅
+  const location = useLocation();           // ← 현재 URL 가져오기
+  const joinedOnceRef = useRef(false);
+
+  // 참가 완료 여부
+  const [joined, setJoined] = useState(false);
+
+  useEffect(() => {
+    if (joinedOnceRef.current) return;   // 이미 한 번 호출됐다면 스킵
+    joinedOnceRef.current = true;
+
+    const checkAndJoin = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/chat-rooms/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',                    // ← 세션(cookie) 포함
+          body: JSON.stringify({ inviteCode })
+        });
+
+        if (res.status === 401) {
+          // 인증 안 됐으면 로그인 페이지로
+          // 로그인 후 이 URL로 돌아오게 redirect 쿼리 붙임
+          const redirectPath = `/chat/${roomId}/${inviteCode}`;
+          navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+
+          return;
+        }
+        if (!res.ok) throw new Error('채팅방 입장 실패');
+
+        // join 성공 → DB에 참가자 저장됨
+        setJoined(true);
+      } catch (err) {
+        console.error(err);
+
+      }
+    };
+    checkAndJoin();
+  }, [inviteCode, location.pathname, navigate]);
+
+
 
   const handleContextMenu = (e) => {
     e.preventDefault();
@@ -89,6 +131,9 @@ const ChatRoom = () => {
   };
 
   useEffect(() => {
+    //joined 되면 웹소캣 연결
+    if (!joined) return;
+
     const socket = new SockJS('http://localhost:8080/ws');
     const stompClient = Stomp.over(socket);
 
@@ -359,7 +404,7 @@ const ChatRoom = () => {
           boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
           zIndex: 2000
         }}>
-         공유 초대 링크가 복사되었습니다
+          공유 초대 링크가 복사되었습니다
         </div>
       )}
 

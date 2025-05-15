@@ -84,7 +84,7 @@ public class ChatRoomController {
 		if (memberDetails == null) {
 			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
 		}
-
+		log.info("채팅방 입장");
 		return chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
 	}
 
