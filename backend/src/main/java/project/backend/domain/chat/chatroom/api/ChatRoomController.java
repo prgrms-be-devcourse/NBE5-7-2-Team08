@@ -99,7 +99,7 @@ public class ChatRoomController {
 	@GetMapping
 	public Page<ChatRoomDetailResponse> findAllChatRooms(
 		@AuthenticationPrincipal MemberDetails memberDetails,
-		@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+		@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		if (memberDetails == null) {
 			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
 		}
@@ -108,13 +108,13 @@ public class ChatRoomController {
 		return chatRoomService.findChatRoomsByParticipantId(memberId, pageable);
 	}
 
-  // 자신이 만든 채팅방 가져오기 -> 주후 인증객체 id로 조회가능 할듯(Authentication)
-  @GetMapping("/mine/{memberId}")
-  public Page<MyChatRoomResponse> findMyAllChatRooms(@PathVariable Long memberId,
-                                                     @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-    log.info("자신이 만든 채팅방 요청: memberId = {}", memberId);
-    return chatRoomService.findAllRoomsByOwnerId(memberId, pageable);
+	// 자신이 만든 채팅방 가져오기 -> 주후 인증객체 id로 조회가능 할듯(Authentication)
+	@GetMapping("/mine/{memberId}")
+	public Page<MyChatRoomResponse> findMyAllChatRooms(@PathVariable Long memberId,
+		@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+		log.info("자신이 만든 채팅방 요청: memberId = {}", memberId);
+		return chatRoomService.findAllRoomsByOwnerId(memberId, pageable);
 
-  }
+	}
 
 }

@@ -1,5 +1,6 @@
 package project.backend.domain.chat.chatmessage.app;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,45 +30,57 @@ import project.backend.global.exception.errorcode.MemberErrorCode;
 @RequiredArgsConstructor
 public class ChatMessageService {
 
-    private final ChatMessageRepository chatMessageRepository;
-    private final ChatRoomRepository chatRoomRepository;
-    private final MemberRepository memberRepository;
-    private final ChatParticipantRepository chatParticipantRepository;
+	private final ChatMessageRepository chatMessageRepository;
+	private final ChatRoomRepository chatRoomRepository;
+	private final MemberRepository memberRepository;
+	private final ChatParticipantRepository chatParticipantRepository;
 
-    private final ChatMessageMapper messageMapper;
+	private final ChatMessageMapper messageMapper;
 
-    @Transactional
-    public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String email) {
+	@Transactional
+	public ChatMessageResponse save(Long roomId, ChatMessageRequest request, String email) {
 
-        Member sender = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+		Member sender = memberRepository.findByEmail(email)
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        ChatRoom room = chatRoomRepository.findById(roomId)
-            .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+		ChatRoom room = chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
-        ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
-                sender, room)
-            .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
+		ChatParticipant participant = chatParticipantRepository.findByParticipantAndChatRoom(
+				sender, room)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
-        ChatMessage message = messageMapper.toEntity(room, participant, request);
-        chatMessageRepository.save(message);
+		ChatMessage message = messageMapper.toEntity(room, participant, request);
+		chatMessageRepository.save(message);
 
-        return messageMapper.toResponse(message);
-    }
+		return messageMapper.toResponse(message);
+	}
 
-    @Transactional(readOnly = true)
-    public Page<ChatMessageSearchResponse> searchMessages(Long roomId,
-        ChatMessageSearchRequest request) {
-        if (request.getKeyword() == null || request.getKeyword().trim().length() < 2) {
-            throw new ChatMessageException(ChatMessageErrorCode.INVALID_KEYWORD_LENGTH);
-        }
-        PageRequest pageable = PageRequest.of(request.getPage(), request.getPageSize());
+	@Transactional(readOnly = true)
+	public Page<ChatMessageSearchResponse> searchMessages(Long roomId,
+		ChatMessageSearchRequest request) {
+		if (request.getKeyword() == null || request.getKeyword().trim().length() < 2) {
+			throw new ChatMessageException(ChatMessageErrorCode.INVALID_KEYWORD_LENGTH);
+		}
+		PageRequest pageable = PageRequest.of(request.getPage(), request.getPageSize());
 
-        Page<ChatMessage> resultPage = chatMessageRepository.searchByKeywordAndRoomId(
-            request.getKeyword(),
-            roomId,
-            pageable
-        );
-        return resultPage.map(messageMapper::toSearchResponse);
-    }
+		Page<ChatMessage> resultPage = chatMessageRepository.searchByKeywordAndRoomId(
+			request.getKeyword(),
+			roomId,
+			pageable
+		);
+		return resultPage.map(messageMapper::toSearchResponse);
+	}
+
+	@Transactional(readOnly = true)
+	public List<ChatMessageResponse> getMessagesByRoomId(Long roomId) {
+		chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+
+		List<ChatMessage> messages = chatMessageRepository.findByChatRoom_IdOrderBySendAtAsc(
+			roomId);
+		return messages.stream()
+			.map(messageMapper::toResponse)
+			.toList();
+	}
 }
