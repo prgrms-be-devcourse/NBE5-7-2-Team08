@@ -3,6 +3,7 @@ package project.backend.global.config;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
@@ -19,6 +20,7 @@ import project.backend.domain.member.entity.Member;
 import java.util.List;
 
 @Component
+@Profile("local")
 @RequiredArgsConstructor
 public class DefaultProfileInitializer {
 
