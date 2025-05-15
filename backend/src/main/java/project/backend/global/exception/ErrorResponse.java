@@ -3,6 +3,8 @@ package project.backend.global.exception;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.FieldError;
+import project.backend.domain.imagefile.ImageFile;
 import project.backend.global.exception.errorcode.ErrorCode;
 
 @Builder
@@ -14,9 +16,16 @@ public class ErrorResponse {
 
     public static ErrorResponse toResponse(ErrorCode errorCode) {
         return ErrorResponse.builder()
-            .code(errorCode.getCode())
-            .message(errorCode.getMessage())
-            .build();
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build();
+    }
+
+    public static ErrorResponse toResponse(FieldError error) {
+        return ErrorResponse.builder()
+                .code(error.getField() + "-" + error.getCode())
+                .message(error.getDefaultMessage())
+                .build();
     }
 
 }

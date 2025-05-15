@@ -1,13 +1,11 @@
 package project.backend.global.exception;
 
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import project.backend.global.exception.errorcode.ErrorCode;
-import project.backend.global.exception.errorcode.MemberInputInvalidErrorCode;
 import project.backend.global.exception.ex.BaseException;
 
 @RestControllerAdvice
@@ -26,25 +24,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         FieldError fieldError = ex.getBindingResult().getFieldError();
 
-
         if (fieldError == null) {
-            ErrorCode errorCode = MemberInputInvalidErrorCode.INVALID_UNKNOWN;
-
             return ResponseEntity
-                    .status(errorCode.getStatus())
-                    .body(ErrorResponse.toResponse(errorCode));
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.builder()
+                            .code("unknown")
+                            .message("알 수 없는 이유로 유효성 검증에 실패했습니다.")
+                            .build());
         }
 
-        ErrorCode errorCode = switch (fieldError.getField()) {
-            case "email" -> MemberInputInvalidErrorCode.INVALID_EMAIL;
-            case "password" -> MemberInputInvalidErrorCode.INVALID_PASSWORD;
-            case "nickname" -> MemberInputInvalidErrorCode.INVALID_NICKNAME;
-            default -> MemberInputInvalidErrorCode.INVALID_UNKNOWN;
-        };
-
-        ErrorResponse response = ErrorResponse.toResponse(errorCode);
+        ErrorResponse response = ErrorResponse.toResponse(fieldError);
         return ResponseEntity
-                .status(errorCode.getStatus())
+                .status(HttpStatus.BAD_REQUEST)
                 .body(response);
     }
 }
