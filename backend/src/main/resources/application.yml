@@ -18,9 +18,6 @@ spring:
         show_sql: true
         format_sql: true
 
-
-
-
 file:
   profile-path: img/
   default-profile: /profile/default-profile.png

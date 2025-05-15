@@ -18,7 +18,7 @@ const ChatRoom = () => {
   const stompClientRef = useRef(null);
   const messagesEndRef = useRef(null);
   const isComposingRef = useRef(false);
-
+  
   // 초대 코드 관련 상태 추가
   const [showNotification, setShowNotification] = useState(false);
 
@@ -38,6 +38,25 @@ const ChatRoom = () => {
   const HighlightedCode = ({ content, language }) => {
     return (
       <Highlight className={language}>{content}</Highlight>
+    );
+  };
+
+  const renderWithLink = (text) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split(urlRegex).map((part, i) =>
+      urlRegex.test(part) ? (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: '#0366d6', textDecoration: 'underline' }}
+        >
+          {part}
+        </a>
+      ) : (
+        part
+      )
     );
   };
 
@@ -136,7 +155,9 @@ const handleSearch = async (keyword, page = 0) => {
 
   try {
     const response = await fetch(
-      `http://localhost:8080/chat/${roomId}/search?keyword=${keyword}&page=${page}`
+      `http://localhost:8080/chat/search/${roomId}?keyword=${keyword}&page=${page}`, {
+        credentials: 'include'
+      }
     );
 
     if (!response.ok) {
@@ -254,7 +275,6 @@ const handleSearch = async (keyword, page = 0) => {
             width: '38px',
             height: '38px',
             borderRadius: '50%',
-            backgroundColor: '#4a6cf7',
             marginRight: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -262,7 +282,12 @@ const handleSearch = async (keyword, page = 0) => {
             color: 'white',
             fontWeight: '600',
             fontSize: '16px',
-            flexShrink: 0
+            flexShrink: 0,
+            backgroundImage: msg.type === 'GIT'
+            ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
+            : undefined,
+            backgroundColor: msg.type === 'GIT' ? 'transparent' : '#4a6cf7',
+            backgroundSize: 'cover'
           }}>
             {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : 'U'}
           </div>
@@ -288,7 +313,36 @@ const handleSearch = async (keyword, page = 0) => {
                 {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
-            {msg.type === 'CODE' || msg.content.startsWith('```') ? (
+
+            {/* GitHub 메시지 UI */}
+            {msg.type === 'GIT' ? (
+              <div style={{
+                backgroundColor: '#f6f8fa',
+                borderRadius: '6px',
+                color: '#24292e',
+                display: 'flex'
+              }}>
+                {/* 왼쪽 검정색 선 */}
+                <div style={{
+                  width: '6px',
+                  backgroundColor: '#000',
+                  marginRight: '10px',
+                  borderRadius: '2px'
+                }} />
+                {/* <div style={{ whiteSpace: 'pre-line', padding: '10px' }}>{msg.content}</div> */}
+                <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', padding: '10px' }}>
+                  <strong style={{ display: 'block', marginBottom: '6px' }}>
+                    {msg.content.split('\n')[0]}
+                  </strong>
+                  {msg.content.split('\n').slice(1).map((line, i) => (
+                    <React.Fragment key={i}>
+                      {renderWithLink(line)}
+                      <br />
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            ): msg.type === 'CODE' || msg.content.startsWith('```') ? (
               <div style={{ 
                 borderRadius: '6px',
                 overflow: 'hidden',
@@ -306,7 +360,7 @@ const handleSearch = async (keyword, page = 0) => {
                 color: '#4a5568',
                 wordBreak: 'break-word'
               }}>
-                {msg.content}
+                <div style={{ whiteSpace: 'pre-line' }}>{msg.content}</div>
               </div>
             )}
           </div>

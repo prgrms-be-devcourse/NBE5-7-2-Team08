@@ -1,18 +1,9 @@
 package project.backend.domain.chat.chatroom.entity;
 
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import jakarta.persistence.*;
@@ -21,7 +12,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.member.entity.Member;
-
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
