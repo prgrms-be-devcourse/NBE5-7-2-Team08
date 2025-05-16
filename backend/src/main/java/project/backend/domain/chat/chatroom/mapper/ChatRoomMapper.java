@@ -78,11 +78,12 @@ public class ChatRoomMapper {
 			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
 			.participantCount(chatRoom.getParticipants().size())
+			.inviteCode(generateInviteCode())
 			.build();
 	}
 
 
-	private String generateInviteCode() {
+	private static String generateInviteCode() {
 		return UUID.randomUUID().toString();
 	}
 }
