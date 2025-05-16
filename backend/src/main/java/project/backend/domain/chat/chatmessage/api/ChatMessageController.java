@@ -44,7 +44,7 @@ public class ChatMessageController {
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "20") int size
 	) {
-		ChatMessageSearchRequest request = ChatMessageSearchRequest.from(keyword, page, size);
+		ChatMessageSearchRequest request = ChatMessageSearchRequest.of(keyword, page, size);
 
 		return chatMessageService.searchMessages(roomId, request);
 	}

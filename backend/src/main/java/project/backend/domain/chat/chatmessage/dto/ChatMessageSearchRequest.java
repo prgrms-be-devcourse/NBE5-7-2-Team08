@@ -13,7 +13,7 @@ public class ChatMessageSearchRequest {
 
 	private int pageSize = 10;
 
-	public static ChatMessageSearchRequest from(String keyword, int page, int pageSize) {
+	public static ChatMessageSearchRequest of(String keyword, int page, int pageSize) {
 		return ChatMessageSearchRequest.builder()
 			.keyword(keyword)
 			.page(page)
