@@ -72,7 +72,8 @@ const ChatRoom = () => {
 
   const stompClientRef = useRef(null);
   const subscriptionRef = useRef(null);
-  
+  const hasConnectedRef = useRef(false); // 실제 연결에 성공했는지 추적
+
   useEffect(() => {
       // Make sure roomId exists before connecting
       if (!roomId) {
@@ -83,13 +84,14 @@ const ChatRoom = () => {
 
       const client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-        reconnectDelay: 1000, // 5초 후 자동 재연결
+        reconnectDelay: 500, // 0.5초 후 자동 재연결
         heartbeatIncoming: 10000, // 서버에서 오는 ping
         heartbeatOutgoing: 10000, // 클라이언트가 서버로 보내는 ping
         debug: (str) => console.log(`[STOMP] ${str}`),
 
         onConnect: () => {
           console.log('✅ Connected to WebSocket');
+          // hasConnectedRef.current = true;
 
           // 기존 구독 제거
           if (subscriptionRef.current) {
@@ -106,13 +108,26 @@ const ChatRoom = () => {
               }
               setMessages((prev) => [...prev, received]);
             } catch(e){
-              console.eerror("📛 Failed to parse incoming message", e);
+              console.error("📛 Failed to parse incoming message", e);
             }
           });
         },
 
         onWebSocketClose: () => {
-          console.warn("❌ WebSocket closed. Will attempt to reconnect...");
+          console.warn("❌ WebSocket closed.");
+          // if (!hasConnectedRef.current) {
+          //   console.warn("🔒 Initial connection failed. Possibly due to 401.");
+          //   navigate("/login"); // 최초 연결에 성공하지 못했다면 로그인 페이지로 이동
+          // } else {
+          //   console.log("🔁 Will attempt reconnect...");
+          // }
+
+           // 세션 만료 가능성 있음
+          // if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')) {
+          //   alert('세션이 만료되었습니다. 다시 로그인 해주세요.');
+          // } else {
+          //   alert('서버와 연결이 끊어졌습니다. 재연결 중입니다..."')
+          // }
         },
 
         onStompError: (frame) => {
