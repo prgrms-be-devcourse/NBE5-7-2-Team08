@@ -501,7 +501,6 @@ const ChatRoom = () => {
             width: '38px',
             height: '38px',
             borderRadius: '50%',
-            backgroundColor: '#4a6cf7',
             marginRight: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -512,11 +511,9 @@ const ChatRoom = () => {
             flexShrink: 0,
             backgroundImage: msg.type === 'GIT'
             ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
-            : undefined,
-            backgroundColor: msg.type === 'GIT' ? 'transparent' : '#4a6cf7',
+            : `url("http://localhost:8080/profile/default-profile.png")`,
             backgroundSize: 'cover'
           }}>
-            {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : 'U'}
           </div>
           <div style={{ flex: 1, maxWidth: 'calc(100% - 50px)' }}>
             <div style={{ 
