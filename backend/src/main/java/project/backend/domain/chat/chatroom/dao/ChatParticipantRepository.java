@@ -1,5 +1,6 @@
 package project.backend.domain.chat.chatroom.dao;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +22,10 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
         limit 1
         """)
     Optional<Long> findMostLargeRoomIdByEmail(@Param("email") String email);
-	boolean existsByParticipantIdAndChatRoomId(Long participantId, Long chatRoomId);
+
+    boolean existsByParticipantIdAndChatRoomId(Long participantId, Long chatRoomId);
+
+    List<ChatParticipant> findByChatRoom(ChatRoom chatRoom);
+
 }
 
