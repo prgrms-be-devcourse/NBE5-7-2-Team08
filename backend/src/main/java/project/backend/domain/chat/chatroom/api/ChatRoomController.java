@@ -53,7 +53,8 @@ public class ChatRoomController {
 	) {
 		if (memberDetails == null) {
 			Long roomId = chatRoomService.getRoomId(request.getInviteCode());
-			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER, roomId, request.getInviteCode());
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER, roomId,
+				request.getInviteCode());
 		}
 
 		log.info("채팅방 입장");
@@ -62,7 +63,8 @@ public class ChatRoomController {
 
 
 	@GetMapping("/recent")
-	public RecentChatRoomResponse getRecentRoomId(@AuthenticationPrincipal MemberDetails memberDetails) {
+	public RecentChatRoomResponse getRecentRoomId(
+		@AuthenticationPrincipal MemberDetails memberDetails) {
 		Long roomId = chatRoomService.getMostRecentRoomId(memberDetails.getEmail());
 		String inviteCode = chatRoomService.getInviteCode(roomId);
 		return new RecentChatRoomResponse(roomId, inviteCode);

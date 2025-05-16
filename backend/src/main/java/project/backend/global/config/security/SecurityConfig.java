@@ -18,46 +18,46 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomAuthenticationFailureHandler failureHandler;
-    private final CustomAuthenticationSuccessHandler successHandler;
-    private final CustomLogoutSuccessHandler logoutSuccessHandler;
-    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+	private final CustomAuthenticationFailureHandler failureHandler;
+	private final CustomAuthenticationSuccessHandler successHandler;
+	private final CustomLogoutSuccessHandler logoutSuccessHandler;
+	private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+	}
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-            .formLogin(form -> {
-                form.loginPage("/login")
-                    .usernameParameter("email")
-                    .passwordParameter("password")
-                    .failureHandler(failureHandler)
-                    .successHandler(successHandler)
-                    .permitAll();
-            })
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(Customizer.withDefaults())
-            .authorizeHttpRequests(auth -> {
-                auth
-                    .requestMatchers("/signup", "/login", "/", "/github/**")
-                    .anonymous()
-                            .requestMatchers("/chat-rooms/join").permitAll()
-                            .anyRequest()
-                            .authenticated();
-                })
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessHandler(logoutSuccessHandler)
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                )
-                .exceptionHandling(exception ->
-                        exception.authenticationEntryPoint(restAuthenticationEntryPoint))
-                .build();
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		return http
+			.formLogin(form -> {
+				form.loginPage("/login")
+					.usernameParameter("email")
+					.passwordParameter("password")
+					.failureHandler(failureHandler)
+					.successHandler(successHandler)
+					.permitAll();
+			})
+			.csrf(AbstractHttpConfigurer::disable)
+			.cors(Customizer.withDefaults())
+			.authorizeHttpRequests(auth -> {
+				auth
+					.requestMatchers("/signup", "/login", "/", "/github/**")
+					.anonymous()
+					.requestMatchers("/chat-rooms/join").permitAll()
+					.anyRequest()
+					.authenticated();
+			})
+			.logout(logout -> logout
+				.logoutUrl("/logout")
+				.logoutSuccessHandler(logoutSuccessHandler)
+				.invalidateHttpSession(true)
+				.deleteCookies("JSESSIONID")
+			)
+			.exceptionHandling(exception ->
+				exception.authenticationEntryPoint(restAuthenticationEntryPoint))
+			.build();
 
-    }
+	}
 }

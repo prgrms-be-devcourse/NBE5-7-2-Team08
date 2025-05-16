@@ -1,7 +1,6 @@
 package project.backend.domain.chat.chatroom.app;
 
 
-
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,121 +31,120 @@ import project.backend.global.exception.ex.MemberException;
 @RequiredArgsConstructor
 public class ChatRoomService {
 
-    private final ChatRoomRepository chatRoomRepository;
-    private final MemberRepository memberRepository;
-    private final ChatMessageRepository chatMessageRepository;
-    private final ChatParticipantRepository chatParticipantRepository;
-    private final ChatRoomMapper chatRoomMapper;
+	private final ChatRoomRepository chatRoomRepository;
+	private final MemberRepository memberRepository;
+	private final ChatMessageRepository chatMessageRepository;
+	private final ChatParticipantRepository chatParticipantRepository;
+	private final ChatRoomMapper chatRoomMapper;
 
-    @Transactional
-    public ChatRoomSimpleResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
-        Member owner = memberRepository.findById(ownerId)
-            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+	@Transactional
+	public ChatRoomSimpleResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
+		Member owner = memberRepository.findById(ownerId)
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        ChatRoom chatRoom = chatRoomMapper.toEntity(request, owner);
+		ChatRoom chatRoom = chatRoomMapper.toEntity(request, owner);
 
-        ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
+		ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
 
-        ChatParticipant chatParticipant = ChatParticipant.of(owner, chatRoom);
+		ChatParticipant chatParticipant = ChatParticipant.of(owner, chatRoom);
 
-        chatParticipantRepository.save(chatParticipant);
+		chatParticipantRepository.save(chatParticipant);
 
-        return chatRoomMapper.toSimpleResponse(savedRoom);
-    }
+		return chatRoomMapper.toSimpleResponse(savedRoom);
+	}
 
-    @Transactional(readOnly = true)
-    public String getInviteCode(Long roomId) {
-        ChatRoom room = chatRoomRepository.findById(roomId)
-            .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+	@Transactional(readOnly = true)
+	public String getInviteCode(Long roomId) {
+		ChatRoom room = chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
-        return room.getInviteCode();
-    }
+		return room.getInviteCode();
+	}
 
-    @Transactional
-    public Long getRoomId(String inviteCode) {
-        ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
-            .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+	@Transactional
+	public Long getRoomId(String inviteCode) {
+		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
-        return room.getId();
-    }
-
-
-    @Transactional
-    public InviteJoinResponse joinChatRoom(String inviteCode, Long memberId) {
-        ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
-            .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_CODE_NOT_FOUND));
-
-        Member member = memberRepository.findById(memberId)
-            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-
-        boolean isAlreadyParticipant = chatParticipantRepository
-            .existsByParticipantIdAndChatRoomId(memberId, room.getId());
-
-        if (isAlreadyParticipant) {
-            throw new ChatRoomException(ChatRoomErrorCode.ALREADY_PARTICIPANT);
-        }
-
-        ChatParticipant chatParticipant = ChatParticipant.of(member, room);
-
-        chatParticipantRepository.save(chatParticipant);
-
-        return new InviteJoinResponse(room.getId(),room.getInviteCode(),room.getName());
-    }
+		return room.getId();
+	}
 
 
+	@Transactional
+	public InviteJoinResponse joinChatRoom(String inviteCode, Long memberId) {
+		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_CODE_NOT_FOUND));
 
-    public Long getMostRecentRoomId(String email) {
+		Member member = memberRepository.findById(memberId)
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        // 1순위: 가장 최근 메시지가 도착한 채팅방
-        Optional<Long> recentRoomId = chatMessageRepository.findMostRecentRoomIdByMemberEmail(
-            email);
-        if (recentRoomId.isPresent()) {
-            return recentRoomId.get();
-        }
+		boolean isAlreadyParticipant = chatParticipantRepository
+			.existsByParticipantIdAndChatRoomId(memberId, room.getId());
 
-        // 2순위: 채팅방에 메세지가 없을 때 참여중인 채팅방 중 roomId가 가장 큰 채팅방
-        Optional<Long> fallbackRoomId = chatParticipantRepository.findMostLargeRoomIdByEmail(email);
-        if (fallbackRoomId.isPresent()) {
-            return fallbackRoomId.get();
-        }
+		if (isAlreadyParticipant) {
+			throw new ChatRoomException(ChatRoomErrorCode.ALREADY_PARTICIPANT);
+		}
 
-        // 아무 채팅방에도 참여한 적이 없음 → 예외 던지기
-        throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_EXIST);
+		ChatParticipant chatParticipant = ChatParticipant.of(member, room);
 
-    }
+		chatParticipantRepository.save(chatParticipant);
 
-    public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
-
-        checkMemberExists(memberId);
+		return new InviteJoinResponse(room.getId(), room.getInviteCode(), room.getName());
+	}
 
 
-        Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId, pageable);
-        if (allRoomsByOwnerId.isEmpty()) {
-            throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
-        }
-        return allRoomsByOwnerId.map(ChatRoomMapper::toProfileResponse);
-    }
+	public Long getMostRecentRoomId(String email) {
+
+		// 1순위: 가장 최근 메시지가 도착한 채팅방
+		Optional<Long> recentRoomId = chatMessageRepository.findMostRecentRoomIdByMemberEmail(
+			email);
+		if (recentRoomId.isPresent()) {
+			return recentRoomId.get();
+		}
+
+		// 2순위: 채팅방에 메세지가 없을 때 참여중인 채팅방 중 roomId가 가장 큰 채팅방
+		Optional<Long> fallbackRoomId = chatParticipantRepository.findMostLargeRoomIdByEmail(email);
+		if (fallbackRoomId.isPresent()) {
+			return fallbackRoomId.get();
+		}
+
+		// 아무 채팅방에도 참여한 적이 없음 → 예외 던지기
+		throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_EXIST);
+
+	}
+
+	public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
+
+		checkMemberExists(memberId);
+
+		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId,
+			pageable);
+		if (allRoomsByOwnerId.isEmpty()) {
+			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
+		}
+		return allRoomsByOwnerId.map(ChatRoomMapper::toProfileResponse);
+	}
 
 
-    private void checkMemberExists(Long memberId) {
-        chatRoomRepository.findById(memberId)
-            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
+	private void checkMemberExists(Long memberId) {
+		chatRoomRepository.findById(memberId)
+			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+	}
 
 
-    @Transactional(readOnly = true)
-    public Page<ChatRoomDetailResponse> findChatRoomsByParticipantId(Long memberId,
-        Pageable pageable) {
+	@Transactional(readOnly = true)
+	public Page<ChatRoomDetailResponse> findChatRoomsByParticipantId(Long memberId,
+		Pageable pageable) {
 
-        Page<ChatRoom> chatRooms = chatRoomRepository.findByParticipants_Participant_Id(memberId,
-            pageable);
+		Page<ChatRoom> chatRooms = chatRoomRepository.findByParticipants_Participant_Id(memberId,
+			pageable);
 
-        if (chatRooms.isEmpty()) {
-            throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
-        }
+		if (chatRooms.isEmpty()) {
+			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
+		}
 
-        return chatRooms.map(ChatRoomMapper::toDetailResponse);
-    }
+		return chatRooms.map(ChatRoomMapper::toDetailResponse);
+	}
 
 
 }
