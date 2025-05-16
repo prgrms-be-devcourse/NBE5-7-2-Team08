@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MemberErrorCode implements ErrorCode {
     MEMBER_ALREADY_EXISTS("ME-001", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT),
-    MEMBER_NOT_FOUND("MEMBER_NOT_FOUND", "사용자 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    MEMBER_NOT_FOUND("ME-002", "사용자 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
     private final String code;
     private final String message;

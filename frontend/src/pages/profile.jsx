@@ -20,10 +20,12 @@ const ProfilePage = () => {
           method: "GET",
           credentials: "include"
         });
+        
+        const status = response.status;
 
         if (!response.ok) {
           const errorData = await response.json();
-          const status = response.status;
+          
 
           if (!alertShownRef.current) {
             alertShownRef.current = true;
@@ -168,7 +170,7 @@ const ProfilePage = () => {
                   ))
                 ) : (
                   <div className={styles["empty-rooms"]}>
-                    <p>No rooms created yet</p>
+                    <p>🥲 No rooms created yet</p>
                   </div>
                 )}
               </div>

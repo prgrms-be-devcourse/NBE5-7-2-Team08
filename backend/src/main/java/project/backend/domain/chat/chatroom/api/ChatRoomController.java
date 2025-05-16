@@ -36,7 +36,7 @@ import project.backend.global.exception.ex.AuthException;
 @RequestMapping("/chat-rooms")
 public class ChatRoomController {
 
-	private final ChatRoomService chatRoomService;
+    private final ChatRoomService chatRoomService;
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
@@ -69,17 +69,19 @@ public class ChatRoomController {
 		return new RecentChatRoomResponse(roomId, inviteCode);
 	}
 
-	@GetMapping
-	public Page<ChatRoomDetailResponse> findAllChatRooms(
-		@AuthenticationPrincipal MemberDetails memberDetails,
-		@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-		if (memberDetails == null) {
-			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
-		}
-		Long memberId = memberDetails.getId();
-		// 채팅방 목록 리스트로 가져오기
-		return chatRoomService.findChatRoomsByParticipantId(memberId, pageable);
-	}
+
+    @GetMapping
+    public Page<ChatRoomDetailResponse> findAllChatRooms(
+            @AuthenticationPrincipal MemberDetails memberDetails,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        if (memberDetails == null) {
+            throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+        }
+        Long memberId = memberDetails.getId();
+        // 채팅방 목록 리스트로 가져오기
+        return chatRoomService.findChatRoomsByParticipantId(memberId, pageable);
+    }
+
 
 	// 자신이 만든 채팅방 가져오기 -> 주후 인증객체 id로 조회가능 할듯(Authentication)
 	@GetMapping("/mine/{memberId}")
@@ -89,6 +91,7 @@ public class ChatRoomController {
 		return chatRoomService.findAllRoomsByOwnerId(memberId, pageable);
 
 	}
+
 
 	//임창인 시작
 	@DeleteMapping("/{roomId}/leave")

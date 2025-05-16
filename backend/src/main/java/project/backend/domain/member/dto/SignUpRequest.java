@@ -18,6 +18,7 @@ public class SignUpRequest {
     private String password;
 
     @NotBlank(message = "닉네임은 필수입니다.")
+    @Size(min = 3, message = "닉네임은 최소 3자 이상이여야 합니다.")
     private String nickname;
 
 }

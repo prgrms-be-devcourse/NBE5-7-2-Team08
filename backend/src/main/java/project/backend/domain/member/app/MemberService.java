@@ -31,7 +31,7 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
 
     @Value("${file.default-profile}")
-    private String defaultProfilePath;
+    private String defaultProfile;
 
     public MemberResponse saveMember(SignUpRequest request) {
 
@@ -40,7 +40,7 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
 
-        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(defaultProfilePath);
+        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(defaultProfile);
 
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -102,10 +102,11 @@ public class MemberService {
         return memberRepository.findByEmail(email).isPresent();
     }
 
+
     public MemberResponse getMemberDetails(Authentication auth) {
         MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
         Long memberId = loginMember.getId();
-
+        log.info("memberId = {}", memberId);
         Member member = getMemberById(memberId);
         return MemberMapper.toResponse(member);
     }

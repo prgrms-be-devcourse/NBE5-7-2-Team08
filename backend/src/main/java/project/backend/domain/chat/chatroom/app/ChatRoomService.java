@@ -3,6 +3,7 @@ package project.backend.domain.chat.chatroom.app;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
@@ -26,11 +27,12 @@ import project.backend.global.exception.ex.ChatRoomException;
 import project.backend.global.exception.errorcode.ChatRoomErrorCode;
 import project.backend.global.exception.ex.MemberException;
 
-
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChatRoomService {
+
 
 	private final ChatRoomRepository chatRoomRepository;
 	private final MemberRepository memberRepository;
@@ -38,6 +40,7 @@ public class ChatRoomService {
 	private final ChatParticipantRepository chatParticipantRepository;
 	private final ChatRoomMapper chatRoomMapper;
 	private final MemberService memberService;
+
 
 	@Transactional
 	public ChatRoomSimpleResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
@@ -115,7 +118,6 @@ public class ChatRoomService {
 	}
 
 	public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
-
 		checkMemberExists(memberId);
 
 		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId,

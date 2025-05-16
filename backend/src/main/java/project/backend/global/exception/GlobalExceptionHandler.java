@@ -2,7 +2,12 @@ package project.backend.global.exception;
 
 
 import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import project.backend.global.exception.ex.AuthException;
@@ -18,6 +23,7 @@ public class GlobalExceptionHandler {
 			.status(ex.getStatus())
 			.body(response);
 
+
 	}
 
 	@ExceptionHandler(AuthException.class)
@@ -30,4 +36,38 @@ public class GlobalExceptionHandler {
 		ErrorResponse response = ErrorResponse.toResponse(ex.getErrorCode(), details);
 		return ResponseEntity.status(ex.getStatus()).body(response);
 	}
+
+
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+
+        //필드 에러
+        if (!ex.getBindingResult().getFieldErrors().isEmpty()) {
+            FieldError fieldError = ex.getBindingResult().getFieldErrors().getFirst();
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.toResponse(fieldError));
+        }
+
+        //객체 에러(@AssertTrue 같은거)
+        if (!ex.getBindingResult().getGlobalErrors().isEmpty()) {
+            String message = ex.getBindingResult().getGlobalErrors().getFirst().getDefaultMessage();
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.builder()
+                            .code("VALIDATION_FAILED")
+                            .message(message)
+                            .build());
+        }
+
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.builder()
+                        .code("UNEXPECTED_VALIDATION_FAILED")
+                        .message(ex.getMessage())
+                        .build());
+    }
+
 }
