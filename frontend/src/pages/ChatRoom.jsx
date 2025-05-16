@@ -170,7 +170,10 @@ const ChatRoom = () => {
   };
 
   const sendMessage = (text = content) => {
-    const trimmed = text.trim();
+    // Check if text is a string and convert it if not
+    const messageText = typeof text === 'string' ? text : String(text);
+    const trimmed = messageText.trim();
+    
     if (stompClientRef.current && trimmed !== '') {
       const chatMessage = {
         content: trimmed,
@@ -724,7 +727,7 @@ const ChatRoom = () => {
               />
 
               <button
-                onClick={sendMessage}
+                onClick={() => sendMessage()}
                 style={{
                   ...buttonStyle,
                   height: '80px'

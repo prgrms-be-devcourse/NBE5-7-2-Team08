@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -37,10 +36,31 @@ const Sidebar = () => {
   // 토스트 알림 상태
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  
+  // 현재 사용자 정보 
+  const [currentUser, setCurrentUser] = useState(null);
+
 
   useEffect(() => {
     fetchChatRooms(currentPage);
   }, [currentPage]);
+
+  // 현재 사용자 정보 가져오기
+  const fetchCurrentUser = async () => {
+    try {
+      const userRes = await fetch('http://localhost:8080/users/current', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        setCurrentUser(userData);
+      }
+    } catch (err) {
+      console.error('사용자 정보 로딩 오류:', err);
+    }
+  };
 
   const fetchChatRooms = async (page) => {
     try {
@@ -83,10 +103,76 @@ const Sidebar = () => {
     }
   };
 
+  // 방 상세 정보 가져오기
+  const fetchRoomDetails = async (roomId) => {
+    try {
+      // 방 상세 정보를 가져오는 API가 있다면 사용
+      // 현재 예시에서는 이런 API가 명시되어 있지 않으므로 기존 목록에서 찾아서 사용
+      const existingRoom = chatRooms.find(room => Number(room.uniqueId) === Number(roomId));
+      
+      if (!existingRoom) return null;
+      
+      // 방장 정보가 없는 경우에만 추가
+      if (!existingRoom.participants || !existingRoom.participants.some(p => p.owner)) {
+        return {
+          ...existingRoom,
+          participants: currentUser ? [
+            {
+              ...currentUser,
+              owner: existingRoom.ownerId === currentUser.id,
+              nickname: currentUser.nickname || currentUser.username || '나'
+            },
+            ...(existingRoom.participants || []).filter(p => p.id !== currentUser.id)
+          ] : existingRoom.participants || []
+        };
+      }
+      
+      return existingRoom;
+    } catch (err) {
+      console.error('방 상세 정보 가져오기 오류:', err);
+      return null;
+    }
+  };
+
   // 멤버 정보 모달 표시 핸들러
-  const showMembersInfo = (room) => {
-    setSelectedRoom(room);
+  const showMembersInfo = async (room) => {
+    // 방 상세 정보 가져오기
+    const detailedRoom = await fetchRoomDetails(room.uniqueId);
+    
+    // 방 정보에 방장 추가
+    const enhancedRoom = detailedRoom || room;
+    
+    // 방장 정보 처리
+    if (currentUser && enhancedRoom.ownerId === currentUser.id && 
+        (!enhancedRoom.participants || !enhancedRoom.participants.some(p => p.owner))) {
+      enhancedRoom.participants = enhancedRoom.participants || [];
+      
+      // 이미 해당 사용자가 목록에 있는지 확인
+      const existingUserIndex = enhancedRoom.participants.findIndex(p => p.id === currentUser.id);
+      
+      if (existingUserIndex >= 0) {
+        // 기존 사용자 정보를 방장으로 업데이트
+        enhancedRoom.participants[existingUserIndex] = {
+          ...enhancedRoom.participants[existingUserIndex],
+          owner: true
+        };
+      } else {
+        // 방장 정보 추가
+        enhancedRoom.participants.push({
+          ...currentUser,
+          owner: true,
+          nickname: currentUser.nickname || currentUser.username || '나'
+        });
+      }
+    }
+    
+    setSelectedRoom(enhancedRoom);
     setShowMembersModal(true);
+    
+    // 상태 업데이트 - 방 목록에 반영
+    setChatRooms(prev => prev.map(r => 
+      Number(r.uniqueId) === Number(enhancedRoom.uniqueId) ? enhancedRoom : r
+    ));
   };
 
   // 토스트 메시지 표시 함수
@@ -113,13 +199,22 @@ const Sidebar = () => {
       
       const created = await res.json();
       setShowCreateModal(false);
+      fetchChatRooms(0);
       
       // 응답에서 얻은 데이터로 채팅방 목록 직접 업데이트
-      // 새 채팅방을 목록 맨 앞에 추가
       if (created) {
+        // 생성자를 방장으로 추가
         const newRoom = {
           ...created,
-          uniqueId: created.id || created.roomId
+          uniqueId: created.id || created.roomId,
+          ownerId: created.ownerId || (currentUser ? currentUser.id : null),
+          participants: [
+            {
+              ...(currentUser || {}),
+              owner: true,
+              nickname: currentUser?.nickname || currentUser?.username || '나'
+            }
+          ]
         };
         
         // 현재 페이지가 첫 페이지인 경우만 직접 목록에 추가
@@ -128,6 +223,7 @@ const Sidebar = () => {
           setTotalElements(prev => prev + 1);
         } else {
           // 첫 페이지가 아니면 첫 페이지로 이동하고 목록 갱신
+          setCurrentPage(0);
           setCurrentPage(0);
           fetchChatRooms(0);
         }
@@ -158,12 +254,25 @@ const Sidebar = () => {
 
       const joined = await res.json();
       setShowJoinModal(false);
+      setCurrentPage(0);
+      fetchChatRooms(0);
 
       if (joined) {
         const newRoom = {
-          ...joined,
-          uniqueId: joined.id || joined.roomId
-        };
+        ...joined,
+        uniqueId: joined.id || joined.roomId,
+        participants: [
+          ...(joined.participants || []),
+          ...(joined.ownerId === currentUser?.id && currentUser
+            ? [{
+                ...currentUser,
+                owner: true,
+                nickname: currentUser.nickname || currentUser.username || '나'
+              }]
+            : []
+          )
+        ]
+      };
 
         if (currentPage === 0) {
           setChatRooms(prev => {
@@ -215,7 +324,7 @@ const Sidebar = () => {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), transparent)'
         }}>
           <h3 style={{ margin: '0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '18px', fontWeight: '600' }}>Code Chat < br/> Rooms</span>
+            <span style={{ fontSize: '18px', fontWeight: '600' }}>Code Chat <br/> Rooms</span>
             {totalElements > 0 && (
               <span style={{ 
                 fontSize: '14px', 
@@ -462,7 +571,7 @@ const Sidebar = () => {
           room={selectedRoom}
           onClose={() => setShowMembersModal(false)}
           sidebarRef={sidebarRef}
-          showToastMessage={showToastMessage}
+          showToast={showToastMessage}
         />
       )}
 
