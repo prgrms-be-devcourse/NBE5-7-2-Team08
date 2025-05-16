@@ -79,6 +79,7 @@ function App() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="비밀번호를 입력해주세요"
               required
+              minLength="12"
             />
           </div>
 
@@ -91,6 +92,7 @@ function App() {
               onChange={(e) => setNickname(e.target.value)}
               placeholder="사용할 닉네임을 입력해주세요"
               required
+              minLength="3"
             />
           </div>
 
