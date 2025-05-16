@@ -44,7 +44,6 @@ public class ChatRoomController {
 		@AuthenticationPrincipal MemberDetails memberDetails) {
 		Long ownerId = memberDetails.getId();
 
-		log.info("채팅방생성");
 		return chatRoomService.createChatRoom(request, ownerId);
 	}
 
@@ -58,7 +57,6 @@ public class ChatRoomController {
 				request.getInviteCode());
 		}
 
-		log.info("채팅방 입장");
 		return chatRoomService.joinChatRoom(request.getInviteCode(), memberDetails.getId());
 	}
 

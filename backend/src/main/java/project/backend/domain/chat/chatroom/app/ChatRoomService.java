@@ -13,6 +13,7 @@ import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.member.app.MemberService;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
 import org.springframework.data.domain.Page;
@@ -36,11 +37,11 @@ public class ChatRoomService {
 	private final ChatMessageRepository chatMessageRepository;
 	private final ChatParticipantRepository chatParticipantRepository;
 	private final ChatRoomMapper chatRoomMapper;
+	private final MemberService memberService;
 
 	@Transactional
 	public ChatRoomSimpleResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
-		Member owner = memberRepository.findById(ownerId)
-			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+		Member owner = memberService.getMemberById(ownerId);
 
 		ChatRoom chatRoom = chatRoomMapper.toEntity(request, owner);
 
