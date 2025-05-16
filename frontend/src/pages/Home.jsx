@@ -21,9 +21,10 @@ const Home = () => {
     })
       .then(res => {
         const roomId = res.data.roomId;
+        const inviteCode = res.data.inviteCode;
         console.log(roomId);
         if (roomId) {
-            navigate(`/chat/${roomId}`);
+            navigate(`/chat/${roomId}/${inviteCode}`);
         } else {
             console.warn('roomId가 응답에 없음');
             navigate('/blank'); // fallback

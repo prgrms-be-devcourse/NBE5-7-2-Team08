@@ -12,4 +12,5 @@ public class MyChatRoomResponse {
     private Long roomId;
     private String roomName;
     private int participantCount;
+    private String inviteCode;
 }

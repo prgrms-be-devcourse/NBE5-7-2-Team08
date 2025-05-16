@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { useNavigate } from "react-router-dom";
+
 import "../App.css"
+import { useNavigate, useLocation } from "react-router-dom"; // ← useLocation 추가
 
 function App() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const location = useLocation(); // ← 현재 URL 정보
 
   const handleSubmit = async (e) => {
   e.preventDefault();
@@ -38,7 +40,12 @@ function App() {
     const data = await response.json();
     console.log("Login successful:", data);
     alert("로그인 성공!");
-    navigate("/");
+    
+
+     // ✅ 여기: redirect 쿼리 파라미터 확인
+     const searchParams = new URLSearchParams(location.search);
+     const redirectPath = searchParams.get("redirect") || "/";
+     navigate(redirectPath);
 
   } catch (error) {
     console.error("네트워크 또는 서버 에러:", error);

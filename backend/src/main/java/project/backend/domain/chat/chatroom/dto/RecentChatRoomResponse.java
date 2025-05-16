@@ -8,5 +8,5 @@ import lombok.Data;
 public class RecentChatRoomResponse {
 
     private Long roomId;
-
+    private String inviteCode;
 }
