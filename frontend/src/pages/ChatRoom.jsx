@@ -257,7 +257,7 @@ const ChatRoom = () => {
 
     if (client && client.connected && trimmed !== '') {
       const chatMessage = {
-        content: trimmed,
+        content: String(text),
         type: inputMode,
         // 현재 시간을 ISO 형식으로 설정 (백엔드에서 덮어쓸 수도 있지만 프론트에서도 설정)
         sendAt: new Date().toISOString(),
@@ -273,13 +273,12 @@ const ChatRoom = () => {
       setContent('');
       setInputMode('TEXT');
     }else{
-      console.warn('🛑 STOMP 연결되지 않음. 메시지를 보낼 수 없습니다.');
-      alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
-
+      console.warn('메시지를 보낼 수 없습니다.');
+      
       // 연결이 끊긴 경우 재연결 시도
-      if (client && !client.active) {
+      if (!client.connected) {
         client.activate();
-        console.log("🔄 STOMP 재연결 시도 중...");
+        alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
       }
     }
   };
@@ -583,7 +582,8 @@ const ChatRoom = () => {
                 fontSize: '14px',
                 lineHeight: '1.5',
                 color: '#4a5568',
-                wordBreak: 'break-word'
+                wordBreak: 'break-word',
+                whiteSpace: 'pre-wrap'
               }}>
                 {msg.content}
               </div>
