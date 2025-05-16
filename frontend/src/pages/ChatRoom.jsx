@@ -22,14 +22,11 @@ const ChatRoom = () => {
   const messagesEndRef = useRef(null);
   const isComposingRef = useRef(false);
 
-  // 초대 코드 관련 상태 추가
-  const [showNotification, setShowNotification] = useState(false);
-
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
 
-  const [showModal, setShowModal] = useState(false);
+  const [showNotification, setShowModal] = useState(false);
   const [showUrlCopiedModal, setShowUrlCopiedModal] = useState(false);
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
 
@@ -38,7 +35,7 @@ const ChatRoom = () => {
   const joinedOnceRef = useRef(false);
 
   // 참가 완료 여부
-  const [joined, setJoined] = useState(false);
+  const [setJoined] = useState(false);
 
   useEffect(() => {
     if (joinedOnceRef.current) return;   // 이미 한 번 호출됐다면 스킵
@@ -76,7 +73,7 @@ const ChatRoom = () => {
       }
     };
     checkAndJoin();
-  }, [inviteCode, location.pathname, navigate]);
+  }, [inviteCode, location.pathname, navigate, setJoined]);
 
 
 
@@ -713,24 +710,6 @@ const ChatRoom = () => {
         )}
       </div>
 
-
-      {/* 초대 URL 복사 버튼 */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-        <button
-          style={{
-            padding: '10px 15px',
-            backgroundColor: '#fff',
-            color: '#2588F1',
-            border: '1px solid #5AAAFF',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-          onClick={copyInviteCode}
-        >
-          초대 코드 복사
-        </button>
-      </div>
-
       {messages.map((msg, index) => (
         <div key={index} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
           {/*프로필 이미지 출력*/}
@@ -825,9 +804,6 @@ const ChatRoom = () => {
           공유 초대 링크가 복사되었습니다
         </div>
       )}
-
-
-
 
     </div>
   );

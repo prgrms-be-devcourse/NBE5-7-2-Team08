@@ -20,7 +20,7 @@ import project.backend.domain.member.entity.Member;
 import java.util.List;
 
 @Component
-@Profile("local")
+@Profile("dev")
 @RequiredArgsConstructor
 public class DefaultProfileInitializer {
 
