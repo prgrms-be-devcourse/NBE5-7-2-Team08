@@ -1,6 +1,7 @@
 package project.backend.global.config;
 
 import jakarta.annotation.PostConstruct;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -79,6 +80,7 @@ public class DefaultProfileInitializer {
                         .name("TestRoom-" + (i + 1) + "-" + j)
                         .repositoryUrl("https://github.com/test" + (i + 1) + "/repo" + j)
                         .owner(owner)
+                        .inviteCode(UUID.randomUUID().toString())
                         .build();
 
                 // 참가자 최대 3명 포함 (owner 포함 가능)
