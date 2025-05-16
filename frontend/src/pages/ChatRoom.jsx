@@ -37,6 +37,33 @@ const ChatRoom = () => {
   // 참가 완료 여부
   const [setJoined] = useState(false);
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleLeaveRoom = async () => {
+  if (!window.confirm('정말 이 채팅방을 나가시겠습니까?')) return;
+
+  try {
+    const res = await fetch(`http://localhost:8080/chat-rooms/${roomId}/leave`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+
+    if (res.ok) {
+      alert('채팅방에서 나갔습니다.');
+      navigate('/chat');
+    } else {
+      const text = await res.text();
+      throw new Error(text || '나가기 실패');
+    }
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  } finally {
+    setMenuOpen(false); // 닫기
+  }
+};
+
+
   useEffect(() => {
     if (joinedOnceRef.current) return;   // 이미 한 번 호출됐다면 스킵
     joinedOnceRef.current = true;
@@ -546,6 +573,52 @@ const ChatRoom = () => {
               />
             </div>
           </div>
+                
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', padding: '0 24px', marginTop: '8px' }}>
+  {/* ... 버튼 */}
+  <button
+    onClick={() => setMenuOpen(prev => !prev)}
+    style={{
+      fontSize: '20px',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: '#4a5568'
+    }}
+  >
+    ⋯
+  </button>
+
+  {/* 드롭다운 메뉴 */}
+  {menuOpen && (
+    <div style={{
+      position: 'absolute',
+      top: '32px',
+      right: '0',
+      backgroundColor: 'white',
+      border: '1px solid #ccc',
+      borderRadius: '6px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      zIndex: 1000
+    }}>
+      <button
+        onClick={handleLeaveRoom}
+        style={{
+          padding: '10px 16px',
+          background: 'none',
+          border: 'none',
+          width: '100%',
+          textAlign: 'left',
+          cursor: 'pointer',
+          fontSize: '14px',
+          color: '#e53e3e'
+        }}
+      >
+        채팅방 나가기
+      </button>
+    </div>
+  )}
+</div>
 
           {/* 메시지 목록 */}
           <div style={{
@@ -804,6 +877,7 @@ const ChatRoom = () => {
           공유 초대 링크가 복사되었습니다
         </div>
       )}
+      
 
     </div>
   );
