@@ -36,13 +36,16 @@ const ChatRoom = () => {
 
   // 참가 완료 여부
   const [setJoined] = useState(false);
-
   const [menuOpen, setMenuOpen] = useState(false);
+
+
+  //임창인
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showLeaveSuccess, setShowLeaveSuccess] = useState(false);
+
 
   //임창인(채팅방 나가기)
   const handleLeaveRoom = async () => {
-    if (!window.confirm('정말 이 채팅방을 나가시겠습니까?')) return;
-
     try {
       const res = await fetch(`http://localhost:8080/chat-rooms/${roomId}/leave`, {
         method: 'DELETE',
@@ -50,8 +53,12 @@ const ChatRoom = () => {
       });
 
       if (res.ok) {
-        alert('채팅방에서 나갔습니다.');
-        navigate('/');
+        setShowLeaveConfirm(false);
+        setShowLeaveSuccess(true);
+        setTimeout(() => {
+          setShowLeaveSuccess(false);
+          navigate('/');
+        }, 500);
       } else {
         const text = await res.text();
         throw new Error(text || '나가기 실패');
@@ -60,9 +67,10 @@ const ChatRoom = () => {
       console.error(err);
       alert(err.message);
     } finally {
-      setMenuOpen(false); // 닫기
+      setMenuOpen(false);
     }
   };
+
 
 
   useEffect(() => {
@@ -603,7 +611,7 @@ const ChatRoom = () => {
                 zIndex: 1000
               }}>
                 <button
-                  onClick={handleLeaveRoom}
+                  onClick={() => setShowLeaveConfirm(true)}
                   style={{
                     padding: '10px 16px',
                     background: 'none',
@@ -878,6 +886,58 @@ const ChatRoom = () => {
           공유 초대 링크가 복사되었습니다
         </div>
       )}
+
+
+      {/* 나가기 확인 모달 */}
+{showLeaveConfirm && (
+  <div style={{
+    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', display: 'flex',
+    alignItems: 'center', justifyContent: 'center', zIndex: 2000
+  }}>
+    <div style={{
+      backgroundColor: 'white', padding: '24px', borderRadius: '8px',
+      minWidth: '280px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+    }}>
+      <p style={{ fontSize: '16px', marginBottom: '20px' }}>
+        정말 이 채팅방을 나가시겠습니까?
+      </p>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+        <button
+          onClick={() => setShowLeaveConfirm(false)}
+          style={{
+            padding: '8px 16px', backgroundColor: '#eee',
+            border: 'none', borderRadius: '4px', cursor: 'pointer'
+          }}
+        >
+          취소
+        </button>
+        <button
+          onClick={handleLeaveRoom}
+          style={{
+            padding: '8px 16px', backgroundColor: '#e53e3e', color: 'white',
+            border: 'none', borderRadius: '4px', cursor: 'pointer'
+          }}
+        >
+          나가기
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+{/* 나가기 완료 모달 */}
+{showLeaveSuccess && (
+  <div style={{
+    position: 'fixed', top: '20px', right: '20px',
+    backgroundColor: '#333', color: 'white',
+    padding: '12px 20px', borderRadius: '6px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.2)', zIndex: 2000
+  }}>
+    채팅방에서 나갔습니다.
+  </div>
+)}
 
 
     </div>
