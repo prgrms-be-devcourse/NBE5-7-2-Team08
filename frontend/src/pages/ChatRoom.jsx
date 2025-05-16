@@ -129,26 +129,21 @@ const ChatRoom = () => {
 
         onWebSocketClose: () => {
           console.warn("❌ WebSocket closed.");
-          alert('서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+          // alert('서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
           if (!hasConnectedRef.current) {
             console.warn("🔒 Initial connection failed. Possibly due to 401.");
-            navigate("/login"); // 최초 연결에 성공하지 못했다면 로그인 페이지로 이동
+            navigate("/login");
           } else {
             console.log("🔁 Will attempt reconnect...");
-            alert('서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+            // alert('서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
           }
-
-           // 세션 만료 가능성 있음
-          // if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')) {
-          //   alert('세션이 만료되었습니다. 다시 로그인 해주세요.');
-          // } else {
-          //   alert('서버와 연결이 끊어졌습니다. 재연결 중입니다..."')
-          // }
         },
 
         onStompError: (frame) => {
           console.error("💥 STOMP error:", frame.headers['message']);
-          alert('서버와 연결이 끊어졌습니다. 재연결 중입니다..."');
+          if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')){
+            navigate("/login");
+          }
         }
       });
 
@@ -201,7 +196,6 @@ const ChatRoom = () => {
           clearInterval(keepAliveIntervalRef.current);
           console.log("🔕 Stopped keep-alive ping");
         }
-
         if (subscriptionRef.current) {
           subscriptionRef.current.unsubscribe();
           console.log("🔌 Subscription unsubscribed.");
@@ -280,6 +274,13 @@ const ChatRoom = () => {
       setInputMode('TEXT');
     }else{
       console.warn('🛑 STOMP 연결되지 않음. 메시지를 보낼 수 없습니다.');
+      alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+
+      // 연결이 끊긴 경우 재연결 시도
+      if (client && !client.active) {
+        client.activate();
+        console.log("🔄 STOMP 재연결 시도 중...");
+      }
     }
   };
 
