@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,5 +92,16 @@ public class ChatRoomController {
 
 	}
 
+	//임창인 시작
+	@DeleteMapping("/{roomId}/leave")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void leaveChatRoom(@PathVariable Long roomId,
+		@AuthenticationPrincipal MemberDetails memberDetails) {
+		if (memberDetails == null) {
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+		}
+		chatRoomService.leaveChatRoom(roomId, memberDetails.getId());
+	}
+    //임창인 끝
 }
 

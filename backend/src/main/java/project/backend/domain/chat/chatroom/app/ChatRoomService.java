@@ -146,6 +146,17 @@ public class ChatRoomService {
 		return chatRooms.map(ChatRoomMapper::toDetailResponse);
 	}
 
+	//임창인
+	@Transactional
+	public void leaveChatRoom(Long roomId, Long memberId) {
+		ChatRoom room = chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+
+		ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndParticipantId(roomId,memberId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
+
+		chatParticipantRepository.delete(participant);
+	}
 
 }
 
