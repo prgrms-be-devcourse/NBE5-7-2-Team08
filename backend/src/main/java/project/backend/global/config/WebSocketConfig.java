@@ -33,8 +33,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Bean
     public ThreadPoolTaskScheduler customWebSocketTaskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(1); // 너무 높지 않게 설정
-        scheduler.setThreadNamePrefix("wss-heartbeat-thread-");
+//        scheduler.setPoolSize(1); // 너무 높지 않게 설정
+//        scheduler.setThreadNamePrefix("wss-heartbeat-thread-");
         scheduler.initialize();
         return scheduler;
     }

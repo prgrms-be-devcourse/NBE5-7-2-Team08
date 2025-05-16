@@ -73,6 +73,7 @@ const ChatRoom = () => {
   const stompClientRef = useRef(null);
   const subscriptionRef = useRef(null);
   const hasConnectedRef = useRef(false); // 실제 연결에 성공했는지 추적
+  const keepAliveIntervalRef = useRef(null); // 추가
 
   useEffect(() => {
       // Make sure roomId exists before connecting
@@ -84,21 +85,34 @@ const ChatRoom = () => {
 
       const client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-        reconnectDelay: 500, // 0.5초 후 자동 재연결
-        heartbeatIncoming: 10000, // 서버에서 오는 ping
-        heartbeatOutgoing: 10000, // 클라이언트가 서버로 보내는 ping
+        reconnectDelay: 1000, // 1초 후 자동 재연결
+
+        // 💡 서버 heartbeat가 10초 주기일 때, 클라이언트는 여유 있게 15초까지 기다림
+        heartbeatIncoming: 15000, // 서버로부터 최소 15초 동안 ping 없으면 끊음
+        heartbeatOutgoing: 10000, // 클라이언트가 서버로 보내는 ping 주기
         debug: (str) => console.log(`[STOMP] ${str}`),
 
         onConnect: () => {
           console.log('✅ Connected to WebSocket');
-          // hasConnectedRef.current = true;
+          hasConnectedRef.current = true;
+
+          // 🔄 주기적 ping (keep-alive)
+          if (keepAliveIntervalRef.current) clearInterval(keepAliveIntervalRef.current);
+          keepAliveIntervalRef.current = setInterval(() => {
+            if (client && client.connected) {
+              client.publish({
+                destination: '/app/ping', // 서버가 처리하지 않는 dummy topic (핸들러 없음)
+                body: 'ping'
+              });
+              console.log("📡 Sent keep-alive ping");
+            }
+          }, 20000); // 20초마다 ping
 
           // 기존 구독 제거
           if (subscriptionRef.current) {
             subscriptionRef.current.unsubscribe();
             console.log("🔁 Previous subscription cleared.");
           }
-
 
           subscriptionRef.current= client.subscribe(`/topic/chat/${roomId}`, (message) => {
             try{
@@ -115,12 +129,14 @@ const ChatRoom = () => {
 
         onWebSocketClose: () => {
           console.warn("❌ WebSocket closed.");
-          // if (!hasConnectedRef.current) {
-          //   console.warn("🔒 Initial connection failed. Possibly due to 401.");
-          //   navigate("/login"); // 최초 연결에 성공하지 못했다면 로그인 페이지로 이동
-          // } else {
-          //   console.log("🔁 Will attempt reconnect...");
-          // }
+          alert('서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+          if (!hasConnectedRef.current) {
+            console.warn("🔒 Initial connection failed. Possibly due to 401.");
+            navigate("/login"); // 최초 연결에 성공하지 못했다면 로그인 페이지로 이동
+          } else {
+            console.log("🔁 Will attempt reconnect...");
+            alert('서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+          }
 
            // 세션 만료 가능성 있음
           // if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')) {
@@ -132,6 +148,7 @@ const ChatRoom = () => {
 
         onStompError: (frame) => {
           console.error("💥 STOMP error:", frame.headers['message']);
+          alert('서버와 연결이 끊어졌습니다. 재연결 중입니다..."');
         }
       });
 
@@ -179,6 +196,12 @@ const ChatRoom = () => {
   
       return () => {
         console.log("🧹 Cleaning up WebSocket...");
+
+        if (keepAliveIntervalRef.current) {
+          clearInterval(keepAliveIntervalRef.current);
+          console.log("🔕 Stopped keep-alive ping");
+        }
+
         if (subscriptionRef.current) {
           subscriptionRef.current.unsubscribe();
           console.log("🔌 Subscription unsubscribed.");
