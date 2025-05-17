@@ -1,4 +1,4 @@
-package project.backend.global.config.security;
+package project.backend.global.config.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -7,19 +7,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import project.backend.domain.member.dto.MemberDetails;
 
 import java.io.IOException;
 import java.util.Map;
 
 @Slf4j
 @Component
-public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+public class FormSuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
-                                        HttpServletResponse response,
-                                        Authentication authentication) throws IOException {
+        HttpServletResponse response,
+        Authentication authentication) throws IOException {
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");

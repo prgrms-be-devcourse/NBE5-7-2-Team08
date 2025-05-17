@@ -54,7 +54,6 @@ public class ImageFileService {
 
         } catch (IOException e) {
             imageFileRepository.delete(imageFile);
-            imageFileRepository.flush();
             log.error("파일 저장 중 IOException 발생", e);
             throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
         }
@@ -82,7 +81,7 @@ public class ImageFileService {
 
     public ImageFile getProfileImageByStoreFileName(String storeFileName) {
         return imageFileRepository.findByStoreFileName(storeFileName)
-                .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
+            .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
     }
 
 }

@@ -1,4 +1,9 @@
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USERNAME}
@@ -14,6 +19,17 @@ spring:
       max-request-size: 10MB
   profiles:
     active: dev
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23lieCW8NMbOBGLoid
+            client-secret: 00a85d9a3b3581cbf545c5cfab6f4f76576d9699
+            scope:
+              - repo
+              - admin:repo_hook
+              - user
 
   jpa:
     hibernate:
@@ -27,4 +43,12 @@ file:
   profile-path: profiles/
   default-profile: default-profile.png
 
+
+jwt:
+  redirection:
+    base: http://localhost:3000/auth
+
+  info:
+    issuer: "대한민국26세 달성 배씨 배문성의 허가가 있는 토큰이올시다."
+    secret: 36b2294c1079470409d860ac57402fc152524d134a75b7cb223d92644b63adba980d90dcefd0d53c02a5cbb43c2678d49128dae2299f652f5f71033fee640686
 

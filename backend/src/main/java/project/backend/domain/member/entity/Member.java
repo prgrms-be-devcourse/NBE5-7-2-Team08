@@ -10,9 +10,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,31 +31,32 @@ import project.backend.domain.imagefile.ImageFile;
 @AllArgsConstructor
 public class Member {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "member_id")
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_id")
+    private Long id;
 
-  @Column(nullable = false, unique = true)
-  private String email;
+    @Column(nullable = false, unique = true)
+    private String email;
 
-  @Setter
-  @Column(nullable = false)
-  private String password;
+    @Setter
+    private String password;
 
-  @Setter
-  @Column(nullable = false)
-  private String nickname;
+    private String provider;
 
-  @Builder.Default
-  private LocalDateTime joinAt = LocalDateTime.now();
+    @Setter
+    @Column(nullable = false)
+    private String nickname;
 
-  @Builder.Default
-  @OneToMany(mappedBy = "participant")
-  private List<ChatParticipant> participants = new ArrayList<>();
+    @Builder.Default
+    private LocalDateTime joinAt = LocalDateTime.now();
 
-  @Setter
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "profile_image_id")
-  private ImageFile profileImage;
+    @Builder.Default
+    @OneToMany(mappedBy = "participant")
+    private List<ChatParticipant> participants = new ArrayList<>();
+
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_image_id")
+    private ImageFile profileImage;
 }

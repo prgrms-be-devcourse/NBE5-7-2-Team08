@@ -30,7 +30,7 @@ import org.springframework.data.web.PageableDefault;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
-import project.backend.domain.member.dto.MemberDetails;
+import project.backend.global.config.security.dto.MemberDetails;
 import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.ex.AuthException;
 
