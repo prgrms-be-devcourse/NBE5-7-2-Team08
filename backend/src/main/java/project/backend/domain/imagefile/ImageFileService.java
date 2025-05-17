@@ -95,4 +95,9 @@ public class ImageFileService {
             .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
     }
 
+    public ImageFile getImageById(Long imageFileId) {
+        return imageFileRepository.findById(imageFileId)
+            .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
+    }
+
 }

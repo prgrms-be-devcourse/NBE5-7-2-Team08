@@ -10,5 +10,6 @@ public class ChatMessageRequest {
     private String content;
     private MessageType type;
     private String language;
+    private Long imageFileId;
 
 }

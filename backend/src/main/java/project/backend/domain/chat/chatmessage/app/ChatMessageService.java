@@ -18,6 +18,7 @@ import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.imagefile.ImageFile;
+import project.backend.domain.imagefile.ImageFileRepository;
 import project.backend.domain.imagefile.ImageFileService;
 import project.backend.domain.imagefile.ImageType;
 import project.backend.domain.member.dao.MemberRepository;
@@ -25,6 +26,7 @@ import project.backend.domain.member.entity.Member;
 import project.backend.global.exception.errorcode.ChatMessageErrorCode;
 import project.backend.global.exception.ex.ChatMessageException;
 import project.backend.global.exception.ex.ChatRoomException;
+import project.backend.global.exception.ex.ImageFileException;
 import project.backend.global.exception.ex.MemberException;
 import project.backend.global.exception.errorcode.ChatRoomErrorCode;
 import project.backend.global.exception.errorcode.MemberErrorCode;
@@ -56,14 +58,10 @@ public class ChatMessageService {
 
         ChatMessage message;
 
-//        if (request.getType().equals(MessageType.IMAGE) && request.getChatImage() != null) {
-//            ImageFile chatImage = imageFileService.saveImageFile(request.getChatImage(),
-//                ImageType.CHAT_IMAGE);
-//            message = messageMapper.toEntityWithImage(room, participant, chatImage);
-//
-//        }
-
-        if (request.getType().equals(MessageType.TEXT)) {
+        if (request.getType().equals(MessageType.IMAGE) && request.getImageFileId() != null) {
+            ImageFile findImage = imageFileService.getImageById(request.getImageFileId());
+            message = messageMapper.toEntityWithImage(room, participant, findImage);
+        } else if (request.getType().equals(MessageType.TEXT)) {
             message = messageMapper.toEntityWithText(room, participant, request);
 
         } else if (request.getType().equals(MessageType.CODE)) {

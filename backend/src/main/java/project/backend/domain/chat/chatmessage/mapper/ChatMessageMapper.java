@@ -72,6 +72,11 @@ public class ChatMessageMapper {
                 Optional.ofNullable(message.getSender().getParticipant().getProfileImage())
                     .map(ImageFile::getStoreFileName)
                     .orElse("default_image.jpg"))
+            .chatImageUrl(
+                Optional.ofNullable(message.getChatImage())
+                    .map(ImageFile::getStoreFileName)
+                    .orElse(null)
+            )
             .build();
     }
 
