@@ -88,7 +88,7 @@ public class JwtProvider {
 
         return JWT.create()
                 .withIssuedAt(new Date(now))
-                .withExpiresAt(new Date(now + expiration))
+                .withExpiresAt(new Date(now + expiration * 1000))
                 .withPayload(payload)
                 .withIssuer(ISSUER)
                 .sign(getSignatureAlgorithm(SECRET_KEY));

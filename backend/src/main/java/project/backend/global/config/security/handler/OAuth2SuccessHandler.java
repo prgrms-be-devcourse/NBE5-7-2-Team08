@@ -63,6 +63,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         params.put("access", token.accessToken());
         params.put("refresh", token.refreshToken());
 
+        log.info("OAuth 로그인 성공");
+        log.info("AccessToken = {}", token.accessToken());
+        log.info("Refresh Token = {}", token.refreshToken());
+
         String redirectUrl = genRedirectUrl(params);
         log.info("OAuth 로그인 후 리다이렉트 URL = {}", redirectUrl);
 
