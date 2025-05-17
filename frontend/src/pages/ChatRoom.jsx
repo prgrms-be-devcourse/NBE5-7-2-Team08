@@ -510,7 +510,7 @@ const ChatRoom = () => {
             flexShrink: 0,
             backgroundImage: msg.type === 'GIT'
             ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
-            : `url("http://localhost:8080/profile/${msg.profileImageUrl}")`,
+            : `url("http://localhost:8080/images/profile/${msg.profileImageUrl}")`,
             backgroundSize: 'cover'
           }}>
           </div>

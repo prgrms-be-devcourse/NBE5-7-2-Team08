@@ -54,19 +54,25 @@ public class ChatMessageService {
                 sender, room)
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
-        if (request.getType().equals(MessageType.IMAGE) && request.getChatImage() != null) {
-            ImageFile chatImage = imageFileService.saveImageFile(request.getChatImage(),
-                ImageType.CHAT_IMAGE);
-//            messageMapper.toEntity(room,participant, request, chatImage);
-        } else if (request.getType().equals(MessageType.TEXT)) {
+        ChatMessage message;
+
+//        if (request.getType().equals(MessageType.IMAGE) && request.getChatImage() != null) {
+//            ImageFile chatImage = imageFileService.saveImageFile(request.getChatImage(),
+//                ImageType.CHAT_IMAGE);
+//            message = messageMapper.toEntityWithImage(room, participant, chatImage);
+//
+//        }
+
+        if (request.getType().equals(MessageType.TEXT)) {
+            message = messageMapper.toEntityWithText(room, participant, request);
 
         } else if (request.getType().equals(MessageType.CODE)) {
+            message = messageMapper.toEntityWithCode(room, participant, request);
 
         } else {
-
+            throw new ChatMessageException(ChatMessageErrorCode.INVALID_ROUTE);
         }
 
-        ChatMessage message = messageMapper.toEntity(room, participant, request);
         chatMessageRepository.save(message);
 
         return messageMapper.toResponse(message);

@@ -31,7 +31,7 @@ public class MemberService {
     private final ImageFileService imageFileService;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${file.default-profile}")
+    @Value("${file.images.profile.default}")
     private String defaultProfilePath;
 
     public MemberResponse saveMember(SignUpRequest request) {

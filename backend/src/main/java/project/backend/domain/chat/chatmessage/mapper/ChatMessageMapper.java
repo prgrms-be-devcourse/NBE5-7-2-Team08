@@ -16,18 +16,41 @@ import project.backend.domain.imagefile.ImageFile;
 @Component
 public class ChatMessageMapper {
 
-    public ChatMessage toEntity(ChatRoom room, ChatParticipant sender, ChatMessageRequest request) {
+    public ChatMessage toEntityWithText(ChatRoom room, ChatParticipant sender,
+        ChatMessageRequest request) {
         return ChatMessage.builder()
             .chatRoom(room)
             .sender(sender)
             .content(request.getContent())
-            .type(request.getType())
-            .codeLanguage(request.getLanguage())
+            .type(MessageType.TEXT)
             .sendAt(LocalDateTime.now())
             .build();
     }
 
-    public ChatMessage toEntity(GitMessage gitMessage) {
+    public ChatMessage toEntityWithCode(ChatRoom room, ChatParticipant sender,
+        ChatMessageRequest request) {
+        return ChatMessage.builder()
+            .chatRoom(room)
+            .sender(sender)
+            .content(request.getContent())
+            .type(MessageType.CODE)
+            .sendAt(LocalDateTime.now())
+            .codeLanguage(request.getLanguage())
+            .build();
+    }
+
+    public ChatMessage toEntityWithImage(ChatRoom room, ChatParticipant sender,
+        ImageFile chatImage) {
+        return ChatMessage.builder()
+            .chatRoom(room)
+            .sender(sender)
+            .type(MessageType.IMAGE)
+            .sendAt(LocalDateTime.now())
+            .chatImage(chatImage)
+            .build();
+    }
+
+    public ChatMessage toEntityWithGit(GitMessage gitMessage) {
         return ChatMessage.builder()
             .chatRoom(gitMessage.getRoom())
             .type(MessageType.GIT)
