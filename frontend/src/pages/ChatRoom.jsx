@@ -235,54 +235,6 @@ const ChatRoom = () => {
     }
   };
 
-  // const sendMessage = (text = content) => {
-
-  //   //지은 시작
-  //   let raw = text;
-
-  //   // 객체면 JSON 문자열로 변환
-  //   if (typeof raw === 'object') {
-  //     try {
-  //       raw = JSON.stringify(raw, null, 2); // 예쁘게 포맷팅된 문자열
-  //     } catch (err) {
-  //       console.error('객체 직렬화 실패:', err);
-  //       return;
-  //     }
-  //   }
-
-  //   const trimmed = String(text).trim();
-  //   //지은 끝
-
-  //   const client = stompClientRef.current;
-
-  //   if (client && client.connected && trimmed !== '') {
-  //     const chatMessage = {
-  //       content: String(text),
-  //       type: inputMode,
-  //       // 현재 시간을 ISO 형식으로 설정 (백엔드에서 덮어쓸 수도 있지만 프론트에서도 설정)
-  //       sendAt: new Date().toISOString(),
-  //       ...(inputMode === 'CODE' && { language })
-  //     };
-
-  //     client.publish({
-  //       destination: `/chat/send-message/${roomId}`,
-  //       body: JSON.stringify(chatMessage),
-  //       headers: {}
-  //     });
-
-  //     setContent('');
-  //     setInputMode('TEXT');
-  //   }else{
-  //     console.warn('메시지를 보낼 수 없습니다.');
-      
-  //     // 연결이 끊긴 경우 재연결 시도
-  //     if (!client.connected) {
-  //       client.activate();
-  //       alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
-  //     }
-  //   }
-  // };
-
   // 통합 메시지 전송 함수 (텍스트/코드/이미지 모두 처리)
   const sendMessage = (overrideMessage = null) => {
     const client = stompClientRef.current;
@@ -321,6 +273,7 @@ const ChatRoom = () => {
 
 
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
   const fileInputRef = useRef(null);
 
   // 전송 버튼 클릭 시 호출되는 공통 핸들러 함수 (이미지 업로드 고려)
@@ -356,6 +309,8 @@ const ChatRoom = () => {
       }catch(err){
         console.err("이미지 전송 실패: ",err);
       }
+      setImageFile(null);
+      setImagePreviewUrl(null);
     } else {
       // TEXT 또는 CODE 모드일 경우 기존 sendMessage 호출
       sendMessage();
@@ -656,7 +611,28 @@ const ChatRoom = () => {
                   language={msg.language || 'java'} 
                 />
               </div>
-            ) : (
+            ): msg.type === 'IMAGE' ? (
+                <div style={{
+                  maxWidth: '30%',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <img
+                    src={`http://localhost:8080/images/chat/${msg.chatImageUrl}`}
+                    alt="업로드된 이미지"
+                    style={{
+                      width: '100%',
+                      maxHeight: '400px',
+                      objectFit: 'contain',
+                      borderRadius: '6px'
+                    }}
+                  />
+                </div>
+            )
+            : (
               <div style={{ 
                 fontSize: '14px',
                 lineHeight: '1.5',
@@ -808,11 +784,6 @@ const ChatRoom = () => {
                     if (nextMode === 'IMAGE' && fileInputRef.current) {
                       fileInputRef.current.click();
                     }
-                    // if (inputMode === 'IMAGE') {
-                    //   setInputMode('TEXT');
-                    // } else {
-                    //   setInputMode('IMAGE');
-                    // }
                   }}
                   style={{ 
                     padding: '6px 12px',
@@ -875,6 +846,50 @@ const ChatRoom = () => {
             </div>
             
             <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+
+                {/* 썸네일 미리보기 이미지 */}
+                {inputMode === 'IMAGE' && imagePreviewUrl && (
+                  <div style={{
+                    marginBottom: '12px',
+                    padding: '8px',
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    maxWidth: '100%',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
+                  }}>
+                    <img
+                      src={imagePreviewUrl}
+                      alt="미리보기"
+                      style={{
+                        maxWidth: '30%',
+                        maxHeight: '160px',
+                        objectFit: 'cover',
+                        borderRadius: '6px'
+                      }}
+                    />
+                    <div style={{ textAlign: 'right' }}>
+                      <button
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreviewUrl(null);
+                        }}
+                        style={{
+                          marginTop: '4px',
+                          fontSize: '12px',
+                          color: '#f56565',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+                )}
+
               <textarea
                 value={content}
                 onChange={handleInputChange}
@@ -902,6 +917,7 @@ const ChatRoom = () => {
                   transition: 'border-color 0.2s'
                 }}
               />
+            </div>
 
               <input
                 type="file"
@@ -909,7 +925,15 @@ const ChatRoom = () => {
                 // accept="image/*"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    setImageFile(e.target.files[0]);
+                    const file = e.target.files[0];    
+                    setImageFile(file);
+
+                    // 파일 URL 생성
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setImagePreviewUrl(reader.result);
+                    };
+                    reader.readAsDataURL(file);
                   }
                 }}
                 style={{ display: 'none' }} // 숨김
