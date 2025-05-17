@@ -45,6 +45,7 @@ public class ChatMessageMapper {
             .type(message.getType())
             .sendAt(message.getSendAt())
             .language(message.getCodeLanguage())
+            .senderId(message.getSender().getParticipant().getId())
             .build();
     }
 

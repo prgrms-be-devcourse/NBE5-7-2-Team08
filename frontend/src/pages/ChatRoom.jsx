@@ -136,6 +136,7 @@ const ChatRoom = () => {
           } else {
             console.log("🔁 Will attempt reconnect...");
             // alert('서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+            // 토큰 검사 로직 필요
           }
         },
 
