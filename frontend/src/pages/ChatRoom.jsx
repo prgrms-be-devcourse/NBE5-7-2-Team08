@@ -311,7 +311,7 @@ const ChatRoom = () => {
     }
 
     client.publish({
-      destination: `/app/send-message/${roomId}`,
+      destination: `/chat/send-message/${roomId}`,
       body: JSON.stringify(message)
     });
 
@@ -645,7 +645,7 @@ const ChatRoom = () => {
                     ))}
                 </div>
                 </div>
-            ): msg.type === 'CODE' || msg.content.startsWith('```') ? (
+            ): msg.type === 'CODE' || (msg.content && msg.content.startsWith('```')) ? (
               <div style={{ 
                 borderRadius: '6px',
                 overflow: 'hidden',
@@ -801,11 +801,18 @@ const ChatRoom = () => {
               }}>
                 <span
                   onClick={() => {
-                    if (inputMode === 'IMAGE') {
-                      setInputMode('TEXT');
-                    } else {
-                      setInputMode('IMAGE');
+                    const nextMode = inputMode === 'IMAGE' ? 'TEXT' : 'IMAGE';
+                    setInputMode(nextMode);
+
+                    // 모드가 IMAGE로 바뀌었으면 파일 선택창 자동 오픈
+                    if (nextMode === 'IMAGE' && fileInputRef.current) {
+                      fileInputRef.current.click();
                     }
+                    // if (inputMode === 'IMAGE') {
+                    //   setInputMode('TEXT');
+                    // } else {
+                    //   setInputMode('IMAGE');
+                    // }
                   }}
                   style={{ 
                     padding: '6px 12px',
@@ -823,12 +830,8 @@ const ChatRoom = () => {
                 </span>
                 <span
                   onClick={() => {
-                    if (inputMode === 'CODE') {
-                      setInputMode('TEXT');
-                      setContent('');
-                    } else {
-                      setInputMode('CODE');
-                    }
+                    const nextMode = inputMode === 'CODE' ? 'TEXT' : 'CODE';
+                    setInputMode(nextMode);
                   }}
                   style={{ 
                     padding: '6px 12px',
@@ -900,8 +903,21 @@ const ChatRoom = () => {
                 }}
               />
 
+              <input
+                type="file"
+                ref={fileInputRef}
+                // accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    setImageFile(e.target.files[0]);
+                  }
+                }}
+                style={{ display: 'none' }} // 숨김
+                />
+
               <button
-                onClick={() => sendMessage()}
+                // onClick={() => sendMessage()}
+                onClick={handleUnifiedSend}
                 style={{
                   ...buttonStyle,
                   height: '80px'
