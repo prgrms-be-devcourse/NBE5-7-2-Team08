@@ -235,54 +235,93 @@ const ChatRoom = () => {
     }
   };
 
-  const sendMessage = (text = content) => {
+  // const sendMessage = (text = content) => {
 
-    //지은 시작
-    let raw = text;
+  //   //지은 시작
+  //   let raw = text;
 
-    // 객체면 JSON 문자열로 변환
-    if (typeof raw === 'object') {
-      try {
-        raw = JSON.stringify(raw, null, 2); // 예쁘게 포맷팅된 문자열
-      } catch (err) {
-        console.error('객체 직렬화 실패:', err);
-        return;
-      }
-    }
+  //   // 객체면 JSON 문자열로 변환
+  //   if (typeof raw === 'object') {
+  //     try {
+  //       raw = JSON.stringify(raw, null, 2); // 예쁘게 포맷팅된 문자열
+  //     } catch (err) {
+  //       console.error('객체 직렬화 실패:', err);
+  //       return;
+  //     }
+  //   }
 
-    const trimmed = String(text).trim();
-    //지은 끝
+  //   const trimmed = String(text).trim();
+  //   //지은 끝
 
-    const client = stompClientRef.current;
+  //   const client = stompClientRef.current;
 
-    if (client && client.connected && trimmed !== '') {
-      const chatMessage = {
-        content: String(text),
-        type: inputMode,
-        // 현재 시간을 ISO 형식으로 설정 (백엔드에서 덮어쓸 수도 있지만 프론트에서도 설정)
-        sendAt: new Date().toISOString(),
-        ...(inputMode === 'CODE' && { language })
-      };
+  //   if (client && client.connected && trimmed !== '') {
+  //     const chatMessage = {
+  //       content: String(text),
+  //       type: inputMode,
+  //       // 현재 시간을 ISO 형식으로 설정 (백엔드에서 덮어쓸 수도 있지만 프론트에서도 설정)
+  //       sendAt: new Date().toISOString(),
+  //       ...(inputMode === 'CODE' && { language })
+  //     };
 
-      client.publish({
-        destination: `/chat/send-message/${roomId}`,
-        body: JSON.stringify(chatMessage),
-        headers: {}
-      });
+  //     client.publish({
+  //       destination: `/chat/send-message/${roomId}`,
+  //       body: JSON.stringify(chatMessage),
+  //       headers: {}
+  //     });
 
-      setContent('');
-      setInputMode('TEXT');
-    }else{
-      console.warn('메시지를 보낼 수 없습니다.');
+  //     setContent('');
+  //     setInputMode('TEXT');
+  //   }else{
+  //     console.warn('메시지를 보낼 수 없습니다.');
       
-      // 연결이 끊긴 경우 재연결 시도
-      if (!client.connected) {
-        client.activate();
-        alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
-      }
+  //     // 연결이 끊긴 경우 재연결 시도
+  //     if (!client.connected) {
+  //       client.activate();
+  //       alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+  //     }
+  //   }
+  // };
+
+  // 통합 메시지 전송 함수 (텍스트/코드/이미지 모두 처리)
+  const sendMessage = (overrideMessage = null) => {
+    const client = stompClientRef.current;
+    // 연결이 끊긴 경우 재연결 시도
+    if (!client.connected) {
+      client.activate();
+      alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+      return;
     }
+
+    // 기본 메시지 구조
+    let baseMessage = {
+      content: content,
+      type: inputMode,
+      sendAt: new Date().toISOString(),
+      ...(inputMode === 'CODE' && { language })
+    };
+
+    // overrideMessage가 있으면 병합 (예: 이미지 메시지 전송 시)
+    const message = overrideMessage ? { ...baseMessage, ...overrideMessage } : baseMessage;
+
+    // 메시지 비어있는 경우 전송 방지
+    const trimmed = String(message.content).trim();
+    if (message.type !== 'IMAGE' && trimmed === '') {
+      return;
+    }
+
+    client.publish({
+      destination: `/app/send-message/${roomId}`,
+      body: JSON.stringify(message)
+    });
+
+    setContent('');
+    setInputMode('TEXT');
   };
 
+
+  const [imageFile, setImageFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   // 전송 버튼 클릭 시 호출되는 공통 핸들러 함수 (이미지 업로드 고려)
   const handleUnifiedSend = async () => {
