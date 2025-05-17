@@ -1,5 +1,6 @@
 package project.backend.domain.chat.chatmessage.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,6 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.imagefile.ImageFile;
 
 @Entity
 @Getter
@@ -47,6 +49,10 @@ public class ChatMessage {
     private MessageType type = MessageType.TEXT;
 
     private String codeLanguage; //추가, 문법마다 다르게 하이라이팅을 하기 위함
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "chat_image_id")
+    private ImageFile chatImage;
 
     @Builder
     public ChatMessage(ChatParticipant sender, ChatRoom chatRoom, String content,

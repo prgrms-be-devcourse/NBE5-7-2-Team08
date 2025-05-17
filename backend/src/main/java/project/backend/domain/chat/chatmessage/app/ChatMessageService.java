@@ -11,11 +11,14 @@ import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchResponse;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
+import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.imagefile.ImageFile;
+import project.backend.domain.imagefile.ImageFileService;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
 import project.backend.global.exception.errorcode.ChatMessageErrorCode;
@@ -33,6 +36,7 @@ public class ChatMessageService {
     private final ChatRoomRepository chatRoomRepository;
     private final MemberRepository memberRepository;
     private final ChatParticipantRepository chatParticipantRepository;
+    private final ImageFileService imageFileService;
 
     private final ChatMessageMapper messageMapper;
 
@@ -49,6 +53,10 @@ public class ChatMessageService {
                 sender, room)
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
+        if (request.getType().equals(MessageType.IMAGE) && request.getChatImage() != null) {
+            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getChatImage());
+
+        }
         ChatMessage message = messageMapper.toEntity(room, participant, request);
         chatMessageRepository.save(message);
 
