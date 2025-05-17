@@ -7,7 +7,7 @@ import 'highlight.js/styles/github.css';
 import Sidebar from '../components/SideBar';
 import Header from '../components/header';
 import SearchSidebar from '../components/SearchSideBar';
-import { FaCopy } from 'react-icons/fa';
+import { FaCopy, FaTrashAlt } from 'react-icons/fa';
 
 const ChatRoom = () => {
   const [messages, setMessages]=useState([]);
@@ -851,10 +851,11 @@ const ChatRoom = () => {
                 {/* 썸네일 미리보기 이미지 */}
                 {inputMode === 'IMAGE' && imagePreviewUrl && (
                   <div style={{
-                    marginBottom: '12px',
+                    position: 'relative',
+                    marginBottom: '10px',
                     padding: '8px',
                     backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    border: '2px solid #e2e8f0',
                     borderRadius: '8px',
                     maxWidth: '100%',
                     boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
@@ -865,29 +866,37 @@ const ChatRoom = () => {
                       style={{
                         maxWidth: '30%',
                         maxHeight: '160px',
-                        objectFit: 'cover',
+                        objectFit: 'contain',
                         borderRadius: '6px'
                       }}
                     />
-                    <div style={{ textAlign: 'right' }}>
+
                       <button
                         onClick={() => {
                           setImageFile(null);
                           setImagePreviewUrl(null);
                         }}
-                        style={{
-                          marginTop: '4px',
-                          fontSize: '12px',
-                          color: '#f56565',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer'
-                        }}
+                          title="삭제"
+                          style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '28px',
+                            height: '28px',
+                            color: '#e53e3e',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.15)'
+                          }}
                       >
-                        삭제
+                         <FaTrashAlt color="#e53e3e" size={25} />
                       </button>
                     </div>
-                  </div>
                 )}
 
               <textarea
