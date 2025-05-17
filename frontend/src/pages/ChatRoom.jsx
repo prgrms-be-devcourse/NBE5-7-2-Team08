@@ -283,6 +283,46 @@ const ChatRoom = () => {
     }
   };
 
+
+  // 전송 버튼 클릭 시 호출되는 공통 핸들러 함수 (이미지 업로드 고려)
+  const handleUnifiedSend = async () => {
+    if (inputMode === 'IMAGE') {
+      // 이미지 업로드 모드일 경우
+      if (!imageFile) {
+        alert("이미지를 선택하세요.");
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+
+        const response = await fetch('http://localhost:8080/send-image', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        if (!response.ok) throw new Error('이미지 업로드 실패');
+
+        const imageId = await response.json(); // 서버에서 imageId 반환
+
+        sendMessage({
+          type: 'IMAGE',
+          content: '',
+          imageFileId: imageId
+        });
+
+        setImageFile(null);
+      }catch(err){
+        console.err("이미지 전송 실패: ",err);
+      }
+    } else {
+      // TEXT 또는 CODE 모드일 경우 기존 sendMessage 호출
+      sendMessage();
+    }
+  };
+
   const handleSearch = async (keyword, page = 0) => {
     // Check if roomId is defined before proceeding
     if (!roomId) {
