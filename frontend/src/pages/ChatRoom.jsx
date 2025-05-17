@@ -209,7 +209,6 @@ const ChatRoom = () => {
       };
     }, [roomId]);
 
-
   // 메시지가 업데이트될 때마다 아래로 스크롤
   useEffect(() => {
     scrollToBottom();
@@ -511,7 +510,7 @@ const ChatRoom = () => {
             flexShrink: 0,
             backgroundImage: msg.type === 'GIT'
             ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
-            : `url("http://localhost:8080/profile/default-profile.png")`,
+            : `url("http://localhost:8080/profile/${msg.profileImageUrl}")`,
             backgroundSize: 'cover'
           }}>
           </div>

@@ -14,6 +14,6 @@ public class ChatMessageResponse {
     private LocalDateTime sendAt;
     private MessageType type;
     private String language;
-    private Long senderId; //사용자 식별을 위한 id 추가
+    private String profileImageUrl;
 
 }

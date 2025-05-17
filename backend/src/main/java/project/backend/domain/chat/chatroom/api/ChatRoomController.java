@@ -119,11 +119,4 @@ public class ChatRoomController {
 
     }
 
-    @GetMapping("/{roomId}/participants")
-    public List<ChatParticipantResponse> findAllChatParticipant(
-        @PathVariable Long roomId
-    ) {
-        return chatRoomService.findAllParticipants(roomId);
-    }
-
 }

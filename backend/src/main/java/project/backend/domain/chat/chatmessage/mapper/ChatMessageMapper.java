@@ -1,6 +1,7 @@
 package project.backend.domain.chat.chatmessage.mapper;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
@@ -10,6 +11,7 @@ import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.imagefile.ImageFile;
 
 @Component
 public class ChatMessageMapper {
@@ -45,7 +47,10 @@ public class ChatMessageMapper {
             .type(message.getType())
             .sendAt(message.getSendAt())
             .language(message.getCodeLanguage())
-            .senderId(message.getSender().getParticipant().getId())
+            .profileImageUrl(
+                Optional.ofNullable(message.getSender().getParticipant().getProfileImage())
+                    .map(ImageFile::getStoreFileName)
+                    .orElse("default_image.jpg"))
             .build();
     }
 
