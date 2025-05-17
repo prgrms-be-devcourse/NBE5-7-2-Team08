@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
@@ -29,27 +28,28 @@ public class DefaultProfileInitializer {
     private final ChatRoomRepository chatRoomRepository;
     private final MemberRepository memberRepository;
 
-    @Value("${file.default-profile}")
+    @Value("${file.images.profile.default}")
     private String defaultProfilePath;
 
     @PostConstruct
     public void initDefaultImage() {
-        boolean exists = imageFileRepository.existsByStoreFileName("/profile/default-profile.png");
+        boolean exists = imageFileRepository.existsByStoreFileName(
+            "/images/profile/default-profile.png");
 
         if (!exists) {
             imageFileRepository.save(ImageFile.builder()
-                    .storeFileName(defaultProfilePath)
-                    .uploadFileName(defaultProfilePath)
-                    .imageType(ImageType.PROFILE_IMAGE)
-                    .build());
+                .storeFileName(defaultProfilePath)
+                .uploadFileName(defaultProfilePath)
+                .imageType(ImageType.PROFILE_IMAGE)
+                .build());
 
             imageFileRepository.flush();
         }
 
         // 2. 테스트용 멤버 생성
         List<String> emails = List.of(
-                "test1@test.com", "test2@test.com", "test3@test.com", "test4@test.com",
-                "test5@test.com", "test6@test.com", "test7@test.com"
+            "test1@test.com", "test2@test.com", "test3@test.com", "test4@test.com",
+            "test5@test.com", "test6@test.com", "test7@test.com"
         );
 
         for (int i = 0; i < emails.size(); i++) {
@@ -76,19 +76,19 @@ public class DefaultProfileInitializer {
 
             for (int j = 1; j < allMembers.size(); j++) {
                 ChatRoom room = ChatRoom.builder()
-                        .name("TestRoom-" + (i + 1) + "-" + j)
-                        .repositoryUrl("https://github.com/test" + (i + 1) + "/repo" + j)
-                        .owner(owner)
-                        .build();
+                    .name("TestRoom-" + (i + 1) + "-" + j)
+                    .repositoryUrl("https://github.com/test" + (i + 1) + "/repo" + j)
+                    .owner(owner)
+                    .build();
 
                 // 참가자 최대 3명 포함 (owner 포함 가능)
                 for (int k = 0; k < Math.min(3, allMembers.size()); k++) {
                     Member participant = allMembers.get(k);
 
                     ChatParticipant chatParticipant = ChatParticipant.builder()
-                            .participant(participant)
-                            .chatRoom(room)
-                            .build();
+                        .participant(participant)
+                        .chatRoom(room)
+                        .build();
 
                     room.getParticipants().add(chatParticipant); // 양방향 연결
                 }

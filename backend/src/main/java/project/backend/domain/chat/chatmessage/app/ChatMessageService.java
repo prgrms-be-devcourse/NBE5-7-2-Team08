@@ -19,6 +19,7 @@ import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileService;
+import project.backend.domain.imagefile.ImageType;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
 import project.backend.global.exception.errorcode.ChatMessageErrorCode;
@@ -54,9 +55,17 @@ public class ChatMessageService {
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
         if (request.getType().equals(MessageType.IMAGE) && request.getChatImage() != null) {
-            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getChatImage());
+            ImageFile chatImage = imageFileService.saveImageFile(request.getChatImage(),
+                ImageType.CHAT_IMAGE);
+//            messageMapper.toEntity(room,participant, request, chatImage);
+        } else if (request.getType().equals(MessageType.TEXT)) {
+
+        } else if (request.getType().equals(MessageType.CODE)) {
+
+        } else {
 
         }
+
         ChatMessage message = messageMapper.toEntity(room, participant, request);
         chatMessageRepository.save(message);
 

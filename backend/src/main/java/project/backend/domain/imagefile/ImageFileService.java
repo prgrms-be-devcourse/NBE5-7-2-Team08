@@ -23,11 +23,14 @@ public class ImageFileService {
 
     private final ImageFileRepository imageFileRepository;
 
-    @Value("${file.profile-path}")
+    @Value("${file.images.profile.path}")
     private String profilePath;
 
+    @Value("${file.images.chat.path}")
+    private String chatImagePath;
+
     @Transactional
-    public ImageFile saveProfileImageFile(MultipartFile file) {
+    public ImageFile saveImageFile(MultipartFile file, ImageType type) {
 
         log.info("Saving profile image file");
         String uploadFileName = file.getOriginalFilename();
@@ -41,7 +44,14 @@ public class ImageFileService {
 
         String storeFileName = UUID.randomUUID() + extension;
 
-        Path savePath = Paths.get(profilePath, storeFileName);
+        Path savePath;
+        if (type.equals(ImageType.PROFILE_IMAGE)) {
+            savePath = Paths.get(profilePath, storeFileName);
+        } else if (type.equals(ImageType.CHAT_IMAGE)) {
+            savePath = Paths.get(chatImagePath, storeFileName);
+        } else {
+            throw new ImageFileException(ImageFileErrorCode.INVALID_ROUTE);
+        }
 
         ImageFile imageFile = ImageFile.ofProfile(storeFileName, uploadFileName);
         imageFileRepository.saveAndFlush(imageFile);
@@ -82,7 +92,7 @@ public class ImageFileService {
 
     public ImageFile getProfileImageByStoreFileName(String storeFileName) {
         return imageFileRepository.findByStoreFileName(storeFileName)
-                .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
+            .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
     }
 
 }

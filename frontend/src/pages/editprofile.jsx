@@ -117,7 +117,7 @@ const EditProfilePage = () => {
             <div className={styles["profile-picture-section"]}>
               <div className={styles["profile-picture"]}>
                 <img
-                  src={selectedImage || `http://localhost:8080/profile/${userDetails.profileImg}`}
+                  src={selectedImage || `http://localhost:8080/images/profile/${userDetails.profileImg}`}
                   alt="Profile"
                   className={styles["profile-image"]}
                   onError={(e) => {

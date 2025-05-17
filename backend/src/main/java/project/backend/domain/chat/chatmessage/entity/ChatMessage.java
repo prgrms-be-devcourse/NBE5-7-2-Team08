@@ -57,13 +57,14 @@ public class ChatMessage {
     @Builder
     public ChatMessage(ChatParticipant sender, ChatRoom chatRoom, String content,
         LocalDateTime sendAt,
-        MessageType type, String codeLanguage) {
+        MessageType type, String codeLanguage, ImageFile chatImage) {
         this.sender = sender;
         this.chatRoom = chatRoom;
         this.content = content;
         this.sendAt = sendAt;
         this.type = type;
         this.codeLanguage = codeLanguage;
+        this.chatImage = chatImage;
     }
 
 }

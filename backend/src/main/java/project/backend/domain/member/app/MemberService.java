@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileService;
+import project.backend.domain.imagefile.ImageType;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.dto.MemberDetails;
 import project.backend.domain.member.dto.MemberResponse;
@@ -40,12 +41,13 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
 
-        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(defaultProfilePath);
+        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
+            defaultProfilePath);
 
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
         Member newMember = memberRepository.save(
-                MemberMapper.toEntity(request, encryptedPassword, defaultProfileImg));
+            MemberMapper.toEntity(request, encryptedPassword, defaultProfileImg));
 
         return MemberMapper.toResponse(newMember);
     }
@@ -66,7 +68,8 @@ public class MemberService {
         }
 
         if (request.getProfileImg() != null) {
-            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getProfileImg());
+            ImageFile newProfile = imageFileService.saveImageFile(request.getProfileImg(),
+                ImageType.PROFILE_IMAGE);
             targetMember.setProfileImage(newProfile);
         }
 
@@ -85,12 +88,12 @@ public class MemberService {
 
     public Member getMemberByEmail(String email) {
         return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
     private Member getMemberById(Long id) {
         return memberRepository.findById(id)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
     public MemberResponse getMemberResponseById(Long memberId) {

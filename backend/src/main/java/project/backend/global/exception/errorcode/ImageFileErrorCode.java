@@ -10,8 +10,8 @@ import project.backend.global.exception.ErrorResponse;
 public enum ImageFileErrorCode implements ErrorCode {
     FILE_SAVE_FAILURE("IE-001", "이미지 저장 실패", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_NOT_FOUND("IE-002", "이미지를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    INVALID_IMAGE_TYPE("IE-003", "적합하지 않은 파일입니다.", HttpStatus.BAD_REQUEST);
-
+    INVALID_IMAGE_TYPE("IE-003", "적합하지 않은 파일입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_ROUTE("IE-004", "유효하지 않은 경로로 저장을 시도하였습니다.", HttpStatus.BAD_REQUEST);
 
     private final String code;
 

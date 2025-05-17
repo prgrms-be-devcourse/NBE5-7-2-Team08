@@ -25,7 +25,6 @@ public class ChatMessageMapper {
             .codeLanguage(request.getLanguage())
             .sendAt(LocalDateTime.now())
             .build();
-
     }
 
     public ChatMessage toEntity(GitMessage gitMessage) {
@@ -35,7 +34,6 @@ public class ChatMessageMapper {
             .content(gitMessage.getContent())
             .sendAt(LocalDateTime.now())
             .build();
-
     }
 
     public ChatMessageResponse toResponse(ChatMessage message) {
