@@ -22,5 +22,7 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
         """)
     Optional<Long> findMostLargeRoomIdByEmail(@Param("email") String email);
 	boolean existsByParticipantIdAndChatRoomId(Long participantId, Long chatRoomId);
+
+	Optional<ChatParticipant> findByChatRoomIdAndParticipantId(Long chatRoomId, Long participantId);
 }
 

@@ -1,5 +1,6 @@
 package project.backend.global.exception;
 
+import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ public class ErrorResponse {
 
     private String code;
     private String message;
+    private Map<String, Object> details;
 
     public static ErrorResponse toResponse(ErrorCode errorCode) {
         return ErrorResponse.builder()
@@ -28,4 +30,11 @@ public class ErrorResponse {
                 .build();
     }
 
+    public static ErrorResponse toResponse(ErrorCode errorCode, Map<String, Object> details) {
+        return ErrorResponse.builder()
+            .code(errorCode.getCode())
+            .message(errorCode.getMessage())
+            .details(details)
+            .build();
+    }
 }

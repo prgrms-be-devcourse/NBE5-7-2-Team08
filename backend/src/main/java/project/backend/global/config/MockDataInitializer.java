@@ -1,6 +1,7 @@
 package project.backend.global.config;
 
 import jakarta.annotation.PostConstruct;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -16,7 +17,7 @@ import project.backend.domain.member.entity.Member;
 import java.util.List;
 
 @Component
-@Profile("local")
+@Profile("dev")
 @RequiredArgsConstructor
 public class MockDataInitializer {
 
@@ -62,6 +63,7 @@ public class MockDataInitializer {
                         .name("TestRoom-" + (i + 1) + "-" + j)
                         .repositoryUrl("https://github.com/test" + (i + 1) + "/repo" + j)
                         .owner(owner)
+                        .inviteCode(UUID.randomUUID().toString())
                         .build();
 
                 // 참가자 최대 3명 포함 (owner 포함 가능)
