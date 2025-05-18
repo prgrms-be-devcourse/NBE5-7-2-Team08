@@ -857,17 +857,18 @@ const ChatRoom = () => {
                     backgroundColor: '#f8fafc',
                     border: '2px solid #e2e8f0',
                     borderRadius: '8px',
-                    maxWidth: '100%',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
+                    maxWidth: '10%',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                    display: 'inline-block'
                   }}>
                     <img
                       src={imagePreviewUrl}
                       alt="미리보기"
                       style={{
-                        maxWidth: '30%',
-                        maxHeight: '160px',
+                        maxWidth: '100%',
                         objectFit: 'contain',
-                        borderRadius: '6px'
+                        borderRadius: '6px',
+                        display: 'block'
                       }}
                     />
 
@@ -875,14 +876,15 @@ const ChatRoom = () => {
                         onClick={() => {
                           setImageFile(null);
                           setImagePreviewUrl(null);
+                          setInputMode('TEXT');
                         }}
                           title="삭제"
                           style={{
                             position: 'absolute',
-                            top: '8px',
-                            right: '8px',
+                            top: '2px',
+                            right: '2px',
                             backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            border: 'none',
+                            border: '1px solid #e2e8f0',
                             borderRadius: '50%',
                             width: '28px',
                             height: '28px',
@@ -894,73 +896,77 @@ const ChatRoom = () => {
                             boxShadow: '0 1px 4px rgba(0,0,0,0.15)'
                           }}
                       >
-                         <FaTrashAlt color="#e53e3e" size={25} />
+                         <FaTrashAlt color="#e53e3e" size={16} />
                       </button>
                     </div>
                 )}
 
-              <textarea
-                value={content}
-                onChange={handleInputChange}
-                onCompositionStart={() => (isComposingRef.current = true)}
-                onCompositionEnd={() => (isComposingRef.current = false)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey && !isComposingRef.current) {
-                    e.preventDefault();
-                    sendMessage(e.target.value);
-                  }
-                }}
-                placeholder={inputMode === 'CODE' ? "코드를 입력하세요..." : "메시지를 입력하세요..."}
-                style={{
-                  flex: 1,
-                  height: '80px',
-                  resize: 'none',
-                  padding: '12px 16px',
-                  fontSize: '14px',
-                  backgroundColor: inputMode === 'CODE' ? '#f8fafc' : 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  lineHeight: '1.5',
-                  color: '#4a5568',
-                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
-                  transition: 'border-color 0.2s'
-                }}
-              />
-            </div>
-
-              <input
-                type="file"
-                ref={fileInputRef}
-                // accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    const file = e.target.files[0];    
-                    setImageFile(file);
-
-                    // 파일 URL 생성
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setImagePreviewUrl(reader.result);
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                style={{ display: 'none' }} // 숨김
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
+                <textarea
+                  disabled={inputMode === 'IMAGE'}
+                  value={content}
+                  onChange={handleInputChange}
+                  onCompositionStart={() => (isComposingRef.current = true)}
+                  onCompositionEnd={() => (isComposingRef.current = false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && !isComposingRef.current) {
+                      e.preventDefault();
+                      sendMessage(e.target.value);
+                    }
+                  }}
+                  placeholder={ inputMode === 'CODE'? '코드를 입력하세요.' : inputMode === 'IMAGE' ? '이미지를 업로드 해주세요.' : '메시지를 입력하세요.'}
+                  style={{
+                    flex: 1,
+                    height: '80px',
+                    resize: 'none',
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    backgroundColor: inputMode === 'IMAGE' ? '#f1f5f9': inputMode === 'CODE' ? '#f8fafc' : 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    lineHeight: '1.5',
+                    color: '#4a5568',
+                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
+                    transition: 'border-color 0.2s',
+                    cursor: inputMode === 'IMAGE' ? 'not-allowed' : 'text'
+                  }}
                 />
 
-              <button
-                // onClick={() => sendMessage()}
-                onClick={handleUnifiedSend}
-                style={{
-                  ...buttonStyle,
-                  height: '80px'
-                }}
-              >
-                전송
-              </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  // accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      const file = e.target.files[0];    
+                      setImageFile(file);
+
+                      // 파일 URL 생성
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setImagePreviewUrl(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  style={{ display: 'none' }} // 숨김
+                  />
+
+                <button
+                  // onClick={() => sendMessage()}
+                  onClick={handleUnifiedSend}
+                  style={{
+                    ...buttonStyle,
+                    height: '80px'
+                  }}
+                >
+                  전송
+                </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
         
         {showSearchSidebar && (
           <SearchSidebar
