@@ -16,7 +16,12 @@ const ChatRoom = () => {
   const navigate = useNavigate();
   const [inputMode, setInputMode] = useState("TEXT");
   const [language, setLanguage] = useState("java");
+
   const [currentUser, setCurrentUser] = useState(null);
+  const [contextMenuId, setContextMenuId] = useState(null);
+
+  const [editMessageId, setEditMessageId] = useState(null); // 현재 수정 중인 메시지 ID
+  const [editContent, setEditContent] = useState(""); // 수정 중인 내용
   
   const messagesEndRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -106,7 +111,7 @@ const ChatRoom = () => {
         }
     };
 
-    fetchCurrentUser(); // 호출
+      fetchCurrentUser(); // 호출
 
       const client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
@@ -509,50 +514,12 @@ const ChatRoom = () => {
     let currentDate = null;
     
     // 메시지를 순회하며 날짜별로 구분
-    messages.forEach((msg, index) => {
-      const messageDate = formatDate(msg.sendAt);
-      
-      // 날짜가 바뀌었다면 구분선 추가
-      if (messageDate !== currentDate) {
-        currentDate = messageDate;
-        result.push(
-          <div key={`date-${index}`} style={{
-            display: 'flex',
-            alignItems: 'center',
-            margin: '24px 0',
-            color: '#64748b',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}>
-            <div style={{
-              flex: '1',
-              height: '1px',
-              backgroundColor: '#e2e8f0'
-            }}></div>
-            <div style={{ 
-              margin: '0 16px',
-              padding: '4px 12px',
-              backgroundColor: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #e2e8f0'
-            }}>
-              {messageDate}
-            </div>
-            <div style={{
-              flex: '1',
-              height: '1px',
-              backgroundColor: '#e2e8f0'
-            }}></div>
-          </div>
-        );
-      }
-      
-      // 메시지 추가
+    messages.forEach((msg, index) => {  
       result.push(
         <div key={`msg-${index}`} style={{ 
           marginBottom: '18px', 
           display: 'flex',
-          alignItems: 'flex-start'
+          alignItems: 'flex-start',
         }}>
           {/* 프로필 이미지 */}
           <div style={{
@@ -573,29 +540,108 @@ const ChatRoom = () => {
             backgroundSize: 'cover'
           }}>
           </div>
-          <div style={{ flex: 1, maxWidth: 'calc(100% - 50px)' }}>
+          <div style={{ flex: 1, maxWidth: 'calc(100% - 50px)'}}>
             <div style={{ 
               display: 'flex',
-              alignItems: 'baseline',
-              marginBottom: '6px'
+              marginBottom: '6px',
+              justifyContent: 'space-between',
             }}>
-              <span style={{ 
-                fontWeight: '600',
-                fontSize: '15px',
-                color: '#2d3748'
-              }}>
-                {msg.senderName}
-              </span>
-              <span style={{ 
-                fontWeight: 'normal', 
-                fontSize: '12px', 
-                color: '#718096', 
-                marginLeft: '8px' 
-              }}>
-                {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                {formatTime(msg.sendAt)}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                <span style={{ 
+                  fontWeight: '600',
+                  fontSize: '15px',
+                  color: '#2d3748'
+                }}>
+                  {msg.senderName}
+                </span>
+                <span style={{ 
+                  fontWeight: 'normal', 
+                  fontSize: '12px', 
+                  color: '#718096', 
+                  marginLeft: '8px' 
+                }}>
+                  {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  {formatTime(msg.sendAt)}
+                </span>
             </div>
+
+            {/* 점 세개 메뉴는 조건부 렌더링 */}
+            {currentUser?.id === msg.senderId && (
+              <div style={{ position: 'relative'}}>
+                <button
+                  onClick={() =>
+                    setContextMenuId(contextMenuId === msg.messageId ? null : msg.messageId)
+                  }
+                  style={{
+                    position: 'absolute',
+                    top: '-10px',
+                    right: '0px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    color: '#94a3b8'
+                  }}
+                >
+                  ⋯
+                </button>
+
+                {contextMenuId === msg.messageId && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '24px',
+                    right: '0',
+                    backgroundColor: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                    zIndex: 1000,
+                    padding: '6px 0'
+                  }}>
+                    <button
+                      onClick={() => {
+                        setEditMessageId(msg.messageId);
+                        setEditContent(msg.content);
+                        setContextMenuId(null);
+                      }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '6px 16px',
+                        textAlign: 'left',
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '14px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      메시지 수정하기
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        // deleteMessage(msg.messageId);
+                        setContextMenuId(null);
+                      }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '6px 16px',
+                        textAlign: 'left',
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '14px',
+                        color: '#e53e3e',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
             
             {/* GitHub 메시지 UI */}
             {msg.type === 'GIT' ? (
