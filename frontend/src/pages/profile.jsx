@@ -20,10 +20,12 @@ const ProfilePage = () => {
           method: "GET",
           credentials: "include"
         });
+        
+        const status = response.status;
 
         if (!response.ok) {
           const errorData = await response.json();
-          const status = response.status;
+          
 
           if (!alertShownRef.current) {
             alertShownRef.current = true;
@@ -94,8 +96,8 @@ const ProfilePage = () => {
   }, [userDetails ,navigate]);
 
 
-  const handleJoinClick = (roomId) => {
-    navigate(`/chat/${roomId}`);
+  const handleJoinClick = (roomId,inviteCode) => {
+    navigate(`/chat/${roomId}/${inviteCode}`);
   };
 
   if (!userDetails) {
@@ -163,12 +165,12 @@ const ProfilePage = () => {
                         </div>
                       </div>
                       <button className={styles["join-button"]}
-                      onClick={() => handleJoinClick(room.roomId)}>Join</button>
+                      onClick={() => handleJoinClick(room.roomId, room.inviteCode)}>Join</button>
                     </div>
                   ))
                 ) : (
                   <div className={styles["empty-rooms"]}>
-                    <p>No rooms created yet</p>
+                    <p>🥲 No rooms created yet</p>
                   </div>
                 )}
               </div>

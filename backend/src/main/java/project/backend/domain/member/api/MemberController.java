@@ -1,5 +1,6 @@
 package project.backend.domain.member.api;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -22,7 +23,7 @@ public class MemberController {
     }
 
     @PutMapping(value = "/update", consumes = "multipart/form-data")
-    public MemberResponse updateMemberDetails(Authentication authentication, @ModelAttribute MemberUpdateRequest updateRequest) {
+    public MemberResponse updateMemberDetails(Authentication authentication, @ModelAttribute @Valid MemberUpdateRequest updateRequest) {
         log.info("updateMemberDetails");
         return memberService.updateMember(authentication, updateRequest);
     }

@@ -47,7 +47,7 @@ public class MemberService {
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
         Member newMember = memberRepository.save(
-            MemberMapper.toEntity(request, encryptedPassword, defaultProfileImg));
+                MemberMapper.toEntity(request, encryptedPassword, defaultProfileImg));
 
         return MemberMapper.toResponse(newMember);
     }
@@ -88,12 +88,12 @@ public class MemberService {
 
     public Member getMemberByEmail(String email) {
         return memberRepository.findByEmail(email)
-            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
-    private Member getMemberById(Long id) {
+    public Member getMemberById(Long id) {
         return memberRepository.findById(id)
-            .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
     public MemberResponse getMemberResponseById(Long memberId) {
@@ -108,7 +108,7 @@ public class MemberService {
     public MemberResponse getMemberDetails(Authentication auth) {
         MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
         Long memberId = loginMember.getId();
-
+        log.info("memberId = {}", memberId);
         Member member = getMemberById(memberId);
         return MemberMapper.toResponse(member);
     }

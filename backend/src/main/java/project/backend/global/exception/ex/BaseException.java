@@ -7,14 +7,14 @@ import project.backend.global.exception.errorcode.ErrorCode;
 @Getter
 public abstract class BaseException extends RuntimeException {
 
-    private final ErrorCode errorCode;
+	private final ErrorCode errorCode;
 
-    public BaseException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
-    }
+	public BaseException(ErrorCode errorCode) {
+		super(errorCode.getMessage());
+		this.errorCode = errorCode;
+	}
 
-    public HttpStatus getStatus() {
-        return errorCode.getStatus();
-    }
+	public HttpStatus getStatus() {
+		return errorCode.getStatus();
+	}
 }
