@@ -9,10 +9,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.backend.global.config.security.dto.MemberDetails;
 import project.backend.global.config.security.dto.OAuthMemberDto;
 import project.backend.global.config.security.jwt.Token;
 
@@ -26,72 +28,85 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtProvider {
 
-    public static final Long TOKEN_VALIDATION_SECOND = 600L;
-    public static final Long REFRESH_TOKEN_VALIDATION_SECOND = 7 * 24 * 60 * 60L;
+	public static final Long TOKEN_VALIDATION_SECOND = 600L;
+	public static final Long REFRESH_TOKEN_VALIDATION_SECOND = 7 * 24 * 60 * 60L;
 
-    @Value("${jwt.info.secret}")
-    private String SECRET_KEY;
+	@Value("${jwt.info.secret}")
+	private String SECRET_KEY;
 
-    @Value("${jwt.info.issuer}")
-    private String ISSUER;
+	@Value("${jwt.info.issuer}")
+	private String ISSUER;
 
-    private Algorithm getSignatureAlgorithm(String secretKet) {
-        return Algorithm.HMAC256(secretKet);
-    }
+	private Algorithm getSignatureAlgorithm(String secretKet) {
+		return Algorithm.HMAC256(secretKet);
+	}
 
-    public Token generateTokenPair(OAuthMemberDto oAuthMemberDto) {
-        Map<String, String> payload = Map.of(
-                "email", oAuthMemberDto.email(),
-                "nickname", oAuthMemberDto.name()
-        );
+	public Token generateTokenPair(OAuthMemberDto oAuthMemberDto) {
+		Map<String, String> payload = Map.of(
+			"email", oAuthMemberDto.email(),
+			"nickname", oAuthMemberDto.nickname()
+		);
 
-        String accessToken = generateAccessToken(payload);
-        String refreshToken = generateRefreshToken(payload);
+		String accessToken = generateAccessToken(payload);
+		String refreshToken = generateRefreshToken(payload);
 
-        return new Token(accessToken, refreshToken);
-    }
+		return new Token(accessToken, refreshToken);
+	}
 
-    public String generateAccessToken(Map<String, String> payload) {
-        return doGenerateToken(TOKEN_VALIDATION_SECOND, payload);
-    }
+	public Token generateTokenPair(MemberDetails memberDetails) {
 
-    public String generateRefreshToken(Map<String, String> payload) {
-        return doGenerateToken(REFRESH_TOKEN_VALIDATION_SECOND, payload);
-    }
+		Map<String, String> payload = Map.of(
+			"email", memberDetails.getEmail(),
+			"nickname", memberDetails.getNickname()
+		);
 
-    private JWTVerifier getJwtVerifier() {
-        return JWT.require(getSignatureAlgorithm(SECRET_KEY))
-                .withIssuer(ISSUER)
-                .build();
-    }
+		String accessToken = generateAccessToken(payload);
+		String refreshToken = generateRefreshToken(payload);
 
+		return new Token(accessToken, refreshToken);
+	}
 
-    //추후 커스텀예외 추가 예정
-    public boolean validateToken(String token) {
-        try {
-            getJwtVerifier().verify(token); // 검증 성공 → 아무 문제 없음
-            return true;
+	public String generateAccessToken(Map<String, String> payload) {
+		return doGenerateToken(TOKEN_VALIDATION_SECOND, payload);
+	}
 
-        } catch (JWTVerificationException e) {
-            log.error("JWT 검증 실패: {}", e.getMessage());
-            return false;
+	public String generateRefreshToken(Map<String, String> payload) {
+		return doGenerateToken(REFRESH_TOKEN_VALIDATION_SECOND, payload);
+	}
 
-        } catch (Exception e) {
-            log.error("모루겠음 나가셈 ㅋㅋ");
-            return false;
-        }
-    }
+	private JWTVerifier getJwtVerifier() {
+		return JWT.require(getSignatureAlgorithm(SECRET_KEY))
+			.withIssuer(ISSUER)
+			.build();
+	}
 
 
-    private String doGenerateToken(Long expiration, Map<String, String> payload) {
-        long now = System.currentTimeMillis();
+	//추후 커스텀예외 추가 예정
+	public boolean validateToken(String token) {
+		try {
+			getJwtVerifier().verify(token); // 검증 성공 → 아무 문제 없음
+			return true;
 
-        return JWT.create()
-                .withIssuedAt(new Date(now))
-                .withExpiresAt(new Date(now + expiration * 1000))
-                .withPayload(payload)
-                .withIssuer(ISSUER)
-                .sign(getSignatureAlgorithm(SECRET_KEY));
-    }
+		} catch (JWTVerificationException e) {
+			log.error("JWT 검증 실패: {}", e.getMessage());
+			return false;
+
+		} catch (Exception e) {
+			log.error("모루겠음 나가셈 ㅋㅋ");
+			return false;
+		}
+	}
+
+
+	private String doGenerateToken(Long expiration, Map<String, String> payload) {
+		long now = System.currentTimeMillis();
+
+		return JWT.create()
+			.withIssuedAt(new Date(now))
+			.withExpiresAt(new Date(now + expiration * 1000))
+			.withPayload(payload)
+			.withIssuer(ISSUER)
+			.sign(getSignatureAlgorithm(SECRET_KEY));
+	}
 
 }

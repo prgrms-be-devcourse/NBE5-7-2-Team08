@@ -1,7 +1,6 @@
 package project.backend.domain.member.mapper;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.member.dto.MemberResponse;
 import project.backend.domain.member.dto.SignUpRequest;
@@ -34,7 +33,7 @@ public class MemberMapper {
 	public static Member toEntity(OAuthMemberDto request, ImageFile defaultProfileImg) {
 		return Member.builder()
 			.email(request.email())
-			.nickname(request.name())
+			.nickname(request.nickname())
 			.provider("gitHub")
 			.gitHubUserName(request.login())
 			.profileImage(defaultProfileImg)

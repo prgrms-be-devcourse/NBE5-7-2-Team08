@@ -48,11 +48,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
 		OAuthMemberDto userDto = new OAuthMemberDto(
 			(String) oAuth2User.getAttributes().get("email"),
-			(String) oAuth2User.getAttributes().get("name"),
+			(String) oAuth2User.getAttributes().get("username"),
 			(String) oAuth2User.getAttributes().get("login"));
 
 		Optional<Member> memberOptional = memberRepository.findByEmail(userDto.email());
 
+		// 기존에 없는 email이면 회원가입
 		Member member = oAuthSignUpService.OAuthSignUp(userDto);
 
 		Token token = jwtProvider.generateTokenPair(userDto);
