@@ -475,6 +475,21 @@ const ChatRoom = () => {
     setEditContent('');
   };
 
+  const handleDeleteMessage = (messageId) => {
+    const client = stompClientRef.current;
+    if (!client || !client.connected) {
+      alert('서버에 연결되어 있지 않습니다.');
+      return;
+    }
+
+    client.publish({
+      destination: `/chat/delete-message/${roomId}`,
+      body: messageId
+    });
+
+    setContextMenuId(null); // 메뉴 닫기
+  };
+
   // 메시지 데이터 처리 및 날짜 구분선 추가
   const renderMessagesWithDateSeparators = () => {
     if (!messages.length) return null;
@@ -595,7 +610,7 @@ const ChatRoom = () => {
 
                     <button
                       onClick={() => {
-                        // deleteMessage(msg.messageId);
+                        handleDeleteMessage(msg.messageId);
                         setContextMenuId(null);
                       }}
                       style={{
@@ -668,7 +683,20 @@ const ChatRoom = () => {
                 </button>
               </div>
             </div>
-          ) : msg.type === 'GIT' ? (
+          )
+          
+          :msg.deleted ? (
+            <div style={{ 
+              fontSize: '14px',
+              lineHeight: '1.5',
+              color: '#a0aec0',
+              fontStyle: 'italic'
+            }}>
+              삭제된 메시지입니다.
+            </div>
+          )
+                    
+          : msg.type === 'GIT' ? (
                 <div style={{
                 backgroundColor: '#f6f8fa',
                 borderRadius: '6px',
@@ -703,8 +731,18 @@ const ChatRoom = () => {
               }}>
                 <HighlightedCode 
                   content={msg.content.replace(/```/g, '')} 
-                  language={msg.language || 'java'} 
+                  language={msg.language || 'java'}
                 />
+                 {msg.edited && (
+                  <span style={{
+                    marginLeft: '6px',
+                    fontSize: '11px',
+                    color: '#a0aec0',
+                    fontStyle: 'italic'
+                  }}>
+                    (수정됨)
+                  </span>
+                )}
               </div>
             ): msg.type === 'IMAGE' ? (
                 <div style={{
