@@ -82,12 +82,14 @@ const ChatRoom = () => {
   const keepAliveIntervalRef = useRef(null); // 추가
 
   useEffect(() => {
-      // Make sure roomId exists before connecting
       if (!roomId) {
         console.error("No roomId available");
         navigate("/"); // Redirect to home if no room ID is found
         return;
       }
+
+      console.log("🆕 Entered room:", roomId);
+      setMessages([]); //이전 채팅방 메세지 제거
 
       //로그인 유저 정보 가져오기
       const fetchCurrentUser = async () => {
@@ -103,13 +105,12 @@ const ChatRoom = () => {
           if (!res.ok) {
             throw new Error('로그인 정보를 가져오지 못했습니다.');
           }
-
           const user = await res.json(); // { id, email, nickname, profileImg }
           setCurrentUser(user);
         } catch (error) {
           console.error('사용자 정보 요청 실패:', error);
         }
-    };
+     };
 
       fetchCurrentUser(); // 호출
 
@@ -126,18 +127,6 @@ const ChatRoom = () => {
           console.log('✅ Connected to WebSocket');
           hasConnectedRef.current = true;
 
-          // 🔄 주기적 ping (keep-alive)
-          if (keepAliveIntervalRef.current) clearInterval(keepAliveIntervalRef.current);
-          keepAliveIntervalRef.current = setInterval(() => {
-            if (client && client.connected) {
-              client.publish({
-                destination: '/app/ping', // 서버가 처리하지 않는 dummy topic (핸들러 없음)
-                body: 'ping'
-              });
-              console.log("📡 Sent keep-alive ping");
-            }
-          }, 20000); // 20초마다 ping
-
           // 기존 구독 제거
           if (subscriptionRef.current) {
             subscriptionRef.current.unsubscribe();
@@ -150,7 +139,6 @@ const ChatRoom = () => {
               if (!received.sendAt || new Date(received.sendAt).getFullYear() === 1970) {
                 received.sendAt = new Date().toISOString();
               }
-              // setMessages((prev) => [...prev, received]);
               setMessages(prev =>
                 prev.some(m => m.messageId === received.messageId)
                   ? prev.map(m => m.messageId === received.messageId ? received : m)
@@ -160,6 +148,18 @@ const ChatRoom = () => {
               console.error("📛 Failed to parse incoming message", e);
             }
           });
+
+          // 🔄 주기적 ping (keep-alive)
+          if (keepAliveIntervalRef.current) clearInterval(keepAliveIntervalRef.current);
+          keepAliveIntervalRef.current = setInterval(() => {
+            if (client && client.connected) {
+              client.publish({
+                destination: '/app/ping', // 서버가 처리하지 않는 dummy topic (핸들러 없음)
+                body: 'ping'
+              });
+              console.log("📡 Sent keep-alive ping");
+            }
+          }, 20000); // 20초마다 ping
         },
 
         onWebSocketClose: () => {
@@ -187,53 +187,55 @@ const ChatRoom = () => {
       stompClientRef.current = client;
 
       // 최초 메세지 가져오기
-      const fetchMessages = async () => {
-        try {
-          // 컨트롤러 엔드포인트에 맞게 URL 수정
-          const response = await fetch(`http://localhost:8080/${roomId}/messages`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include' // 인증 정보 포함
-          });
+      // const fetchMessages = async () => {
+      //   try {
+      //     // 컨트롤러 엔드포인트에 맞게 URL 수정
+      //     const response = await fetch(`http://localhost:8080/${roomId}/messages`, {
+      //       method: 'GET',
+      //       headers: {
+      //         'Content-Type': 'application/json'
+      //       },
+      //       credentials: 'include' // 인증 정보 포함
+      //     });
           
-          if (response.ok) {
-            const data = await response.json();
-            // 서버에서 받은 모든 메시지의 날짜/시간 유효성 검사
-            const validatedData = data.map(msg => {
-              // sendAt이 유효하지 않으면(1970년) 현재 시간으로 설정
-              if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
-                return { ...msg, sendAt: new Date().toISOString() };
-              }
-              return msg;
-            });
+      //     if (response.ok) {
+      //       const data = await response.json();
+      //       // 서버에서 받은 모든 메시지의 날짜/시간 유효성 검사
+      //       const validatedData = data.map(msg => {
+      //         // sendAt이 유효하지 않으면(1970년) 현재 시간으로 설정
+      //         if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
+      //           return { ...msg, sendAt: new Date().toISOString() };
+      //         }
+      //         return msg;
+      //       });
             
-            // 메시지 시간순으로 정렬 (오래된 메시지가 위에 오도록)
-            const sortedData = validatedData.sort((a, b) => 
-              new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
-            );
+      //       // 메시지 시간순으로 정렬 (오래된 메시지가 위에 오도록)
+      //       const sortedData = validatedData.sort((a, b) => 
+      //         new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+      //       );
             
-            setMessages(sortedData);
-          } else {
-            console.error("Failed to fetch messages:", response.status);
-          }
-        } catch (error) {
-          console.error('Error fetching messages:', error);
-        }
-      };
+      //       //setMessages(sortedData);
+      //     } else {
+      //       console.error("Failed to fetch messages:", response.status);
+      //     }
+      //   } catch (error) {
+      //     console.error('Error fetching messages:', error);
+      //   }
+      // };
   
-      fetchMessages(); // 컴포넌트 마운트 시 메시지 가져오기
+      // fetchMessages();
   
       return () => {
         console.log("🧹 Cleaning up WebSocket...");
 
         if (keepAliveIntervalRef.current) {
           clearInterval(keepAliveIntervalRef.current);
+          keepAliveIntervalRef.current = null;
           console.log("🔕 Stopped keep-alive ping");
         }
         if (subscriptionRef.current) {
           subscriptionRef.current.unsubscribe();
+          subscriptionRef.current = null;
           console.log("🔌 Subscription unsubscribed.");
         }
         if (client && client.active) {
