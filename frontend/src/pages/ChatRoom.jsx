@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-import { useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
+import { useParams, useNavigate } from 'react-router-dom';
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
 import Sidebar from '../components/SideBar';
@@ -16,6 +16,7 @@ const ChatRoom = () => {
   const navigate = useNavigate();
   const [inputMode, setInputMode] = useState("TEXT");
   const [language, setLanguage] = useState("java");
+  const [currentUser, setCurrentUser] = useState(null);
   
   const messagesEndRef = useRef(null);
   const isComposingRef = useRef(false);
@@ -83,7 +84,29 @@ const ChatRoom = () => {
         return;
       }
 
-      //  console.log(currentUser?.memberId); // 현재 로그인한 사용자 ID 확인
+      //로그인 유저 정보 가져오기
+      const fetchCurrentUser = async () => {
+        try {
+          const res = await fetch('http://localhost:8080/user/details', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          });
+
+          if (!res.ok) {
+            throw new Error('로그인 정보를 가져오지 못했습니다.');
+          }
+
+          const user = await res.json(); // { id, email, nickname, profileImg }
+          setCurrentUser(user);
+        } catch (error) {
+          console.error('사용자 정보 요청 실패:', error);
+        }
+    };
+
+    fetchCurrentUser(); // 호출
 
       const client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
