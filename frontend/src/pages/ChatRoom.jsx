@@ -13,7 +13,7 @@ const ChatRoom = () => {
   const [messages, setMessages]=useState([]);
   const[content, setContent]=useState("");
   const { roomId }=useParams();
-  const navigate = useNavigate(); // Added navigate hook
+  const navigate = useNavigate();
   const [inputMode, setInputMode] = useState("TEXT");
   const [language, setLanguage] = useState("java");
   
@@ -82,6 +82,8 @@ const ChatRoom = () => {
         navigate("/"); // Redirect to home if no room ID is found
         return;
       }
+
+      //  console.log(currentUser?.memberId); // 현재 로그인한 사용자 ID 확인
 
       const client = new Client({
         webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
