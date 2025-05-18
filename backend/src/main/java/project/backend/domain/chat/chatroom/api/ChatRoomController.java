@@ -52,7 +52,7 @@ public class ChatRoomController {
 		@AuthenticationPrincipal MemberDetails memberDetails
 	) {
 		if (memberDetails == null) {
-			Long roomId = chatRoomService.getRoomId(request.getInviteCode());
+			Long roomId = chatRoomService.getRoomIdByInviteCode(request.getInviteCode());
 			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER, roomId,
 				request.getInviteCode());
 		}
@@ -98,9 +98,6 @@ public class ChatRoomController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void leaveChatRoom(@PathVariable Long roomId,
 		@AuthenticationPrincipal MemberDetails memberDetails) {
-		if (memberDetails == null) {
-			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
-		}
 		chatRoomService.leaveChatRoom(roomId, memberDetails.getId());
 	}
     //임창인 끝

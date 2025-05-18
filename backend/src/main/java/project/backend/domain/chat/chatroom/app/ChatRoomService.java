@@ -48,11 +48,10 @@ public class ChatRoomService {
 
 		ChatRoom chatRoom = chatRoomMapper.toEntity(request, owner);
 
-		ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
-
 		ChatParticipant chatParticipant = ChatParticipant.of(owner, chatRoom);
+		chatRoom.getParticipants().add(chatParticipant);
 
-		chatParticipantRepository.save(chatParticipant);
+		ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
 
 		return chatRoomMapper.toSimpleResponse(savedRoom);
 	}
@@ -66,9 +65,8 @@ public class ChatRoomService {
 	}
 
 	@Transactional
-	public Long getRoomId(String inviteCode) {
-		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+	public Long getRoomIdByInviteCode(String inviteCode) {
+		ChatRoom room = findByInviteCode(inviteCode);
 
 		return room.getId();
 	}
@@ -76,11 +74,9 @@ public class ChatRoomService {
 
 	@Transactional
 	public InviteJoinResponse joinChatRoom(String inviteCode, Long memberId) {
-		ChatRoom room = chatRoomRepository.findByInviteCode(inviteCode)
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_CODE_NOT_FOUND));
+		ChatRoom room = findByInviteCode(inviteCode);
 
-		Member member = memberRepository.findById(memberId)
-			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+		Member member = memberService.getMemberById(memberId);
 
 		boolean isAlreadyParticipant = chatParticipantRepository
 			.existsByParticipantIdAndChatRoomId(memberId, room.getId());
@@ -91,9 +87,9 @@ public class ChatRoomService {
 
 		ChatParticipant chatParticipant = ChatParticipant.of(member, room);
 
-		chatParticipantRepository.save(chatParticipant);
+		room.getParticipants().add(chatParticipant);
 
-		return new InviteJoinResponse(room.getId(), room.getInviteCode(), room.getName());
+		return ChatRoomMapper.toInviteJoinResponse(room.getId(), room.getInviteCode(), room.getName());
 	}
 
 
@@ -158,9 +154,13 @@ public class ChatRoomService {
 		ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndParticipantId(roomId,memberId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
-		chatParticipantRepository.delete(participant);
+		room.getParticipants().remove(participant);
 	}
 
+	private ChatRoom findByInviteCode(String inviteCode) {
+		return chatRoomRepository.findByInviteCode(inviteCode)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+	}
 }
 
 

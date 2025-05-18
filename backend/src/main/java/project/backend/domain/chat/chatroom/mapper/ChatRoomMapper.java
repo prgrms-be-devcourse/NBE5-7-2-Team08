@@ -82,6 +82,13 @@ public class ChatRoomMapper {
 			.build();
 	}
 
+	public static InviteJoinResponse toInviteJoinResponse(Long id, String inviteCode, String name) {
+		return InviteJoinResponse.builder()
+			.id(id)
+			.inviteCode(inviteCode)
+			.name(name)
+			.build();
+	}
 
 	private static String generateInviteCode() {
 		return UUID.randomUUID().toString();
