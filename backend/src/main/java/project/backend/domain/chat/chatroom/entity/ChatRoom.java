@@ -59,4 +59,8 @@ public class ChatRoom {
 			this.participants = participants;
 		}
 	}
+
+	public void addParticipant(ChatParticipant chatParticipant) {
+		participants.add(chatParticipant);
+	}
 }

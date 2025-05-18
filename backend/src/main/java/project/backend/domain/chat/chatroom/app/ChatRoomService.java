@@ -49,7 +49,7 @@ public class ChatRoomService {
 		ChatRoom chatRoom = chatRoomMapper.toEntity(request, owner);
 
 		ChatParticipant chatParticipant = ChatParticipant.of(owner, chatRoom);
-		chatRoom.getParticipants().add(chatParticipant);
+		chatRoom.addParticipant(chatParticipant);
 
 		ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
 
@@ -58,8 +58,7 @@ public class ChatRoomService {
 
 	@Transactional(readOnly = true)
 	public String getInviteCode(Long roomId) {
-		ChatRoom room = chatRoomRepository.findById(roomId)
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+		ChatRoom room = findById(roomId);
 
 		return room.getInviteCode();
 	}
@@ -87,7 +86,7 @@ public class ChatRoomService {
 
 		ChatParticipant chatParticipant = ChatParticipant.of(member, room);
 
-		room.getParticipants().add(chatParticipant);
+		room.addParticipant(chatParticipant);
 
 		return ChatRoomMapper.toInviteJoinResponse(room.getId(), room.getInviteCode(), room.getName());
 	}
@@ -148,8 +147,7 @@ public class ChatRoomService {
 	//임창인
 	@Transactional
 	public void leaveChatRoom(Long roomId, Long memberId) {
-		ChatRoom room = chatRoomRepository.findById(roomId)
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+		ChatRoom room = findById(roomId);
 
 		ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndParticipantId(roomId,memberId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
@@ -159,6 +157,11 @@ public class ChatRoomService {
 
 	private ChatRoom findByInviteCode(String inviteCode) {
 		return chatRoomRepository.findByInviteCode(inviteCode)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+	}
+
+	private ChatRoom findById(Long roomId) {
+		return chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
 }
