@@ -548,7 +548,7 @@ const ChatRoom = () => {
             </div>
 
             {/* 점 세개 메뉴는 조건부 렌더링 */}
-            {currentUser?.id === msg.senderId && msg.type !== 'GIT' && (
+            {currentUser?.id === msg.senderId && !msg.deleted && msg.type !== 'GIT' && (
               <div style={{ position: 'relative'}}>
                 <button
                   onClick={() =>
