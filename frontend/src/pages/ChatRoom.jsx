@@ -84,7 +84,7 @@ const ChatRoom = () => {
   useEffect(() => {
       if (!roomId) {
         console.error("No roomId available");
-        navigate("/"); // Redirect to home if no room ID is found
+        navigate("/");
         return;
       }
       setMessages([]); //이전 채팅방 메세지 제거
@@ -700,7 +700,6 @@ const ChatRoom = () => {
               삭제된 메시지입니다.
             </div>
           )
-                    
           : msg.type === 'GIT' ? (
                 <div style={{
                 backgroundColor: '#f6f8fa',
@@ -1025,6 +1024,10 @@ const ChatRoom = () => {
                           setImageFile(null);
                           setImagePreviewUrl(null);
                           setInputMode('TEXT');
+
+                          if (fileInputRef.current) {
+                           fileInputRef.current.value = null;
+                          }
                         }}
                           title="삭제"
                           style={{
