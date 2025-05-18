@@ -19,31 +19,32 @@ import project.backend.global.config.security.dto.OAuth2Attribute;
 @Transactional
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
-    @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService = new DefaultOAuth2UserService();
+	@Override
+	public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+		OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService = new DefaultOAuth2UserService();
 
-        OAuth2User oAuth2User = oAuth2UserService.loadUser(userRequest);
+		OAuth2User oAuth2User = oAuth2UserService.loadUser(userRequest);
 
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails()
-                .getUserInfoEndpoint().getUserNameAttributeName();
+		String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        String accessToken = userRequest.getAccessToken().getTokenValue();
+		String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails()
+			.getUserInfoEndpoint().getUserNameAttributeName();
 
-        log.info("registrationId = {}", registrationId);
-        log.info("userNameAttributeName = {}", userNameAttributeName);
-        log.info("accessToken = {}", accessToken);
-        log.info("String.valueOf(oAuth2User) = {}", oAuth2User);
+		String accessToken = userRequest.getAccessToken().getTokenValue();
 
-        OAuth2Attribute oAuth2Attribute = OAuth2Attribute.of(registrationId, userNameAttributeName,
-                oAuth2User.getAttributes());
+		log.info("registrationId = {}", registrationId);
+		log.info("userNameAttributeName = {}", userNameAttributeName);
+		log.info("accessToken = {}", accessToken);
+		log.info("String.valueOf(oAuth2User) = {}", oAuth2User);
 
-        var memberAttribute = oAuth2Attribute.convertToMap();
+		OAuth2Attribute oAuth2Attribute = OAuth2Attribute.of(registrationId, userNameAttributeName,
+			oAuth2User.getAttributes());
 
-        return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                memberAttribute, "id");
-    }
+		var memberAttribute = oAuth2Attribute.convertToMap();
+
+		return new DefaultOAuth2User(
+			Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+			memberAttribute, "login");
+	}
 }
 

@@ -11,32 +11,34 @@ import project.backend.global.config.security.dto.OAuthMemberDto;
 @RequiredArgsConstructor
 public class MemberMapper {
 
-    public static Member toEntity(SignUpRequest request, String encryptedPassword, ImageFile defaultProfileImg) {
-        return Member.builder()
-                .email(request.getEmail())
-                .password(encryptedPassword)
-                .nickname(request.getNickname())
-                .provider("local")
-                .profileImage(defaultProfileImg)
-                .build();
-    }
+	public static Member toEntity(SignUpRequest request, String encryptedPassword,
+		ImageFile defaultProfileImg) {
+		return Member.builder()
+			.email(request.getEmail())
+			.password(encryptedPassword)
+			.nickname(request.getNickname())
+			.provider("local")
+			.profileImage(defaultProfileImg)
+			.build();
+	}
 
-    public static MemberResponse toResponse(Member member) {
-        return MemberResponse.builder()
-                .id(member.getId())
-                .email(member.getEmail())
-                .nickname(member.getNickname())
-                .profileImg(member.getProfileImage().getStoreFileName())
-                .build();
-    }
+	public static MemberResponse toResponse(Member member) {
+		return MemberResponse.builder()
+			.id(member.getId())
+			.email(member.getEmail())
+			.nickname(member.getNickname())
+			.profileImg(member.getProfileImage().getStoreFileName())
+			.build();
+	}
 
-    public static Member toEntity(OAuthMemberDto request, ImageFile defaultProfileImg) {
-        return Member.builder()
-                .email(request.email())
-                .nickname(request.name())
-                .provider("gitHub")
-                .profileImage(defaultProfileImg)
-                .build();
-    }
+	public static Member toEntity(OAuthMemberDto request, ImageFile defaultProfileImg) {
+		return Member.builder()
+			.email(request.email())
+			.nickname(request.name())
+			.provider("gitHub")
+			.gitHubUserName(request.login())
+			.profileImage(defaultProfileImg)
+			.build();
+	}
 
 }

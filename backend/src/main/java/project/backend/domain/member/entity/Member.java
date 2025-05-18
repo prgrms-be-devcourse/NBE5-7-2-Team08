@@ -31,32 +31,36 @@ import project.backend.domain.imagefile.ImageFile;
 @AllArgsConstructor
 public class Member {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "member_id")
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "member_id")
+	private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+	@Column(nullable = false, unique = true)
+	private String email;
 
-    @Setter
-    private String password;
+	@Setter
+	private String password;
 
-    private String provider;
+	@Column(updatable = false, name = "github_username")
+	private String gitHubUserName;
 
-    @Setter
-    @Column(nullable = false)
-    private String nickname;
+	@Column(updatable = false)
+	private String provider;
 
-    @Builder.Default
-    private LocalDateTime joinAt = LocalDateTime.now();
+	@Setter
+	@Column(nullable = false)
+	private String nickname;
 
-    @Builder.Default
-    @OneToMany(mappedBy = "participant")
-    private List<ChatParticipant> participants = new ArrayList<>();
+	@Builder.Default
+	private LocalDateTime joinAt = LocalDateTime.now();
 
-    @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "profile_image_id")
-    private ImageFile profileImage;
+	@Builder.Default
+	@OneToMany(mappedBy = "participant")
+	private List<ChatParticipant> participants = new ArrayList<>();
+
+	@Setter
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "profile_image_id")
+	private ImageFile profileImage;
 }
