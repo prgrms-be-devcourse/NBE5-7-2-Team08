@@ -87,8 +87,6 @@ const ChatRoom = () => {
         navigate("/"); // Redirect to home if no room ID is found
         return;
       }
-
-      console.log("🆕 Entered room:", roomId);
       setMessages([]); //이전 채팅방 메세지 제거
 
       //로그인 유저 정보 가져오기
@@ -125,7 +123,7 @@ const ChatRoom = () => {
 
         onConnect: () => {
           console.log('✅ Connected to WebSocket');
-          hasConnectedRef.current = true;
+          hasConnectedRef.current = true; //초기 연결을 구분하는 용도
 
           // 기존 구독 제거
           if (subscriptionRef.current) {
@@ -136,9 +134,7 @@ const ChatRoom = () => {
           subscriptionRef.current= client.subscribe(`/topic/chat/${roomId}`, (message) => {
             try{
               const received = JSON.parse(message.body);
-              if (!received.sendAt || new Date(received.sendAt).getFullYear() === 1970) {
-                received.sendAt = new Date().toISOString();
-              }
+              received.sendAt ||= new Date().toISOString();
               setMessages(prev =>
                 prev.some(m => m.messageId === received.messageId)
                   ? prev.map(m => m.messageId === received.messageId ? received : m)
@@ -151,6 +147,7 @@ const ChatRoom = () => {
 
           // 🔄 주기적 ping (keep-alive)
           if (keepAliveIntervalRef.current) clearInterval(keepAliveIntervalRef.current);
+
           keepAliveIntervalRef.current = setInterval(() => {
             if (client && client.connected) {
               client.publish({
@@ -164,7 +161,6 @@ const ChatRoom = () => {
 
         onWebSocketClose: () => {
           console.warn("❌ WebSocket closed.");
-          // alert('서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
           if (!hasConnectedRef.current) {
             console.warn("🔒 Initial connection failed. Possibly due to 401.");
             navigate("/login");
