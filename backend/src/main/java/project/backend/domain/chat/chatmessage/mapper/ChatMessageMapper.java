@@ -77,6 +77,7 @@ public class ChatMessageMapper {
                     .map(ImageFile::getStoreFileName)
                     .orElse(null)
             )
+            .senderId(message.getSender().getParticipant().getId())
             .build();
     }
 

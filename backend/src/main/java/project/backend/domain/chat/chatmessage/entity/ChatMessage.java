@@ -54,6 +54,9 @@ public class ChatMessage {
     @JoinColumn(name = "chat_image_id")
     private ImageFile chatImage;
 
+    private boolean isEdited = false;
+    private boolean isDeleted = false;
+
     @Builder
     public ChatMessage(ChatParticipant sender, ChatRoom chatRoom, String content,
         LocalDateTime sendAt,
@@ -67,4 +70,17 @@ public class ChatMessage {
         this.chatImage = chatImage;
     }
 
+    public void updateContent(String newContent) {
+        if (newContent != null) {
+            this.content = newContent;
+            isEdited = true;
+        }
+    }
+
+    public void updateLanguage(String language) {
+        if (language != null) {
+            this.codeLanguage = language;
+            isEdited = true;
+        }
+    }
 }

@@ -147,19 +147,9 @@ public class ChatRoomService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChatParticipantResponse> findAllParticipants(Long roomId) {
-        ChatRoom room = chatRoomRepository.findById(roomId)
+    public ChatRoom getRoomById(Long roomId) {
+        return chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
-
-        List<ChatParticipant> participants = chatParticipantRepository.findByChatRoom(room);
-
-        if (participants.isEmpty()) {
-            throw new ChatRoomException(ChatRoomErrorCode.PARTICIPANT_NOT_EXIST);
-        }
-
-        return participants.stream()
-            .map(ChatRoomMapper::toParticipantResponse)
-            .collect(Collectors.toList());
     }
 }
 

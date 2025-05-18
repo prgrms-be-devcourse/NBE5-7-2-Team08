@@ -2,7 +2,6 @@ package project.backend.domain.chat.chatmessage.api;
 
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import project.backend.domain.chat.chatmessage.app.ChatMessageService;
+import project.backend.domain.chat.chatmessage.dto.ChatMessageEditRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchRequest;
@@ -35,6 +35,17 @@ public class ChatMessageController {
     public ChatMessageResponse sendMessage(@DestinationVariable Long roomId,
         @Payload ChatMessageRequest request, Principal principal) {
         ChatMessageResponse response = chatMessageService.save(roomId, request,
+            principal.getName());
+
+        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+
+        return response;
+    }
+
+    @MessageMapping("/edit-message/{roomId}")
+    public ChatMessageResponse editMessage(@DestinationVariable Long roomId, @Payload
+    ChatMessageEditRequest request, Principal principal) {
+        ChatMessageResponse response = chatMessageService.editMessage(roomId, request,
             principal.getName());
 
         messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
