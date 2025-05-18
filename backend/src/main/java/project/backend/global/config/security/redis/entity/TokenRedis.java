@@ -11,11 +11,15 @@ import org.springframework.data.redis.core.index.Indexed;
 @RedisHash(value = "token", timeToLive = 604800)
 public class TokenRedis {
 
-    @Id
-    private Long id;
+	@Id
+	private Long id;
 
-    @Indexed
-    private String accessToken;
+	@Indexed
+	private String accessToken;
 
-    private String refreshToken;
+	private String refreshToken;
+
+	public void updateAccessToken(String accessToken) {
+		this.accessToken = accessToken;
+	}
 }

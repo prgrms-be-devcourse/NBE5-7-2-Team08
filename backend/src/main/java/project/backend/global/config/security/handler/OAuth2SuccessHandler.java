@@ -1,6 +1,7 @@
 package project.backend.global.config.security.handler;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
+import project.backend.global.config.security.app.CookieUtils;
 import project.backend.global.config.security.app.OAuthSignUpService;
 import project.backend.global.config.security.dto.OAuthMemberDto;
 import project.backend.global.config.security.app.JwtProvider;
@@ -58,6 +60,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
 		Token token = jwtProvider.generateTokenPair(userDto);
 
+		//쿠키 생성 및 저장
+		CookieUtils.saveCookie(response, token.accessToken());
+
 		tokenRedisRepository.save(
 			new TokenRedis(member.getId(), token.accessToken(), token.refreshToken()));
 
@@ -69,17 +74,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 		log.info("AccessToken = {}", token.accessToken());
 		log.info("Refresh Token = {}", token.refreshToken());
 
-		String redirectUrl = genRedirectUrl(params);
+		String redirectUrl = UriComponentsBuilder.fromUriString(baseUrl)
+			.build().toUriString();
+
 		log.info("OAuth 로그인 후 리다이렉트 URL = {}", redirectUrl);
 
 		response.sendRedirect(redirectUrl);
 
 	}
 
-	private String genRedirectUrl(HashMap<String, String> params) {
-		return UriComponentsBuilder.fromUriString(baseUrl)
-			.queryParam("access", params.get("access"))
-			.queryParam("refresh", params.get("refresh"))
-			.build().toUriString();
-	}
 }

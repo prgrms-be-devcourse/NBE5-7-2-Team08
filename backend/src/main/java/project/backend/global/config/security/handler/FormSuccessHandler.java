@@ -1,6 +1,7 @@
 package project.backend.global.config.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Map;
+import project.backend.global.config.security.app.CookieUtils;
 import project.backend.global.config.security.app.JwtProvider;
 import project.backend.global.config.security.dto.MemberDetails;
 import project.backend.global.config.security.jwt.Token;
@@ -33,6 +35,8 @@ public class FormSuccessHandler implements AuthenticationSuccessHandler {
 		var memberDetails = (MemberDetails) authentication.getPrincipal();
 
 		Token token = jwtProvider.generateTokenPair(memberDetails);
+
+		CookieUtils.saveCookie(response, token.accessToken());
 
 		tokenRedisRepository.save(
 			new TokenRedis(memberDetails.getId(), token.accessToken(), token.refreshToken())

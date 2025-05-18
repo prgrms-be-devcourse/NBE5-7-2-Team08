@@ -15,6 +15,7 @@ import project.backend.global.config.security.app.CustomOAuth2UserService;
 import project.backend.global.config.security.handler.CustomLogoutSuccessHandler;
 import project.backend.global.config.security.handler.FormFailureHandler;
 import project.backend.global.config.security.handler.FormSuccessHandler;
+import project.backend.global.config.security.handler.JwtAuthenticationFilter;
 import project.backend.global.config.security.handler.OAuth2FailureHandler;
 import project.backend.global.config.security.handler.OAuth2SuccessHandler;
 import project.backend.global.config.security.handler.RestAuthenticationEntryPoint;
@@ -33,6 +34,8 @@ public class SecurityConfig {
 	private final CustomLogoutSuccessHandler logoutSuccessHandler;
 	private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
@@ -44,8 +47,8 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.csrf(AbstractHttpConfigurer::disable)
 			.cors(Customizer.withDefaults())
-//			.sessionManagement(
-//				session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.sessionManagement(
+				session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
 			.formLogin(form -> {
 				form.loginPage("/login")
@@ -61,8 +64,8 @@ public class SecurityConfig {
 					.requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error")
 					.anonymous()
 
-					.requestMatchers("/chat-rooms/join").permitAll()
-					
+					.requestMatchers("/chat-rooms/join", "/signup").permitAll()
+
 					.requestMatchers("/token/**")
 					.permitAll()
 
@@ -88,8 +91,9 @@ public class SecurityConfig {
 			.exceptionHandling(exception ->
 				exception.authenticationEntryPoint(restAuthenticationEntryPoint))
 
-//            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 			.build();
 
 	}
+
 }
