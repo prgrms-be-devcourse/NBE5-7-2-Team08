@@ -617,7 +617,7 @@ const ChatRoom = () => {
               </div>
             )}
           </div>
-          
+
           {/* 본문 영역 - 수정 중인 메시지는 textarea, 나머지는 content 렌더 */}
           {editMessageId === msg.messageId ? (
             <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
@@ -736,6 +736,16 @@ const ChatRoom = () => {
                 whiteSpace: 'pre-wrap'
               }}>
                 {msg.content}
+                {msg.edited && (
+                  <span style={{
+                    marginLeft: '6px',
+                    fontSize: '11px',
+                    color: '#a0aec0',
+                    fontStyle: 'italic'
+                  }}>
+                    (수정됨)
+                  </span>
+                )}
               </div>
             )}
           </div>

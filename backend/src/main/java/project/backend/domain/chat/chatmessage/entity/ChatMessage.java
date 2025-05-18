@@ -83,4 +83,8 @@ public class ChatMessage {
             isEdited = true;
         }
     }
+
+    public void delete() {
+        this.isDeleted = true;
+    }
 }

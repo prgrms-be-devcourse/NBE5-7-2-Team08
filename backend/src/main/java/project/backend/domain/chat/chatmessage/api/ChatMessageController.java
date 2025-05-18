@@ -53,6 +53,18 @@ public class ChatMessageController {
         return response;
     }
 
+    @MessageMapping("/delete-message/{roomId}")
+    public ChatMessageResponse deleteMessage(@DestinationVariable Long roomId,
+        @Payload Long messageId,
+        Principal principal) {
+        ChatMessageResponse response = chatMessageService.deleteMessage(roomId, messageId,
+            principal.getName());
+
+        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+
+        return response;
+    }
+
     @PostMapping("/send-image")
     public Long uploadImage(@RequestParam MultipartFile image) {
         ImageFile imageFile = imageFileService.saveImageFile(image, ImageType.CHAT_IMAGE);

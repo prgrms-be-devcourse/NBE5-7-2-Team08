@@ -94,6 +94,7 @@ public class ChatMessageService {
     public ChatMessageResponse editMessage(Long roomId, ChatMessageEditRequest request,
         String email) {
 
+        //유효성 확인
         memberService.getMemberByEmail(email);
         chatRoomService.getRoomById(roomId);
 
@@ -106,13 +107,36 @@ public class ChatMessageService {
 
         message.updateContent(request.content());
 
+        //현재 코드 언어 변경은 받지 않고 있음 (확장성 고려)
         if (message.getType().equals(MessageType.CODE)) {
             message.updateLanguage(request.language());
         }
 
         ChatMessageResponse response = messageMapper.toResponse(message);
         response.setEdited(true);
-        
+
+        return response;
+    }
+
+    @Transactional
+    public ChatMessageResponse deleteMessage(Long roomId, Long messageId, String email) {
+
+        //유효성 확인
+        memberService.getMemberByEmail(email);
+        chatRoomService.getRoomById(roomId);
+
+        ChatMessage message = chatMessageRepository.findById(messageId)
+            .orElseThrow(() -> new ChatMessageException(ChatMessageErrorCode.MESSAGE_NOT_FOUND));
+
+        if (!message.getSender().getParticipant().getEmail().equals(email)) {
+            throw new AuthException(AuthErrorCode.FORBIDDEN_MESSAGE_DELETE);
+        }
+
+        message.delete();
+
+        ChatMessageResponse response = messageMapper.toResponse(message);
+        response.setDeleted(true);
+
         return response;
     }
 }
