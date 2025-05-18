@@ -78,6 +78,7 @@ public class ChatMessageMapper {
                     .orElse(null)
             )
             .senderId(message.getSender().getParticipant().getId())
+            .messageId(message.getId())
             .build();
     }
 

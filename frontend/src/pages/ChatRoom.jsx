@@ -561,7 +561,6 @@ const ChatRoom = () => {
                   marginLeft: '8px' 
                 }}>
                   {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                  {formatTime(msg.sendAt)}
                 </span>
             </div>
 
@@ -596,7 +595,8 @@ const ChatRoom = () => {
                     borderRadius: '6px',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                     zIndex: 1000,
-                    padding: '6px 0'
+                    padding: '6px 0',
+                    minWidth: '140px'
                   }}>
                     <button
                       onClick={() => {
@@ -607,7 +607,7 @@ const ChatRoom = () => {
                       style={{
                         display: 'block',
                         width: '100%',
-                        padding: '6px 16px',
+                        padding: '10px 16px',
                         textAlign: 'left',
                         background: 'none',
                         border: 'none',
@@ -618,6 +618,13 @@ const ChatRoom = () => {
                       메시지 수정하기
                     </button>
 
+                    {/* 구분선 추가 */}
+                    <div style={{
+                      height: '1px',
+                      backgroundColor: '#e2e8f0',
+                      margin: '0 8px'
+                    }} />
+
                     <button
                       onClick={() => {
                         // deleteMessage(msg.messageId);
@@ -626,7 +633,7 @@ const ChatRoom = () => {
                       style={{
                         display: 'block',
                         width: '100%',
-                        padding: '6px 16px',
+                        padding: '10px 16px',
                         textAlign: 'left',
                         background: 'none',
                         border: 'none',

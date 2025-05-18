@@ -17,5 +17,6 @@ public class ChatMessageResponse {
     private String profileImageUrl;
     private String chatImageUrl;
     private Long senderId;
+    private Long messageId;
 
 }
