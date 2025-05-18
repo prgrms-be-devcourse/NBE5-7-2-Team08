@@ -48,7 +48,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
 		OAuthMemberDto userDto = new OAuthMemberDto(
 			(String) oAuth2User.getAttributes().get("email"),
-			(String) oAuth2User.getAttributes().get("username"),
+			(String) oAuth2User.getAttributes().get("name"),
 			(String) oAuth2User.getAttributes().get("login"));
 
 		Optional<Member> memberOptional = memberRepository.findByEmail(userDto.email());

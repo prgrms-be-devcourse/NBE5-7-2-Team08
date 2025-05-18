@@ -14,6 +14,7 @@ public record OAuth2Attribute(
 	String email,
 	String name,
 	String login
+
 ) {
 
 	public static OAuth2Attribute of(String provider, String attributeKey,
@@ -32,7 +33,7 @@ public record OAuth2Attribute(
 			attributes,
 			attributeKey,
 			(String) attributes.get("email"),
-			(String) attributes.get("username"),// 깃허브는 "username" (대문자 아님 주의!)
+			(String) attributes.get("name"),// 깃허브는 "username" (대문자 아님 주의!)
 			(String) attributes.get("login")
 		);
 	}

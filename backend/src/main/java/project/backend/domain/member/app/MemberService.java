@@ -48,7 +48,7 @@ public class MemberService {
 
 		Member newMember = memberRepository.save(
 			MemberMapper.toEntity(request, encryptedPassword, defaultProfileImg));
-		
+
 		return MemberMapper.toResponse(newMember);
 	}
 
@@ -95,6 +95,7 @@ public class MemberService {
 			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 	}
 
+
 	public MemberResponse getMemberResponseById(Long memberId) {
 		Member member = getMemberById(memberId);
 		return MemberMapper.toResponse(member);
@@ -111,4 +112,5 @@ public class MemberService {
 		Member member = getMemberById(memberId);
 		return MemberMapper.toResponse(member);
 	}
+
 }

@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -43,9 +44,9 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.csrf(AbstractHttpConfigurer::disable)
 			.cors(Customizer.withDefaults())
-//            .sessionManagement(
-//                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//
+//			.sessionManagement(
+//				session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
 			.formLogin(form -> {
 				form.loginPage("/login")
 					.usernameParameter("email")
@@ -60,6 +61,8 @@ public class SecurityConfig {
 					.requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error")
 					.anonymous()
 
+					.requestMatchers("/chat-rooms/join").permitAll()
+					
 					.requestMatchers("/token/**")
 					.permitAll()
 
@@ -84,8 +87,9 @@ public class SecurityConfig {
 
 			.exceptionHandling(exception ->
 				exception.authenticationEntryPoint(restAuthenticationEntryPoint))
-//
+
 //            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 			.build();
+
 	}
 }
