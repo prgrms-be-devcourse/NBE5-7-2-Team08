@@ -150,7 +150,12 @@ const ChatRoom = () => {
               if (!received.sendAt || new Date(received.sendAt).getFullYear() === 1970) {
                 received.sendAt = new Date().toISOString();
               }
-              setMessages((prev) => [...prev, received]);
+              // setMessages((prev) => [...prev, received]);
+              setMessages(prev =>
+                prev.some(m => m.messageId === received.messageId)
+                  ? prev.map(m => m.messageId === received.messageId ? received : m)
+                  : [...prev, received]
+              );
             } catch(e){
               console.error("📛 Failed to parse incoming message", e);
             }
@@ -419,64 +424,6 @@ const ChatRoom = () => {
     }
   };
 
-  // 날짜를 YYYY-MM-DD 형식으로 변환하는 함수 (수정됨)
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      
-      // 유효한 날짜인지 확인 (1970년은 유효하지 않은 것으로 간주)
-      if (isNaN(date.getTime()) || date.getFullYear() === 1970) {
-        return new Date().toLocaleDateString('ko-KR', {
-          year: 'numeric', 
-          month: '2-digit', 
-          day: '2-digit'
-        });
-      }
-      
-      return date.toLocaleDateString('ko-KR', {
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit'
-      });
-    } catch (error) {
-      console.error('날짜 형식 변환 오류:', error);
-      return new Date().toLocaleDateString('ko-KR', {
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit'
-      });
-    }
-  };
-
-  // 시간을 HH:MM 형식으로 변환하는 함수 (추가됨)
-  const formatTime = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      
-      // 유효한 날짜인지 확인
-      if (isNaN(date.getTime()) || date.getFullYear() === 1970) {
-        return new Date().toLocaleTimeString('ko-KR', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false 
-        });
-      }
-      
-      return date.toLocaleTimeString('ko-KR', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      });
-    } catch (error) {
-      console.error('시간 형식 변환 오류:', error);
-      return new Date().toLocaleTimeString('ko-KR', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      });
-    }
-  };
-
   // 버튼 스타일 공통화
   const buttonStyle = {
     backgroundColor: '#4a6cf7',
@@ -506,12 +453,33 @@ const ChatRoom = () => {
     boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
   };
 
+  const handleEditMessage = (messageId) => {
+    const client = stompClientRef.current;
+    if (!client || !client.connected) {
+      alert('서버에 연결되어 있지 않습니다.');
+      return;
+    }
+
+    const editPayload = {
+      messageId: messageId,
+      content: editContent
+    };
+
+    client.publish({
+      destination: `/chat/edit-message/${roomId}`,
+      body: JSON.stringify(editPayload)
+    });
+
+    // 수정 모드 종료
+    setEditMessageId(null);
+    setEditContent('');
+  };
+
   // 메시지 데이터 처리 및 날짜 구분선 추가
   const renderMessagesWithDateSeparators = () => {
     if (!messages.length) return null;
     
     const result = [];
-    let currentDate = null;
     
     // 메시지를 순회하며 날짜별로 구분
     messages.forEach((msg, index) => {  
@@ -649,9 +617,58 @@ const ChatRoom = () => {
               </div>
             )}
           </div>
-            
-            {/* GitHub 메시지 UI */}
-            {msg.type === 'GIT' ? (
+          
+          {/* 본문 영역 - 수정 중인 메시지는 textarea, 나머지는 content 렌더 */}
+          {editMessageId === msg.messageId ? (
+            <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  fontSize: '14px',
+                  resize: 'vertical'
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  onClick={() => handleEditMessage(msg.messageId)}
+                  style={{
+                    backgroundColor: '#4a6cf7',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  저장
+                </button>
+                <button
+                  onClick={() => {
+                    setEditMessageId(null);
+                    setEditContent('');
+                  }}
+                  style={{
+                    backgroundColor: '#e2e8f0',
+                    color: '#1a202c',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          ) : msg.type === 'GIT' ? (
                 <div style={{
                 backgroundColor: '#f6f8fa',
                 borderRadius: '6px',
