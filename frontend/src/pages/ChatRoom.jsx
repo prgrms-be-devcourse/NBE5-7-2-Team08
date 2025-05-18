@@ -548,7 +548,7 @@ const ChatRoom = () => {
             </div>
 
             {/* 점 세개 메뉴는 조건부 렌더링 */}
-            {currentUser?.id === msg.senderId && (
+            {currentUser?.id === msg.senderId && msg.type !== 'GIT' && (
               <div style={{ position: 'relative'}}>
                 <button
                   onClick={() =>
@@ -556,7 +556,6 @@ const ChatRoom = () => {
                   }
                   style={{
                     position: 'absolute',
-                    top: '-10px',
                     right: '0px',
                     border: 'none',
                     background: 'transparent',
@@ -581,36 +580,44 @@ const ChatRoom = () => {
                     padding: '6px 0',
                     minWidth: '140px'
                   }}>
+                     {/* 수정 버튼은 이미지 메시지가 아닌 경우에만 표시 */}
+                     {msg.type !== 'IMAGE' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setEditMessageId(msg.messageId);
+                            setEditContent(msg.content);
+                            setContextMenuId(null);
+                          }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            padding: '10px 16px',
+                            textAlign: 'left',
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '14px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          메세지 수정하기
+                        </button>
+
+                        {/* 구분선 추가 */}
+                        <div style={{
+                          height: '1px',
+                          backgroundColor: '#e2e8f0',
+                          margin: '0 8px'
+                        }} />
+                      </>
+                    )}
+
                     <button
                       onClick={() => {
-                        setEditMessageId(msg.messageId);
-                        setEditContent(msg.content);
-                        setContextMenuId(null);
-                      }}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '10px 16px',
-                        textAlign: 'left',
-                        background: 'none',
-                        border: 'none',
-                        fontSize: '14px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      메시지 수정하기
-                    </button>
-
-                    {/* 구분선 추가 */}
-                    <div style={{
-                      height: '1px',
-                      backgroundColor: '#e2e8f0',
-                      margin: '0 8px'
-                    }} />
-
-                    <button
-                      onClick={() => {
-                        handleDeleteMessage(msg.messageId);
+                        const confirmed = window.confirm("정말 삭제하시겠습니까?");
+                        if (confirmed) {
+                          handleDeleteMessage(msg.messageId);
+                        }
                         setContextMenuId(null);
                       }}
                       style={{
