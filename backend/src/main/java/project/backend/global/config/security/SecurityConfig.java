@@ -22,70 +22,70 @@ import project.backend.global.config.security.handler.RestAuthenticationEntryPoi
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final FormFailureHandler formFailureHandler;
-    private final FormSuccessHandler formSuccessHandler;
+	private final FormFailureHandler formFailureHandler;
+	private final FormSuccessHandler formSuccessHandler;
 
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
-    private final OAuth2FailureHandler oAuth2FailureHandler;
-    private final CustomOAuth2UserService oAuth2UserService;
+	private final OAuth2SuccessHandler oAuth2SuccessHandler;
+	private final OAuth2FailureHandler oAuth2FailureHandler;
+	private final CustomOAuth2UserService oAuth2UserService;
 
-    private final CustomLogoutSuccessHandler logoutSuccessHandler;
-    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+	private final CustomLogoutSuccessHandler logoutSuccessHandler;
+	private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+	}
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		return http
+			.httpBasic(AbstractHttpConfigurer::disable)
+			.csrf(AbstractHttpConfigurer::disable)
+			.cors(Customizer.withDefaults())
 //            .sessionManagement(
 //                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 //
-                .formLogin(form -> {
-                    form.loginPage("/login")
-                            .usernameParameter("email")
-                            .passwordParameter("password")
-                            .failureHandler(formFailureHandler)
-                            .successHandler(formSuccessHandler)
-                            .permitAll();
-                })
+			.formLogin(form -> {
+				form.loginPage("/login")
+					.usernameParameter("email")
+					.passwordParameter("password")
+					.failureHandler(formFailureHandler)
+					.successHandler(formSuccessHandler)
+					.permitAll();
+			})
 
-                .authorizeHttpRequests(auth -> {
-                    auth
-                            .requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error")
-                            .anonymous()
+			.authorizeHttpRequests(auth -> {
+				auth
+					.requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error")
+					.anonymous()
 
-                            .requestMatchers("/token/**")
-                            .permitAll()
+					.requestMatchers("/token/**")
+					.permitAll()
 
-                            .anyRequest()
-                            .authenticated();
-                })
+					.anyRequest()
+					.authenticated();
+			})
 
-                .oauth2Login(oauth -> {
-                    oauth.successHandler(oAuth2SuccessHandler);
-                    oauth.failureHandler(oAuth2FailureHandler);
-                    oauth.userInfoEndpoint(userInfoEndpoint -> {
-                        userInfoEndpoint.userService(oAuth2UserService);
-                    });
-                })
+			.oauth2Login(oauth -> {
+				oauth.successHandler(oAuth2SuccessHandler);
+				oauth.failureHandler(oAuth2FailureHandler);
+				oauth.userInfoEndpoint(userInfoEndpoint -> {
+					userInfoEndpoint.userService(oAuth2UserService);
+				});
+			})
 
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessHandler(logoutSuccessHandler)
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                )
+			.logout(logout -> logout
+				.logoutUrl("/logout")
+				.logoutSuccessHandler(logoutSuccessHandler)
+				.invalidateHttpSession(true)
+				.deleteCookies("JSESSIONID")
+			)
 
-                .exceptionHandling(exception ->
-                        exception.authenticationEntryPoint(restAuthenticationEntryPoint))
+			.exceptionHandling(exception ->
+				exception.authenticationEntryPoint(restAuthenticationEntryPoint))
 //
 //            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
+			.build();
+	}
 }
