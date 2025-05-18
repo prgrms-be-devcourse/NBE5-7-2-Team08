@@ -110,6 +110,9 @@ public class ChatMessageService {
             message.updateLanguage(request.language());
         }
 
-        return messageMapper.toResponse(message);
+        ChatMessageResponse response = messageMapper.toResponse(message);
+        response.setEdited(true);
+        
+        return response;
     }
 }
