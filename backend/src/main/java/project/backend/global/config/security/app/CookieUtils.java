@@ -15,6 +15,14 @@ public class CookieUtils {
 		response.addCookie(cookie);
 	}
 
+	public static void deleteCookie(HttpServletResponse response) {
+		Cookie cookie = new Cookie("accessToken", null);
+		cookie.setPath("/");
+		cookie.setHttpOnly(true);
+		cookie.setMaxAge(0);
+		response.addCookie(cookie);
+	}
+
 	public static Optional<Cookie> getCookie(HttpServletRequest request, String name) {
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null && cookies.length > 0) {

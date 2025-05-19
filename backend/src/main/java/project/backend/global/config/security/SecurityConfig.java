@@ -64,8 +64,8 @@ public class SecurityConfig {
 					.requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error")
 					.anonymous()
 
-					.requestMatchers("/chat-rooms/join", "/signup").permitAll()
-
+					.requestMatchers("/chat-rooms/join").permitAll()
+					
 					.requestMatchers("/token/**")
 					.permitAll()
 
