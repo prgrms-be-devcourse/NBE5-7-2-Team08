@@ -59,7 +59,7 @@ file:
 
 jwt:
   redirection:
-    base: http://localhost:3000/auth
+    base: http://localhost:3000/
 
   info:
     issuer: "대한민국26세 달성 배씨 배문성의 허가가 있는 토큰이올시다."
