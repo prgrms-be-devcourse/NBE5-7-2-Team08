@@ -1279,19 +1279,6 @@ const ChatRoom = () => {
             </div>
           </div>
         </div>
-        {showSearchSidebar && (
-          <SearchSidebar
-            searchKeyword={searchKeyword}
-            searchResults={searchResults}
-            isSearching={isSearching}
-            errorMessage={errorMessage}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalElements={totalElements}
-            onClose={() => setShowSearchSidebar(false)}
-            onPageChange={(page) => handleSearch(searchKeyword, page)}
-          />
-        )}
       </div>
 
       {/* 우클릭 컨텍스트 메뉴 */}
@@ -1411,6 +1398,19 @@ const ChatRoom = () => {
         </div>
       )}
     </div>
+      {showSearchSidebar && (
+      <SearchSidebar
+        searchKeyword={searchKeyword}
+        searchResults={searchResults}
+        isSearching={isSearching}
+        errorMessage={errorMessage}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        onClose={() => setShowSearchSidebar(false)}
+        onPageChange={(page) => handleSearch(searchKeyword, page)}
+      />
+    )}
     </div>
     </div>
   );
