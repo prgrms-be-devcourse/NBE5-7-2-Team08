@@ -90,9 +90,9 @@ const Sidebar = () => {
     }
   };
 
-  const navigateToRoom = (id) => {
+  const navigateToRoom = (id,inviteCode) => {
     if (id) {
-      navigate(`/chat/${id}`);
+      navigate(`/chat/${id}/${inviteCode}`);
     }
   };
 
@@ -230,7 +230,7 @@ const Sidebar = () => {
       }
       
       if (created?.id) {
-        navigate(`/chat/${created.id}`);
+        navigate(`/chat/${created.id}/${created.inviteCode}`);
       }
     } catch (err) {
       alert(err.message);
@@ -290,7 +290,7 @@ const Sidebar = () => {
       }
 
       if (joined?.id) {
-        navigate(`/chat/${joined.id}`);
+        navigate(`/chat/${joined.id}/${joined.inviteCode}`);
       }
     } catch (err) {
       alert(err.message);
@@ -359,7 +359,7 @@ const Sidebar = () => {
               const roomUniqueId = room.uniqueId;
               const isCurrentRoom = roomId && Number(roomId) === Number(roomUniqueId);
               const isSelectedForModal = selectedRoom && Number(selectedRoom.uniqueId) === Number(roomUniqueId) && showMembersModal;
-              
+              const roomInviteCode = room.inviteCode;
               return (
                 <div key={`room-${roomUniqueId}`} style={{ padding: '5px 10px' }}>
                   <div
@@ -386,7 +386,7 @@ const Sidebar = () => {
                     }}
                   >
                     <div
-                      onClick={() => navigateToRoom(roomUniqueId)}
+                      onClick={() => navigateToRoom(roomUniqueId,roomInviteCode)}
                       style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
