@@ -21,6 +21,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ import project.backend.global.exception.ex.TokenException;
 @RequiredArgsConstructor
 public class JwtProvider {
 
-	public static final Long TOKEN_VALIDATION_SECOND = 60L;
+	public static final Long TOKEN_VALIDATION_SECOND = 10L;
 	public static final Long REFRESH_TOKEN_VALIDATION_SECOND = 7 * 24 * 60 * 60L;
 
 	private final TokenRedisRepository tokenRedisRepository;
@@ -167,7 +168,8 @@ public class JwtProvider {
 		String email = getEmailFromToken(token);
 
 		Member member = memberRepository.findByEmail(email)
-			.orElseThrow(() -> new TokenException(TokenErrorCode.NOT_FOUND_TOKEN));
+			.orElseThrow(
+				() -> new UsernameNotFoundException("토큰 email 정보가 적절하지 않습니다.(회원을 찾을 수 없습니다.)"));
 		MemberDetails memberDetails = new MemberDetails(member);
 
 		return new UsernamePasswordAuthenticationToken(memberDetails, token,
@@ -178,11 +180,9 @@ public class JwtProvider {
 		String token) throws IOException {
 		try {
 			Optional<TokenRedis> tokenRedisOpt = tokenRedisRepository.findByAccessToken(token);
-
 			if (tokenRedisOpt.isEmpty()) {
 				log.warn("토큰 없음: 로그인 페이지로 이동");
 				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				response.sendRedirect("https://localhost/login");
 				return null;
 			}
 			TokenRedis tokenRedis = tokenRedisOpt.get();
@@ -192,7 +192,7 @@ public class JwtProvider {
 			JWTVerifier jwtVerifier = getJwtVerifier(REFRESH_TOKEN_VALIDATION_SECOND);
 			jwtVerifier.verify(refreshToken);
 
-			log.info("refreshToken 재발급 시작 = {}", refreshToken);
+			log.info("accessToken 재발급 시작 = {}", refreshToken);
 
 			Authentication authentication = getAuthentication(refreshToken);
 
@@ -202,6 +202,7 @@ public class JwtProvider {
 			CookieUtils.saveCookie(response, newAccessToken);
 
 			tokenRedis.updateAccessToken(newAccessToken);
+
 			tokenRedisRepository.save(tokenRedis);
 			log.info("토큰 재발급 완료");
 
