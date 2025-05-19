@@ -16,17 +16,18 @@ import project.backend.global.config.security.dto.OAuthMemberDto;
 @RequiredArgsConstructor
 public class OAuthSignUpService {
 
-    private final MemberRepository memberRepository;
-    private final ImageFileService imageFileService;
+	private final MemberRepository memberRepository;
+	private final ImageFileService imageFileService;
 
-    @Value("${file.default-profile}")
-    private String defaultProfile;
+	@Value("${file.images.profile.default}")
+	private String defaultProfile;
 
-    public Member OAuthSignUp(OAuthMemberDto request) {
-        return memberRepository.findByEmail(request.email())
-                .orElseGet(() -> {
-                    ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(defaultProfile);
-                    return memberRepository.save(MemberMapper.toEntity(request, defaultProfileImg));
-                });
-    }
+	public Member OAuthSignUp(OAuthMemberDto request) {
+		return memberRepository.findByEmail(request.email())
+			.orElseGet(() -> {
+				ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
+					defaultProfile);
+				return memberRepository.save(MemberMapper.toEntity(request, defaultProfileImg));
+			});
+	}
 }

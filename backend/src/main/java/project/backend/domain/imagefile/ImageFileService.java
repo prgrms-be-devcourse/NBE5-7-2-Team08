@@ -21,67 +21,81 @@ import project.backend.global.exception.errorcode.ImageFileErrorCode;
 @RequiredArgsConstructor
 public class ImageFileService {
 
-    private final ImageFileRepository imageFileRepository;
+	private final ImageFileRepository imageFileRepository;
 
-    @Value("${file.profile-path}")
-    private String profilePath;
+	@Value("${file.images.profile.path}")
+	private String profilePath;
 
-    @Transactional
-    public ImageFile saveProfileImageFile(MultipartFile file) {
+	@Value("${file.images.chat.path}")
+	private String chatImagePath;
 
-        log.info("Saving profile image file");
-        String uploadFileName = file.getOriginalFilename();
+	@Transactional
+	public ImageFile saveImageFile(MultipartFile file, ImageType type) {
 
-        checkExtension(uploadFileName);
-        checkFileTypeIsImage(file.getContentType());
+		log.info("Saving profile image file");
+		String uploadFileName = file.getOriginalFilename();
 
-        String extension = uploadFileName.substring(uploadFileName.lastIndexOf(".")).toLowerCase();
+		checkExtension(uploadFileName);
+		checkFileTypeIsImage(file.getContentType());
 
-        checkFileExtensionIsImage(extension);
+		String extension = uploadFileName.substring(uploadFileName.lastIndexOf(".")).toLowerCase();
 
-        String storeFileName = UUID.randomUUID() + extension;
+		checkFileExtensionIsImage(extension);
 
-        Path savePath = Paths.get(profilePath, storeFileName);
+		String storeFileName = UUID.randomUUID() + extension;
 
-        ImageFile imageFile = ImageFile.ofProfile(storeFileName, uploadFileName);
-        imageFileRepository.saveAndFlush(imageFile);
-        log.info("Saved Metadata of profile image file");
+		Path savePath;
+		if (type.equals(ImageType.PROFILE_IMAGE)) {
+			savePath = Paths.get(profilePath, storeFileName);
+		} else if (type.equals(ImageType.CHAT_IMAGE)) {
+			savePath = Paths.get(chatImagePath, storeFileName);
+		} else {
+			throw new ImageFileException(ImageFileErrorCode.INVALID_ROUTE);
+		}
 
-        try {
-            log.info("📁 저장 경로: {}", savePath.toAbsolutePath());
-            file.transferTo(savePath);
-            return imageFile;
+		ImageFile imageFile = ImageFile.ofProfile(storeFileName, uploadFileName);
+		imageFileRepository.saveAndFlush(imageFile);
+		log.info("Saved Metadata of profile image file");
 
-        } catch (IOException e) {
-            imageFileRepository.delete(imageFile);
-            log.error("파일 저장 중 IOException 발생", e);
-            throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
-        }
-    }
+		try {
+			log.info("📁 저장 경로: {}", savePath.toAbsolutePath());
+			file.transferTo(savePath);
+			return imageFile;
+
+		} catch (IOException e) {
+			imageFileRepository.delete(imageFile);
+			log.error("파일 저장 중 IOException 발생", e);
+			throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
+		}
+	}
 
 
-    private void checkFileExtensionIsImage(String extension) {
-        List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp");
-        if (!imageExtensions.contains(extension)) {
-            throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
-        }
-    }
+	private void checkFileExtensionIsImage(String extension) {
+		List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp");
+		if (!imageExtensions.contains(extension)) {
+			throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
+		}
+	}
 
-    private void checkFileTypeIsImage(String fileType) {
-        if (fileType == null || !fileType.startsWith("image/")) {
-            throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
-        }
-    }
+	private void checkFileTypeIsImage(String fileType) {
+		if (fileType == null || !fileType.startsWith("image/")) {
+			throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
+		}
+	}
 
-    private void checkExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
-            throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
-        }
-    }
+	private void checkExtension(String fileName) {
+		if (fileName == null || !fileName.contains(".")) {
+			throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
+		}
+	}
 
-    public ImageFile getProfileImageByStoreFileName(String storeFileName) {
-        return imageFileRepository.findByStoreFileName(storeFileName)
-            .orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
-    }
+	public ImageFile getProfileImageByStoreFileName(String storeFileName) {
+		return imageFileRepository.findByStoreFileName(storeFileName)
+			.orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
+	}
 
+	public ImageFile getImageById(Long imageFileId) {
+		return imageFileRepository.findById(imageFileId)
+			.orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
+	}
 }

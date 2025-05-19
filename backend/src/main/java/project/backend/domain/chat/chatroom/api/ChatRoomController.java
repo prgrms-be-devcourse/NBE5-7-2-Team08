@@ -36,7 +36,7 @@ import project.backend.global.exception.ex.AuthException;
 @RequestMapping("/chat-rooms")
 public class ChatRoomController {
 
-    private final ChatRoomService chatRoomService;
+	private final ChatRoomService chatRoomService;
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
@@ -102,4 +102,3 @@ public class ChatRoomController {
 	}
     //임창인 끝
 }
-

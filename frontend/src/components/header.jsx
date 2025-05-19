@@ -70,7 +70,7 @@ export function Header() {
           ) : (
             <a href= {"/myprofile"}>
             <img 
-              src={`http://localhost:8080/profile/${profileImage}`}
+              src={`http://localhost:8080/images/profile/${profileImage}`}
               alt="User profile"
               className="profile-image"
             />

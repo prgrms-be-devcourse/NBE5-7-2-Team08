@@ -1,7 +1,9 @@
 package project.backend.global.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -22,6 +24,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/chat"); //클라이언트 -> 서버, 클라이언트에서 SEND 요청을 처리
-        registry.enableSimpleBroker("/topic"); //서버 -> 클라이언트, 해당 경로를 SUBSCRIBE하는 클라이언트에게 메세지를 전달
+        //서버 -> 클라이언트, 해당 경로를 SUBSCRIBE하는 클라이언트에게 메세지를 전달
+        registry.enableSimpleBroker("/topic")
+            .setHeartbeatValue(new long[]{10000, 10000}) // [서버->클라, 클라->서버] 10초마다
+            .setTaskScheduler(customWebSocketTaskScheduler());
+    }
+
+    @Bean
+    public ThreadPoolTaskScheduler customWebSocketTaskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+//        scheduler.setPoolSize(1); // 너무 높지 않게 설정
+//        scheduler.setThreadNamePrefix("wss-heartbeat-thread-");
+        scheduler.initialize();
+        return scheduler;
     }
 }

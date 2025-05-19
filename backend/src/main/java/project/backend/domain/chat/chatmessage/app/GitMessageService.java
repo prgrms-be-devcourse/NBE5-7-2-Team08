@@ -46,7 +46,7 @@ public class GitMessageService {
     }
 
     private void sendGitMessage(Long roomId, GitMessage gitMessage) {
-        ChatMessage message = chatMessageMapper.toEntity(gitMessage);
+        ChatMessage message = chatMessageMapper.toEntityWithGit(gitMessage);
         chatMessageRepository.save(message);
         ChatMessageResponse response = chatMessageMapper.toGitResponse(message);
 

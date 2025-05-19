@@ -2,6 +2,7 @@ package project.backend.domain.chat.chatroom.app;
 
 
 import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -116,6 +117,7 @@ public class ChatRoomService {
 	public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
 		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId,
 			pageable);
+
 		return allRoomsByOwnerId.map(ChatRoomMapper::toProfileResponse);
 	}
 
@@ -155,6 +157,11 @@ public class ChatRoomService {
 		return chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
-}
 
+	@Transactional(readOnly = true)
+	public ChatRoom getRoomById(Long roomId) {
+		return chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+	}
+}
 
