@@ -13,6 +13,7 @@ const BlankRoom = () => {
   const [repoUrl, setRepoUrl] = useState('');
   const [inviteCode, setInviteCode] = useState('');
 
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!roomName.trim()) {
@@ -39,44 +40,43 @@ const BlankRoom = () => {
       setRepoUrl('');
       
       if (created?.id) {
-        navigate(`/chat/${created.id}`);
+        navigate(`/chat/${created.id}/${created.inviteCode}`);
       }
     } catch (err) {
       alert(err.message);
     }
-};
+  };
 
-const handleJoin = async (e) => {
-  e.preventDefault();
-  if (!inviteCode.trim()) {
-    alert('초대 코드를 입력해주세요.');
-    return;
-  }
-  
-  try {
-    const res = await fetch('http://localhost:8080/chat-rooms/join', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ inviteCode })
-    });
-    
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || '방 입장에 실패했습니다.');
+  const handleJoin = async (e) => {
+    e.preventDefault();
+    if (!inviteCode.trim()) {
+      alert('초대 코드를 입력해주세요.');
+      return;
     }
     
-    const { id: roomId } = await res.json();
-    setShowJoinModal(false);
-    setInviteCode('');
-    
-    if (roomId) {
-      navigate(`/chat/${roomId}`);
+    try {
+      const res = await fetch('http://localhost:8080/chat-rooms/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ inviteCode })
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || '방 입장에 실패했습니다.');
+      }
+      
+      const data = await res.json();
+      setShowJoinModal(false);
+      setInviteCode('');
+      
+      navigate(`/chat/${data.id}/${data.inviteCode}`);
+
+    } catch (err) {
+      alert(err.message);
     }
-  } catch (err) {
-    alert(err.message);
-  }
-};
+  };
   
   // 버튼 스타일 공통화
   const buttonStyle = {
@@ -253,7 +253,6 @@ const Modal = ({ title, onClose, onSubmit, children }) => (
           >
             취소
           </button>
-          
           <button
             type="submit"
             style={{
