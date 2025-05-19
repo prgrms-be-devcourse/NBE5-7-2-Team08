@@ -69,13 +69,14 @@ const EditProfilePage = () => {
 
   const handleSave = async () => {
     if (password !== confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다.")
+      alert("비밀번호와 확인값이 일치하지 않습니다.")
       return
     }
 
     const formData = new FormData()
     formData.append("nickname", nickname)
     formData.append("password", password)
+    formData.append("confirmPassword", confirmPassword)
     if (imageFile) {
       formData.append("profileImg", imageFile) // 백엔드 필드명에 따라 변경 가능
     }
@@ -117,7 +118,7 @@ const EditProfilePage = () => {
             <div className={styles["profile-picture-section"]}>
               <div className={styles["profile-picture"]}>
                 <img
-                  src={selectedImage || `http://localhost:8080/profile/${userDetails.profileImg}`}
+                  src={selectedImage || `http://localhost:8080/images/profile/${userDetails.profileImg}`}
                   alt="Profile"
                   className={styles["profile-image"]}
                   onError={(e) => {
@@ -145,6 +146,7 @@ const EditProfilePage = () => {
                   placeholder="닉네임 입력"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
+                  required
                 />
               </div>
 
@@ -156,6 +158,8 @@ const EditProfilePage = () => {
                     placeholder="새 비밀번호"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength="12"
                   />
                 </div>
                 <div className={styles["form-group"]}>
@@ -165,6 +169,8 @@ const EditProfilePage = () => {
                     placeholder="비밀번호 확인"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength="12"
                   />
                 </div>
               </div>

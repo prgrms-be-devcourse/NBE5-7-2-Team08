@@ -24,7 +24,12 @@ spring:
         format_sql: true
 
 file:
-  profile-path: profiles/
-  default-profile: default-profile.png
+  images:
+    profile:
+      path: images/profile/
+      default: default-profile.png
+    chat:
+      path: images/chat/
+
 
 

@@ -1,27 +1,157 @@
 import React, { useEffect, useState, useRef } from 'react';
 import SockJS from 'sockjs-client';
-import { Stomp } from '@stomp/stompjs';
-import { useParams, useNavigate } from 'react-router-dom'; // Added useNavigate
+import { Client } from '@stomp/stompjs';
+import { useParams, useNavigate, useLocation } from 'react-router-dom'; //
 import Highlight from 'react-highlight';
 import 'highlight.js/styles/github.css';
 import Sidebar from '../components/SideBar';
 import Header from '../components/header';
 import SearchSidebar from '../components/SearchSideBar';
-import { FaCopy } from 'react-icons/fa';
+import { FaCopy, FaTrashAlt } from 'react-icons/fa';
 
 const ChatRoom = () => {
-  const [messages, setMessages]=useState([]);
-  const[content, setContent]=useState("");
-  const { roomId }=useParams();
-  const navigate = useNavigate(); // Added navigate hook
+
+  const { roomId, inviteCode } = useParams();
+  const [messages, setMessages] = useState([]);
+  const [content, setContent] = useState("");
   const [inputMode, setInputMode] = useState("TEXT");
   const [language, setLanguage] = useState("java");
-  const stompClientRef = useRef(null);
+
+  const [currentUser, setCurrentUser] = useState(null);
+  const [contextMenuId, setContextMenuId] = useState(null);
+
+  const [editMessageId, setEditMessageId] = useState(null); // 현재 수정 중인 메시지 ID
+  const [editContent, setEditContent] = useState(""); // 수정 중인 내용
+  
   const messagesEndRef = useRef(null);
   const isComposingRef = useRef(false);
-  
-  // 초대 코드 관련 상태 추가
-  const [showNotification, setShowNotification] = useState(false);
+
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+
+
+  const [showNotification, setShowModal] = useState(false);
+  const [showUrlCopiedModal, setShowUrlCopiedModal] = useState(false);
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+
+  const navigate = useNavigate();           // ← 네비게이트 훅
+  const location = useLocation();           // ← 현재 URL 가져오기
+  const joinedOnceRef = useRef(false);
+
+  // 참가 완료 여부
+  const [setJoined] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+
+  //임창인
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showLeaveSuccess, setShowLeaveSuccess] = useState(false);
+
+
+  //임창인(채팅방 나가기)
+  const handleLeaveRoom = async () => {
+    try {
+      const res = await fetch(`http://localhost:8080/chat-rooms/${roomId}/leave`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        setShowLeaveConfirm(false);
+        setShowLeaveSuccess(true);
+        setTimeout(() => {
+          setShowLeaveSuccess(false);
+          navigate('/');
+        }, 500);
+      } else {
+        const text = await res.text();
+        throw new Error(text || '나가기 실패');
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setMenuOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (joinedOnceRef.current) return;   // 이미 한 번 호출됐다면 스킵
+    joinedOnceRef.current = true;
+
+    const checkAndJoin = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/chat-rooms/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',                    // ← 세션(cookie) 포함
+          body: JSON.stringify({ inviteCode })
+        });
+
+        if (res.status === 401) {
+          const data = await res.json();
+          console.log("[DEBUG] 401 응답 data:", data);
+          const redirectPath = `/chat/${data.details.roomId}/${data.details.inviteCode}`;
+          navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+          return;
+        }
+
+        if (!res.ok) {
+          const text = await res.text(); // 응답 본문도 확인
+          console.error("[DEBUG] 실패 상태:", res.status, text);
+          throw new Error('채팅방 입장 실패');
+        }
+
+
+        // join 성공 → DB에 참가자 저장됨
+        setJoined(true);
+      } catch (err) {
+        console.error(err);
+
+      }
+    };
+    checkAndJoin();
+  }, [inviteCode, location.pathname, navigate, setJoined]);
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    setContextMenuVisible(true);
+    setContextMenuPosition({ x: e.pageX, y: e.pageY });
+  };
+
+  useEffect(() => {
+    const handleClick = () => setContextMenuVisible(false);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  //임창인(초대 코드만 복사 join chat room으로 입장해야함)
+  const copyInviteCode = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteCode); // 백엔드 없이 바로 복사
+      setShowModal(true);
+      setTimeout(() => setShowModal(false), 2000);
+    } catch (err) {
+      console.error(err);
+      alert('초대 코드 복사 중 오류가 발생했습니다.');
+    }
+  };
+
+  //공유용 전체 url 복사
+  const copyInviteUrl = async () => {  // 변경: 전체 URL 복사
+    try {
+      const fullUrl = `${window.location.origin}/chat/${roomId}/${inviteCode}`;
+      await navigator.clipboard.writeText(fullUrl);
+      setModalPosition(contextMenuPosition);
+      setShowUrlCopiedModal(true);
+      setTimeout(() => setShowUrlCopiedModal(false), 2000);
+    } catch (err) {
+      console.error(err);
+      alert('초대 URL 복사 중 오류가 발생했습니다.');
+    }
+    setContextMenuVisible(false);  // 메뉴 닫기
+  };
+
 
   const [showSearchSidebar, setShowSearchSidebar] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -31,6 +161,7 @@ const ChatRoom = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [errorMessage, setErrorMessage] = useState(null);
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
@@ -70,122 +201,198 @@ const ChatRoom = () => {
     }
   };
 
+  const stompClientRef = useRef(null);
+  const subscriptionRef = useRef(null);
+  const hasConnectedRef = useRef(false); // 실제 연결에 성공했는지 추적
+  const keepAliveIntervalRef = useRef(null); // 추가
+
   useEffect(() => {
-      // Make sure roomId exists before connecting
-      if (!roomId) {
-        console.error("No roomId available");
-        navigate("/"); // Redirect to home if no room ID is found
-        return;
-      }
-    
-      // WebSocket 연결 설정
-      const socket = new SockJS('http://localhost:8080/ws');
-      const stompClient = Stomp.over(socket);
-  
-      stompClient.connect({}, () => {
-        console.log('Connected to WebSocket');
-        stompClient.subscribe(`/topic/chat/${roomId}`, (message) => {
-          const received = JSON.parse(message.body);
-          // 수신된 메시지의 sendAt이 유효한지 확인하고, 아니면 현재 시간으로 설정
-          if (!received.sendAt || new Date(received.sendAt).getFullYear() === 1970) {
-            received.sendAt = new Date().toISOString();
-          }
-          setMessages((prev) => [...prev, received]);
-        });
+  if (!roomId) {
+    console.error("No roomId available");
+    navigate("/");
+    return;
+  }
+
+  setMessages([]); // 이전 채팅방 메세지 제거
+
+  // 로그인 유저 정보 가져오기
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch('http://localhost:8080/user/details', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       });
-  
-      // 채팅방의 메시지 초기화
-      const fetchMessages = async () => {
-        try {
-          // 컨트롤러 엔드포인트에 맞게 URL 수정
-          const response = await fetch(`http://localhost:8080/${roomId}/messages`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include' // 인증 정보 포함
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            // 서버에서 받은 모든 메시지의 날짜/시간 유효성 검사
-            const validatedData = data.map(msg => {
-              // sendAt이 유효하지 않으면(1970년) 현재 시간으로 설정
-              if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
-                return { ...msg, sendAt: new Date().toISOString() };
-              }
-              return msg;
-            });
-            
-            // 메시지 시간순으로 정렬 (오래된 메시지가 위에 오도록)
-            const sortedData = validatedData.sort((a, b) => 
-              new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
-            );
-            
-            setMessages(sortedData);
-          } else {
-            console.error("Failed to fetch messages:", response.status);
+
+      if (!res.ok) {
+        throw new Error('로그인 정보를 가져오지 못했습니다.');
+      }
+
+      const user = await res.json(); // { id, email, nickname, profileImg }
+      setCurrentUser(user);
+    } catch (error) {
+      console.error('사용자 정보 요청 실패:', error);
+    }
+  };
+
+  fetchCurrentUser();
+
+  // 메시지 초기화
+  const fetchMessages = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/${roomId}/messages`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const validatedData = data.map(msg => {
+          if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
+            return { ...msg, sendAt: new Date().toISOString() };
           }
-        } catch (error) {
-          console.error('Error fetching messages:', error);
+          return msg;
+        });
+
+        const sortedData = validatedData.sort(
+          (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+        );
+
+        setMessages(sortedData);
+      } else {
+        console.error("Failed to fetch messages:", response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  fetchMessages();
+
+  // WebSocket 연결 설정
+  const client = new Client({
+    webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+    reconnectDelay: 1000,
+    heartbeatIncoming: 15000,
+    heartbeatOutgoing: 10000,
+    debug: (str) => console.log(`[STOMP] ${str}`),
+
+    onConnect: () => {
+      console.log('✅ Connected to WebSocket');
+      hasConnectedRef.current = true;
+
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        console.log("🔁 Previous subscription cleared.");
+      }
+
+      subscriptionRef.current = client.subscribe(`/topic/chat/${roomId}`, (message) => {
+        try {
+          const received = JSON.parse(message.body);
+          received.sendAt ||= new Date().toISOString();
+          setMessages(prev =>
+            prev.some(m => m.messageId === received.messageId)
+              ? prev.map(m => m.messageId === received.messageId ? received : m)
+              : [...prev, received]
+          );
+        } catch (e) {
+          console.error("📛 Failed to parse incoming message", e);
         }
-      };
-  
-      fetchMessages(); // 컴포넌트 마운트 시 메시지 가져오기
-  
-      stompClientRef.current = stompClient;
-  
-      return () => {
-        if (stompClientRef.current) {
-          stompClientRef.current.disconnect();
-          console.log('Disconnected');
+      });
+
+      if (keepAliveIntervalRef.current) clearInterval(keepAliveIntervalRef.current);
+
+      keepAliveIntervalRef.current = setInterval(() => {
+        if (client && client.connected) {
+          client.publish({
+            destination: '/app/ping',
+            body: 'ping'
+          });
+          console.log("📡 Sent keep-alive ping");
         }
-      };
-    }, [roomId, navigate]);
+      }, 20000);
+    },
+
+    onWebSocketClose: () => {
+      console.warn("❌ WebSocket closed.");
+      if (!hasConnectedRef.current) {
+        console.warn("🔒 Initial connection failed. Possibly due to 401.");
+        navigate("/login");
+      } else {
+        console.log("🔁 Will attempt reconnect...");
+      }
+    },
+
+    onStompError: (frame) => {
+      console.error("💥 STOMP error:", frame.headers['message']);
+      if (frame.headers['message']?.includes('Unauthorized') || frame.body?.includes('expired')) {
+        navigate("/login");
+      }
+    }
+  });
+
+  client.activate();
+  stompClientRef.current = client;
+
+  return () => {
+    console.log("🧹 Cleaning up WebSocket...");
+
+    if (keepAliveIntervalRef.current) {
+      clearInterval(keepAliveIntervalRef.current);
+      keepAliveIntervalRef.current = null;
+      console.log("🔕 Stopped keep-alive ping");
+    }
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe();
+      subscriptionRef.current = null;
+      console.log("🔌 Subscription unsubscribed.");
+    }
+    if (client && client.active) {
+      client.deactivate().then(() => {
+        console.log("🛑 Disconnected from WebSocket");
+      });
+    }
+  };
+}, [roomId, navigate]);
 
   // 메시지가 업데이트될 때마다 아래로 스크롤
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // 초대 코드 복사 기능 추가
-  const copyInviteUrl = async () => {
-    if (!roomId) return; // roomId가 없는 경우 실행하지 않음
-    
-    try {
-      const res = await fetch(`http://localhost:8080/chat-rooms/invite/${roomId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('초대 URL을 가져오지 못했습니다.');
-      const { inviteUrl } = await res.json();
-      await navigator.clipboard.writeText(inviteUrl);
-      setShowNotification(true); // 알림 표시
-      setTimeout(() => setShowNotification(false), 2000); // 2초 뒤 닫기
-    } catch (err) {
-      console.error(err);
-      alert('초대 URL 복사 중 오류가 발생했습니다.');
+  // 통합 메시지 전송 함수 (텍스트/코드/이미지 모두 처리)
+  const sendMessage = (overrideMessage = null) => {
+    const client = stompClientRef.current;
+    // 연결이 끊긴 경우 재연결 시도
+    if (!client.connected) {
+      client.activate();
+      alert('⚠️ 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.');
+      return;
     }
-  };
 
-  const sendMessage = (text = content) => {
-    // Check if text is a string and convert it if not
-    const messageText = typeof text === 'string' ? text : String(text);
-    const trimmed = messageText.trim();
-    
-    if (stompClientRef.current && trimmed !== '') {
-      const chatMessage = {
-        content: trimmed,
-        type: inputMode,
-        // 현재 시간을 ISO 형식으로 설정 (백엔드에서 덮어쓸 수도 있지만 프론트에서도 설정)
-        sendAt: new Date().toISOString(),
-        ...(inputMode === 'CODE' && { language })
-      };
-      stompClientRef.current.send(`/chat/send-message/${roomId}`, {}, JSON.stringify(chatMessage));
-      setContent('');
-      setInputMode('TEXT');
+    // 기본 메시지 구조
+    let baseMessage = {
+      content: content,
+      type: inputMode,
+      sendAt: new Date().toISOString(),
+      ...(inputMode === 'CODE' && { language })
+    };
+
+    // overrideMessage가 있으면 병합 (예: 이미지 메시지 전송 시)
+    const message = overrideMessage ? { ...baseMessage, ...overrideMessage } : baseMessage;
+
+    // 메시지 비어있는 경우 전송 방지
+    const trimmed = String(message.content).trim();
+    if (message.type !== 'IMAGE' && trimmed === '') {
+      return;
     }
+
+    client.publish({
+      destination: `/chat/send-message/${roomId}`,
+      body: JSON.stringify(message)
+    });
+
+    setContent('');
+    setInputMode('TEXT');
   };
 
   const handleSearch = async (keyword, page = 0) => {
@@ -194,7 +401,6 @@ const ChatRoom = () => {
       setErrorMessage('채팅방 ID가 유효하지 않습니다.');
       return;
     }
-
     setIsSearching(true);
     setShowSearchSidebar(true);
     setSearchKeyword(keyword);
@@ -318,6 +524,51 @@ const ChatRoom = () => {
     }
   };
 
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // 전송 버튼 클릭 시 호출되는 공통 핸들러 함수 (이미지 업로드 고려)
+  const handleUnifiedSend = async () => {
+    if (inputMode === 'IMAGE') {
+      // 이미지 업로드 모드일 경우
+      if (!imageFile) {
+        alert("이미지를 선택하세요.");
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('image', imageFile);
+
+        const response = await fetch('http://localhost:8080/send-image', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        if (!response.ok) throw new Error('이미지 업로드 실패');
+
+        const imageId = await response.json(); // 서버에서 imageId 반환
+
+        sendMessage({
+          type: 'IMAGE',
+          content: '',
+          imageFileId: imageId
+        });
+
+        setImageFile(null);
+      }catch(err){
+        console.err("이미지 전송 실패: ",err);
+      }
+      setImageFile(null);
+      setImagePreviewUrl(null);
+    } else {
+      // TEXT 또는 CODE 모드일 경우 기존 sendMessage 호출
+      sendMessage();
+    }
+  };
+
   // 버튼 스타일 공통화
   const buttonStyle = {
     backgroundColor: '#4a6cf7',
@@ -347,17 +598,54 @@ const ChatRoom = () => {
     boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
   };
 
+  const handleEditMessage = (messageId) => {
+    const client = stompClientRef.current;
+    if (!client || !client.connected) {
+      alert('서버에 연결되어 있지 않습니다.');
+      return;
+    }
+
+    const editPayload = {
+      messageId: messageId,
+      content: editContent
+    };
+
+    client.publish({
+      destination: `/chat/edit-message/${roomId}`,
+      body: JSON.stringify(editPayload)
+    });
+
+    // 수정 모드 종료
+    setEditMessageId(null);
+    setEditContent('');
+  };
+
+  const handleDeleteMessage = (messageId) => {
+    const client = stompClientRef.current;
+    if (!client || !client.connected) {
+      alert('서버에 연결되어 있지 않습니다.');
+      return;
+    }
+
+    client.publish({
+      destination: `/chat/delete-message/${roomId}`,
+      body: messageId
+    });
+
+    setContextMenuId(null); // 메뉴 닫기
+  };
+
   // 메시지 데이터 처리 및 날짜 구분선 추가
   const renderMessagesWithDateSeparators = () => {
     if (!messages.length) return null;
-    
+
     const result = [];
     let currentDate = null;
-    
+
     // 메시지를 순회하며 날짜별로 구분
     messages.forEach((msg, index) => {
       const messageDate = formatDate(msg.sendAt);
-      
+
       // 날짜가 바뀌었다면 구분선 추가
       if (messageDate !== currentDate) {
         currentDate = messageDate;
@@ -375,7 +663,7 @@ const ChatRoom = () => {
               height: '1px',
               backgroundColor: '#e2e8f0'
             }}></div>
-            <div style={{ 
+            <div style={{
               margin: '0 16px',
               padding: '4px 12px',
               backgroundColor: '#f8fafc',
@@ -392,13 +680,13 @@ const ChatRoom = () => {
           </div>
         );
       }
-      
+
       // 메시지 추가
       result.push(
-        <div key={`msg-${index}`} style={{ 
-          marginBottom: '18px', 
+        <div key={`msg-${index}`} style={{
+          marginBottom: '18px',
           display: 'flex',
-          alignItems: 'flex-start'
+          alignItems: 'flex-start',
         }}>
           {/* 프로필 이미지 */}
           <div style={{
@@ -416,38 +704,190 @@ const ChatRoom = () => {
             flexShrink: 0,
             backgroundImage: msg.type === 'GIT'
             ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
-            : undefined,
-            backgroundColor: msg.type === 'GIT' ? 'transparent' : '#4a6cf7',
+            : `url("http://localhost:8080/images/profile/${msg.profileImageUrl}")`,
             backgroundSize: 'cover'
           }}>
-            {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : 'U'}
           </div>
           <div style={{ flex: 1, maxWidth: 'calc(100% - 50px)' }}>
-            <div style={{ 
+            <div style={{
               display: 'flex',
-              alignItems: 'baseline',
-              marginBottom: '6px'
+              marginBottom: '6px',
+              justifyContent: 'space-between',
             }}>
-              <span style={{ 
-                fontWeight: '600',
-                fontSize: '15px',
-                color: '#2d3748'
-              }}>
-                {msg.senderName}
-              </span>
-              <span style={{ 
-                fontWeight: 'normal', 
-                fontSize: '12px', 
-                color: '#718096', 
-                marginLeft: '8px' 
-              }}>
-                {formatTime(msg.sendAt)}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                <span style={{ 
+                  fontWeight: '600',
+                  fontSize: '15px',
+                  color: '#2d3748'
+                }}>
+                  {msg.senderName}
+                </span>
+                <span style={{ 
+                  fontWeight: 'normal', 
+                  fontSize: '12px', 
+                  color: '#718096', 
+                  marginLeft: '8px' 
+                }}>
+                  {new Date(msg.sendAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
             </div>
-            
-            {/* GitHub 메시지 UI */}
-            {msg.type === 'GIT' ? (
-                <div style={{
+
+            {/* 점 세개 메뉴는 조건부 렌더링 */}
+            {currentUser?.id === msg.senderId && !msg.deleted && msg.type !== 'GIT' && (
+              <div style={{ position: 'relative'}}>
+                <button
+                  onClick={() =>
+                    setContextMenuId(contextMenuId === msg.messageId ? null : msg.messageId)
+                  }
+                  style={{
+                    position: 'absolute',
+                    right: '0px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    color: '#94a3b8'
+                  }}
+                >
+                  ⋯
+                </button>
+
+                {contextMenuId === msg.messageId && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '24px',
+                    right: '0',
+                    backgroundColor: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                    zIndex: 1000,
+                    padding: '6px 0',
+                    minWidth: '140px'
+                  }}>
+                     {/* 수정 버튼은 이미지 메시지가 아닌 경우에만 표시 */}
+                     {msg.type !== 'IMAGE' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setEditMessageId(msg.messageId);
+                            setEditContent(msg.content);
+                            setContextMenuId(null);
+                          }}
+                          style={{
+                            display: 'block',
+                            width: '100%',
+                            padding: '10px 16px',
+                            textAlign: 'left',
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '14px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          메세지 수정하기
+                        </button>
+
+                        {/* 구분선 추가 */}
+                        <div style={{
+                          height: '1px',
+                          backgroundColor: '#e2e8f0',
+                          margin: '0 8px'
+                        }} />
+                      </>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        const confirmed = window.confirm("정말 삭제하시겠습니까?");
+                        if (confirmed) {
+                          handleDeleteMessage(msg.messageId);
+                        }
+                        setContextMenuId(null);
+                      }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '10px 16px',
+                        textAlign: 'left',
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '14px',
+                        color: '#e53e3e',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 본문 영역 - 수정 중인 메시지는 textarea, 나머지는 content 렌더 */}
+          {editMessageId === msg.messageId ? (
+            <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  fontSize: '14px',
+                  resize: 'vertical'
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  onClick={() => handleEditMessage(msg.messageId)}
+                  style={{
+                    backgroundColor: '#4a6cf7',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  저장
+                </button>
+                <button
+                  onClick={() => {
+                    setEditMessageId(null);
+                    setEditContent('');
+                  }}
+                  style={{
+                    backgroundColor: '#e2e8f0',
+                    color: '#1a202c',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          )
+          :msg.deleted ? (
+            <div style={{ 
+              fontSize: '14px',
+              lineHeight: '1.5',
+              color: '#a0aec0',
+              fontStyle: 'italic'
+            }}>
+              삭제된 메시지입니다.
+            </div>
+          )
+          : msg.type === 'GIT' ? (
+              <div style={{
                 backgroundColor: '#f6f8fa',
                 borderRadius: '6px',
                 color: '#24292e',
@@ -471,45 +911,90 @@ const ChatRoom = () => {
                     </React.Fragment>
                     ))}
                 </div>
-                </div>
-            ): msg.type === 'CODE' || msg.content.startsWith('```') ? (
+              </div>
+            ): msg.type === 'CODE' || (msg.content && msg.content.startsWith('```')) ? (
               <div style={{ 
                 borderRadius: '6px',
                 overflow: 'hidden',
                 border: '1px solid #e2e8f0'
               }}>
-                <HighlightedCode 
-                  content={msg.content.replace(/```/g, '')} 
-                  language={msg.language || 'java'} 
+                <HighlightedCode
+                  content={msg.content.replace(/```/g, '')}
+                  language={msg.language || 'java'}
                 />
+                 {msg.edited && (
+                  <span style={{
+                    marginLeft: '6px',
+                    fontSize: '11px',
+                    color: '#a0aec0',
+                    fontStyle: 'italic'
+                  }}>
+                    (수정됨)
+                  </span>
+                )}
               </div>
-            ) : (
+            ): msg.type === 'IMAGE' ? (
+                <div style={{
+                  maxWidth: '30%',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)'
+                }}>
+                  <img
+                    src={`http://localhost:8080/images/chat/${msg.chatImageUrl}`}
+                    alt="업로드된 이미지"
+                    style={{
+                      width: '100%',
+                      maxHeight: '400px',
+                      objectFit: 'contain',
+                      borderRadius: '6px'
+                    }}
+                  />
+                </div>
+            )
+            : (
               <div style={{ 
                 fontSize: '14px',
                 lineHeight: '1.5',
                 color: '#4a5568',
-                wordBreak: 'break-word'
+                wordBreak: 'break-word',
+                whiteSpace: 'pre-wrap'
               }}>
                 {msg.content}
+                {msg.edited && (
+                  <span style={{
+                    marginLeft: '6px',
+                    fontSize: '11px',
+                    color: '#a0aec0',
+                    fontStyle: 'italic'
+                  }}>
+                    (수정됨)
+                  </span>
+                )}
               </div>
             )}
           </div>
         </div>
       );
     });
-    
+
     return result;
   };
 
   return (
-    <div style={{ 
-      backgroundColor: '#f5f7fa', 
-      height: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      boxSizing: 'border-box',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-    }}>
+    <div
+      onContextMenu={handleContextMenu}
+      style={{
+        backgroundColor: '#f5f7fa',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+      }}>
+
 
       {/* Top Bar */}
       <Header></Header>
@@ -529,7 +1014,7 @@ const ChatRoom = () => {
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
           overflow: 'hidden'
         }}>
-          
+
           {/* 채팅방 헤더 - 상단에 고정 */}
           <div style={{
             display: 'flex',
@@ -539,22 +1024,22 @@ const ChatRoom = () => {
             borderBottom: '1px solid #eaedf0',
             backgroundColor: '#fff'
           }}>
-            <div style={{ 
+            <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '12px'
             }}>
-              <span style={{ 
-                fontWeight: '600', 
+              <span style={{
+                fontWeight: '600',
                 fontSize: '18px',
                 color: '#2d3748'
               }}>
                 채팅방 #{roomId}
               </span>
-              
+
               {/* 초대 코드 복사 버튼 */}
               <button
-                onClick={copyInviteUrl}
+                onClick={copyInviteCode}
                 style={{
                   backgroundColor: '#2588F1',
                   color: 'white',
@@ -573,7 +1058,7 @@ const ChatRoom = () => {
                 초대 코드 복사
               </button>
             </div>
-            
+
             <div>
               <input
                 type="text"
@@ -593,6 +1078,52 @@ const ChatRoom = () => {
             </div>
           </div>
 
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', padding: '0 24px', marginTop: '8px' }}>
+            {/* ... 버튼 */}
+            <button
+              onClick={() => setMenuOpen(prev => !prev)}
+              style={{
+                fontSize: '20px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#4a5568'
+              }}
+            >
+              ⋯
+            </button>
+
+            {/* 드롭다운 메뉴 */}
+            {menuOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '32px',
+                right: '0',
+                backgroundColor: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                zIndex: 1000
+              }}>
+                <button
+                  onClick={() => setShowLeaveConfirm(true)}
+                  style={{
+                    padding: '10px 16px',
+                    background: 'none',
+                    border: 'none',
+                    width: '100%',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: '#e53e3e'
+                  }}
+                >
+                  채팅방 나가기
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* 메시지 목록 */}
           <div style={{
             flex: 1,
@@ -601,7 +1132,9 @@ const ChatRoom = () => {
             backgroundColor: '#fff',
             minHeight: 0
           }}>
+
             {renderMessagesWithDateSeparators()}
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -613,7 +1146,7 @@ const ChatRoom = () => {
             display: 'flex',
             flexDirection: 'column'
           }}>
-            <div style={{ 
+            <div style={{
               marginBottom: '12px',
               display: 'flex',
               alignItems: 'center'
@@ -627,16 +1160,18 @@ const ChatRoom = () => {
               }}>
                 <span
                   onClick={() => {
-                    if (inputMode === 'IMAGE') {
-                      setInputMode('TEXT');
-                    } else {
-                      setInputMode('IMAGE');
+                    const nextMode = inputMode === 'IMAGE' ? 'TEXT' : 'IMAGE';
+                    setInputMode(nextMode);
+
+                    // 모드가 IMAGE로 바뀌었으면 파일 선택창 자동 오픈
+                    if (nextMode === 'IMAGE' && fileInputRef.current) {
+                      fileInputRef.current.click();
                     }
                   }}
-                  style={{ 
+                  style={{
                     padding: '6px 12px',
                     borderRadius: '4px',
-                    cursor: 'pointer', 
+                    cursor: 'pointer',
                     fontWeight: '500',
                     fontSize: '13px',
                     backgroundColor: inputMode === 'IMAGE' ? '#ffffff' : 'transparent',
@@ -649,14 +1184,10 @@ const ChatRoom = () => {
                 </span>
                 <span
                   onClick={() => {
-                    if (inputMode === 'CODE') {
-                      setInputMode('TEXT');
-                      setContent('');
-                    } else {
-                      setInputMode('CODE');
-                    }
+                    const nextMode = inputMode === 'CODE' ? 'TEXT' : 'CODE';
+                    setInputMode(nextMode);
                   }}
-                  style={{ 
+                  style={{
                     padding: '6px 12px',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -671,13 +1202,13 @@ const ChatRoom = () => {
                   코드
                 </span>
               </div>
-              
+
               {/* 언어 선택 옵션을 코드 버튼 바로 옆으로 이동 */}
               {inputMode === 'CODE' && (
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  style={{ 
+                  style={{
                     ...inputStyle,
                     backgroundColor: '#f8fafc',
                     border: '1px solid #e2e8f0',
@@ -696,63 +1227,164 @@ const ChatRoom = () => {
                 </select>
               )}
             </div>
-            
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <textarea
-                value={content}
-                onChange={handleInputChange}
-                onCompositionStart={() => (isComposingRef.current = true)}
-                onCompositionEnd={() => (isComposingRef.current = false)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey && !isComposingRef.current) {
-                    e.preventDefault();
-                    sendMessage(e.target.value);
-                  }
-                }}
-                placeholder={inputMode === 'CODE' ? "코드를 입력하세요..." : "메시지를 입력하세요..."}
-                style={{
-                  flex: 1,
-                  height: '80px',
-                  resize: 'none',
-                  padding: '12px 16px',
-                  fontSize: '14px',
-                  backgroundColor: inputMode === 'CODE' ? '#f8fafc' : 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  lineHeight: '1.5',
-                  color: '#4a5568',
-                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
-                  transition: 'border-color 0.2s'
-                }}
-              />
 
-              <button
-                onClick={() => sendMessage()}
-                style={{
-                  ...buttonStyle,
-                  height: '80px'
-                }}
-              >
-                전송
-              </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+
+                {/* 썸네일 미리보기 이미지 */}
+                {inputMode === 'IMAGE' && imagePreviewUrl && (
+                  <div style={{
+                    position: 'relative',
+                    marginBottom: '10px',
+                    padding: '8px',
+                    backgroundColor: '#f8fafc',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '8px',
+                    maxWidth: '10%',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                    display: 'inline-block'
+                  }}>
+                    <img
+                      src={imagePreviewUrl}
+                      alt="미리보기"
+                      style={{
+                        maxWidth: '100%',
+                        objectFit: 'contain',
+                        borderRadius: '6px',
+                        display: 'block'
+                      }}
+                    />
+
+                      <button
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreviewUrl(null);
+                          setInputMode('TEXT');
+
+                          if (fileInputRef.current) {
+                           fileInputRef.current.value = null;
+                          }
+                        }}
+                          title="삭제"
+                          style={{
+                            position: 'absolute',
+                            top: '2px',
+                            right: '2px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '50%',
+                            width: '28px',
+                            height: '28px',
+                            color: '#e53e3e',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.15)'
+                          }}
+                      >
+                         <FaTrashAlt color="#e53e3e" size={16} />
+                      </button>
+                    </div>
+                )}
+
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
+                <textarea
+                  disabled={inputMode === 'IMAGE'}
+                  value={content}
+                  onChange={handleInputChange}
+                  onCompositionStart={() => (isComposingRef.current = true)}
+                  onCompositionEnd={() => (isComposingRef.current = false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && !isComposingRef.current) {
+                      e.preventDefault();
+                      sendMessage(e.target.value);
+                    }
+                  }}
+                  placeholder={ inputMode === 'CODE'? '코드를 입력하세요.' : inputMode === 'IMAGE' ? '이미지를 업로드 해주세요.' : '메시지를 입력하세요.'}
+                  style={{
+                    flex: 1,
+                    height: '80px',
+                    resize: 'none',
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    backgroundColor: inputMode === 'IMAGE' ? '#f1f5f9': inputMode === 'CODE' ? '#f8fafc' : 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    lineHeight: '1.5',
+                    color: '#4a5568',
+                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)',
+                    transition: 'border-color 0.2s',
+                    cursor: inputMode === 'IMAGE' ? 'not-allowed' : 'text'
+                  }}
+                />
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  // accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      const file = e.target.files[0];    
+                      setImageFile(file);
+
+                      // 파일 URL 생성
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setImagePreviewUrl(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  style={{ display: 'none' }} // 숨김
+                  />
+
+                <button
+                  // onClick={() => sendMessage()}
+                  onClick={handleUnifiedSend}
+                  style={{
+                    ...buttonStyle,
+                    height: '80px'
+                  }}
+                >
+                  전송
+                </button>
             </div>
           </div>
         </div>
-        
-        {showSearchSidebar && (
-          <SearchSidebar
-            searchKeyword={searchKeyword}
-            searchResults={searchResults}
-            isSearching={isSearching}
-            errorMessage={errorMessage}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalElements={totalElements}
-            onClose={() => setShowSearchSidebar(false)}
-            onPageChange={(page) => handleSearch(searchKeyword, page)}
-          />
-        )}
       </div>
+
+      {/* 우클릭 컨텍스트 메뉴 */}
+      {contextMenuVisible && (
+        <div
+          style={{
+            position: 'absolute',
+            top: contextMenuPosition.y,
+            left: contextMenuPosition.x,
+            backgroundColor: '#fff',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            zIndex: 1000
+          }}
+        >
+          <button
+            onClick={copyInviteUrl}
+            style={{
+              display: 'block',
+              padding: '8px 12px',
+              background: 'none',
+              border: 'none',
+              width: '100%',
+              textAlign: 'left',
+              cursor: 'pointer'
+            }}
+          >
+            공유 초대 링크 복사
+          </button>
+        </div>
+      )}
+
 
       {showNotification && (
         <div style={{
@@ -769,8 +1401,91 @@ const ChatRoom = () => {
           초대 코드가 복사되었습니다.
         </div>
       )}
+
+      {showUrlCopiedModal && (
+        <div style={{
+          position: 'absolute',
+          top: modalPosition.y,
+          left: modalPosition.x,
+          transform: 'translateY(-100%)', // 모달이 클릭 위치 위로 뜨도록
+          backgroundColor: '#333',
+          color: 'white',
+          padding: '10px 16px',
+          borderRadius: '6px',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+          zIndex: 2000
+        }}>
+          공유 초대 링크가 복사되었습니다
+        </div>
+      )}
+
+
+      {/* 나가기 확인 모달 */}
+      {showLeaveConfirm && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.4)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 2000
+        }}>
+          <div style={{
+            backgroundColor: 'white', padding: '24px', borderRadius: '8px',
+            minWidth: '280px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+          }}>
+            <p style={{ fontSize: '16px', marginBottom: '20px' }}>
+              정말 이 채팅방을 나가시겠습니까?
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+              <button
+                onClick={() => setShowLeaveConfirm(false)}
+                style={{
+                  padding: '8px 16px', backgroundColor: '#eee',
+                  border: 'none', borderRadius: '4px', cursor: 'pointer'
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleLeaveRoom}
+                style={{
+                  padding: '8px 16px', backgroundColor: '#e53e3e', color: 'white',
+                  border: 'none', borderRadius: '4px', cursor: 'pointer'
+                }}
+              >
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* 나가기 완료 모달 */}
+      {showLeaveSuccess && (
+        <div style={{
+          position: 'fixed', top: '20px', right: '20px',
+          backgroundColor: '#333', color: 'white',
+          padding: '12px 20px', borderRadius: '6px',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)', zIndex: 2000
+        }}>
+          채팅방에서 나갔습니다.
+        </div>
+      )}
+    </div>
+      {showSearchSidebar && (
+      <SearchSidebar
+        searchKeyword={searchKeyword}
+        searchResults={searchResults}
+        isSearching={isSearching}
+        errorMessage={errorMessage}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalElements={totalElements}
+        onClose={() => setShowSearchSidebar(false)}
+        onPageChange={(page) => handleSearch(searchKeyword, page)}
+      />
+    )}
+    </div>
     </div>
   );
 };
-
 export default ChatRoom;

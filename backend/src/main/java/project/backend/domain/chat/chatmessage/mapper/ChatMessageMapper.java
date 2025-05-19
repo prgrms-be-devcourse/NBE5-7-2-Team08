@@ -1,6 +1,7 @@
 package project.backend.domain.chat.chatmessage.mapper;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
@@ -10,30 +11,52 @@ import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.imagefile.ImageFile;
 
 @Component
 public class ChatMessageMapper {
 
-    public ChatMessage toEntity(ChatRoom room, ChatParticipant sender, ChatMessageRequest request) {
+    public ChatMessage toEntityWithText(ChatRoom room, ChatParticipant sender,
+        ChatMessageRequest request) {
         return ChatMessage.builder()
             .chatRoom(room)
             .sender(sender)
             .content(request.getContent())
-            .type(request.getType())
-            .codeLanguage(request.getLanguage())
+            .type(MessageType.TEXT)
             .sendAt(LocalDateTime.now())
             .build();
-
     }
 
-    public ChatMessage toEntity(GitMessage gitMessage) {
+    public ChatMessage toEntityWithCode(ChatRoom room, ChatParticipant sender,
+        ChatMessageRequest request) {
+        return ChatMessage.builder()
+            .chatRoom(room)
+            .sender(sender)
+            .content(request.getContent())
+            .type(MessageType.CODE)
+            .sendAt(LocalDateTime.now())
+            .codeLanguage(request.getLanguage())
+            .build();
+    }
+
+    public ChatMessage toEntityWithImage(ChatRoom room, ChatParticipant sender,
+        ImageFile chatImage) {
+        return ChatMessage.builder()
+            .chatRoom(room)
+            .sender(sender)
+            .type(MessageType.IMAGE)
+            .sendAt(LocalDateTime.now())
+            .chatImage(chatImage)
+            .build();
+    }
+
+    public ChatMessage toEntityWithGit(GitMessage gitMessage) {
         return ChatMessage.builder()
             .chatRoom(gitMessage.getRoom())
             .type(MessageType.GIT)
             .content(gitMessage.getContent())
             .sendAt(LocalDateTime.now())
             .build();
-
     }
 
     public ChatMessageResponse toResponse(ChatMessage message) {
@@ -45,6 +68,17 @@ public class ChatMessageMapper {
             .type(message.getType())
             .sendAt(message.getSendAt())
             .language(message.getCodeLanguage())
+            .profileImageUrl(
+                Optional.ofNullable(message.getSender().getParticipant().getProfileImage())
+                    .map(ImageFile::getStoreFileName)
+                    .orElse("default_image.jpg"))
+            .chatImageUrl(
+                Optional.ofNullable(message.getChatImage())
+                    .map(ImageFile::getStoreFileName)
+                    .orElse(null)
+            )
+            .senderId(message.getSender().getParticipant().getId())
+            .messageId(message.getId())
             .build();
     }
 

@@ -56,9 +56,11 @@ public class ChatRoomMapper {
 			entity.getId(),
 			entity.getName(),
 			entity.getRepositoryUrl(),
-			entity.getOwner().getId()
+			entity.getOwner().getId(),
+			entity.getInviteCode()
 		);
 	}
+
 
 	// 임창인 엔티티 변환
 	public ChatRoom toEntity(ChatRoomRequest dto, Member owner) {
@@ -77,11 +79,19 @@ public class ChatRoomMapper {
 			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
 			.participantCount(chatRoom.getParticipants().size())
+			.inviteCode(generateInviteCode())
 			.build();
 	}
 
+	public static InviteJoinResponse toInviteJoinResponse(Long id, String inviteCode, String name) {
+		return InviteJoinResponse.builder()
+			.id(id)
+			.inviteCode(inviteCode)
+			.name(name)
+			.build();
+	}
 
-	private String generateInviteCode() {
+	private static String generateInviteCode() {
 		return UUID.randomUUID().toString();
 	}
 }

@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileService;
+import project.backend.domain.imagefile.ImageType;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.dto.MemberDetails;
 import project.backend.domain.member.dto.MemberResponse;
@@ -30,7 +31,7 @@ public class MemberService {
     private final ImageFileService imageFileService;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${file.default-profile}")
+    @Value("${file.images.profile.default}")
     private String defaultProfilePath;
 
     public MemberResponse saveMember(SignUpRequest request) {
@@ -40,7 +41,8 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
 
-        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(defaultProfilePath);
+        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
+            defaultProfilePath);
 
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -66,7 +68,8 @@ public class MemberService {
         }
 
         if (request.getProfileImg() != null) {
-            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getProfileImg());
+            ImageFile newProfile = imageFileService.saveImageFile(request.getProfileImg(),
+                ImageType.PROFILE_IMAGE);
             targetMember.setProfileImage(newProfile);
         }
 
@@ -88,7 +91,7 @@ public class MemberService {
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
-    private Member getMemberById(Long id) {
+    public Member getMemberById(Long id) {
         return memberRepository.findById(id)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
@@ -105,7 +108,7 @@ public class MemberService {
     public MemberResponse getMemberDetails(Authentication auth) {
         MemberDetails loginMember = (MemberDetails) auth.getPrincipal();
         Long memberId = loginMember.getId();
-
+        log.info("memberId = {}", memberId);
         Member member = getMemberById(memberId);
         return MemberMapper.toResponse(member);
     }
