@@ -6,13 +6,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
-	@EntityGraph(attributePaths = {"participants", "participants.participant"})
-	Page<ChatRoom> findByParticipants_Participant_Id(Long memberId, Pageable pageable);
+	@Query("""
+		SELECT DISTINCT cr
+		FROM ChatRoom cr
+		JOIN cr.participants cp
+		WHERE cp.participant.id = :memberId
+		""")
+	Page<ChatRoom> findChatRoomsByParticipantId(@Param("memberId") Long memberId,
+		Pageable pageable);
 
 	Optional<ChatRoom> findByInviteCode(String inviteCode);
 
