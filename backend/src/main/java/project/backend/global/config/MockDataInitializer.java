@@ -17,7 +17,7 @@ import project.backend.domain.member.entity.Member;
 import java.util.List;
 
 @Component
-@Profile("dev")
+@Profile("local")
 @RequiredArgsConstructor
 public class MockDataInitializer {
 

@@ -30,8 +30,8 @@ spring:
       client:
         registration:
           github:
-            client-id: Ov23lieCW8NMbOBGLoid
-            client-secret: 00a85d9a3b3581cbf545c5cfab6f4f76576d9699
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_SECRET}
             scope:
               - repo
               - admin:repo_hook
