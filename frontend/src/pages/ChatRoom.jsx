@@ -752,7 +752,7 @@ const ChatRoom = () => {
           </div>
 
           {/* 본문 영역 - 수정 중인 메시지는 textarea, 나머지는 content 렌더 */}
-          {editMessageId === msg.messageId ? (
+          {editMessageId === msg.messageId && msg.type !== 'GIT' ?( //지은 GIT 조건 추가
             <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
               <textarea
                 value={editContent}
@@ -827,7 +827,7 @@ const ChatRoom = () => {
                     borderRadius: '2px'
                 }} />
                 {/* <div style={{ whiteSpace: 'pre-line', padding: '10px' }}>{msg.content}</div> */}
-                <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', padding: '10px' }}>
+                {/* <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', padding: '10px' }}>
                     <strong style={{ display: 'block', marginBottom: '6px' }}>
                     {msg.content.split('\n')[0]}
                     </strong>
@@ -837,7 +837,22 @@ const ChatRoom = () => {
                         <br />
                     </React.Fragment>
                     ))}
-                </div>
+                </div> */}
+                {/*지은 변경 시작*/}
+                {msg.content && (
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5', padding: '10px' }}>
+                    {msg.content.split('\n').map((line, i) => (
+                      <div key={i}>
+                        {i === 0 ? (
+                          <strong>{renderWithLink(line)}</strong>
+                        ) : (
+                          <>{renderWithLink(line)}</>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/*지은 변경 끝*/}
               </div>
             ): msg.type === 'CODE' || (msg.content && msg.content.startsWith('```')) ? (
               <div style={{ 

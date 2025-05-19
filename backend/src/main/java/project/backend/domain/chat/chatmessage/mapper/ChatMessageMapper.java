@@ -16,89 +16,90 @@ import project.backend.domain.imagefile.ImageFile;
 @Component
 public class ChatMessageMapper {
 
-    public ChatMessage toEntityWithText(ChatRoom room, ChatParticipant sender,
-        ChatMessageRequest request) {
-        return ChatMessage.builder()
-            .chatRoom(room)
-            .sender(sender)
-            .content(request.getContent())
-            .type(MessageType.TEXT)
-            .sendAt(LocalDateTime.now())
-            .build();
-    }
+	public ChatMessage toEntityWithText(ChatRoom room, ChatParticipant sender,
+		ChatMessageRequest request) {
+		return ChatMessage.builder()
+			.chatRoom(room)
+			.sender(sender)
+			.content(request.getContent())
+			.type(MessageType.TEXT)
+			.sendAt(LocalDateTime.now())
+			.build();
+	}
 
-    public ChatMessage toEntityWithCode(ChatRoom room, ChatParticipant sender,
-        ChatMessageRequest request) {
-        return ChatMessage.builder()
-            .chatRoom(room)
-            .sender(sender)
-            .content(request.getContent())
-            .type(MessageType.CODE)
-            .sendAt(LocalDateTime.now())
-            .codeLanguage(request.getLanguage())
-            .build();
-    }
+	public ChatMessage toEntityWithCode(ChatRoom room, ChatParticipant sender,
+		ChatMessageRequest request) {
+		return ChatMessage.builder()
+			.chatRoom(room)
+			.sender(sender)
+			.content(request.getContent())
+			.type(MessageType.CODE)
+			.sendAt(LocalDateTime.now())
+			.codeLanguage(request.getLanguage())
+			.build();
+	}
 
-    public ChatMessage toEntityWithImage(ChatRoom room, ChatParticipant sender,
-        ImageFile chatImage) {
-        return ChatMessage.builder()
-            .chatRoom(room)
-            .sender(sender)
-            .type(MessageType.IMAGE)
-            .sendAt(LocalDateTime.now())
-            .chatImage(chatImage)
-            .build();
-    }
+	public ChatMessage toEntityWithImage(ChatRoom room, ChatParticipant sender,
+		ImageFile chatImage) {
+		return ChatMessage.builder()
+			.chatRoom(room)
+			.sender(sender)
+			.type(MessageType.IMAGE)
+			.sendAt(LocalDateTime.now())
+			.chatImage(chatImage)
+			.build();
+	}
 
-    public ChatMessage toEntityWithGit(GitMessage gitMessage) {
-        return ChatMessage.builder()
-            .chatRoom(gitMessage.getRoom())
-            .type(MessageType.GIT)
-            .content(gitMessage.getContent())
-            .sendAt(LocalDateTime.now())
-            .build();
-    }
+	public ChatMessage toEntityWithGit(GitMessage gitMessage) {
+		return ChatMessage.builder()
+			.chatRoom(gitMessage.getRoom())
+			.type(MessageType.GIT)
+			.content(gitMessage.getContent())
+			.sendAt(LocalDateTime.now())
+			.build();
+	}
 
-    public ChatMessageResponse toResponse(ChatMessage message) {
-        String senderName = message.getSender().getParticipant().getNickname();
+	public ChatMessageResponse toResponse(ChatMessage message) {
+		String senderName = message.getSender().getParticipant().getNickname();
 
-        return ChatMessageResponse.builder()
-            .senderName(senderName)
-            .content(message.getContent())
-            .type(message.getType())
-            .sendAt(message.getSendAt())
-            .language(message.getCodeLanguage())
-            .profileImageUrl(
-                Optional.ofNullable(message.getSender().getParticipant().getProfileImage())
-                    .map(ImageFile::getStoreFileName)
-                    .orElse("default_image.jpg"))
-            .chatImageUrl(
-                Optional.ofNullable(message.getChatImage())
-                    .map(ImageFile::getStoreFileName)
-                    .orElse(null)
-            )
-            .senderId(message.getSender().getParticipant().getId())
-            .messageId(message.getId())
-            .build();
-    }
+		return ChatMessageResponse.builder()
+			.senderName(senderName)
+			.content(message.getContent())
+			.type(message.getType())
+			.sendAt(message.getSendAt())
+			.language(message.getCodeLanguage())
+			.profileImageUrl(
+				Optional.ofNullable(message.getSender().getParticipant().getProfileImage())
+					.map(ImageFile::getStoreFileName)
+					.orElse("default_image.jpg"))
+			.chatImageUrl(
+				Optional.ofNullable(message.getChatImage())
+					.map(ImageFile::getStoreFileName)
+					.orElse(null)
+			)
+			.senderId(message.getSender().getParticipant().getId())
+			.messageId(message.getId())
+			.build();
+	}
 
-    public ChatMessageSearchResponse toSearchResponse(ChatMessage message) {
-        return ChatMessageSearchResponse.builder()
-            .messageId(message.getId())
-            .content(message.getContent())
-            .senderName(message.getSender().getParticipant().getNickname())
-            .sendAt(message.getSendAt())
-            .type(message.getType())
-            .build();
-    }
+	public ChatMessageSearchResponse toSearchResponse(ChatMessage message) {
+		return ChatMessageSearchResponse.builder()
+			.messageId(message.getId())
+			.content(message.getContent())
+			.senderName(message.getSender().getParticipant().getNickname())
+			.sendAt(message.getSendAt())
+			.type(message.getType())
+			.build();
+	}
 
-    public ChatMessageResponse toGitResponse(ChatMessage message) {
-        return ChatMessageResponse.builder()
-            .senderName("GitHub")
-            .content(message.getContent())
-            .type(message.getType())
-            .sendAt(message.getSendAt())
-            .build();
-    }
+	public ChatMessageResponse toGitResponse(ChatMessage message) {
+		return ChatMessageResponse.builder()
+			.senderName("GitHub")
+			.content(message.getContent())
+			.type(message.getType())
+			.sendAt(message.getSendAt())
+			.messageId(message.getId())
+			.build();
+	}
 
 }
