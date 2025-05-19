@@ -65,7 +65,7 @@ public class SecurityConfig {
 					.anonymous()
 
 					.requestMatchers("/chat-rooms/join").permitAll()
-					
+
 					.requestMatchers("/token/**")
 					.permitAll()
 
@@ -80,13 +80,8 @@ public class SecurityConfig {
 					userInfoEndpoint.userService(oAuth2UserService);
 				});
 			})
-
-			.logout(logout -> logout
-				.logoutUrl("/logout")
-				.logoutSuccessHandler(logoutSuccessHandler)
-				.invalidateHttpSession(true)
-				.deleteCookies("JSESSIONID")
-			)
+			
+			.logout(AbstractHttpConfigurer::disable)
 
 			.exceptionHandling(exception ->
 				exception.authenticationEntryPoint(restAuthenticationEntryPoint))
