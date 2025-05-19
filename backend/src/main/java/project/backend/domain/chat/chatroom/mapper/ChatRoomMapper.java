@@ -27,6 +27,7 @@ public class ChatRoomMapper {
 			.collect(Collectors.toList());
 
 		return ChatRoomDetailResponse.builder()
+			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
 			.ownerId(chatRoom.getOwner().getId())
 			.repositoryUrl(chatRoom.getRepositoryUrl())

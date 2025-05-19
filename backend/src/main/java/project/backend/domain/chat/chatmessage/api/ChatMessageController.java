@@ -1,6 +1,7 @@
 package project.backend.domain.chat.chatmessage.api;
 
 import java.security.Principal;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -53,37 +54,39 @@ public class ChatMessageController {
         return response;
     }
 
-    @MessageMapping("/delete-message/{roomId}")
-    public ChatMessageResponse deleteMessage(@DestinationVariable Long roomId,
-        @Payload Long messageId,
-        Principal principal) {
-        ChatMessageResponse response = chatMessageService.deleteMessage(roomId, messageId,
-            principal.getName());
+	@GetMapping("/chat/search/{roomId}")
+	public Page<ChatMessageSearchResponse> searchMessages(
+		@PathVariable("roomId") Long roomId,
+		@RequestParam("keyword") String keyword,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "20") int size
+	) {
+		ChatMessageSearchRequest request = ChatMessageSearchRequest.of(keyword, page, size);
 
-        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+		return chatMessageService.searchMessages(roomId, request);
+	}
 
-        return response;
-    }
+	@GetMapping("/{roomId}/messages")
+	public List<ChatMessageResponse> getMessages(@PathVariable Long roomId) {
+		return chatMessageService.getMessagesByRoomId(roomId);
+	}
 
-    @PostMapping("/send-image")
-    public Long uploadImage(@RequestParam MultipartFile image) {
-        ImageFile imageFile = imageFileService.saveImageFile(image, ImageType.CHAT_IMAGE);
-        return imageFile.getImageId();
-    }
+	@MessageMapping("/delete-message/{roomId}")
+	public ChatMessageResponse deleteMessage(@DestinationVariable Long roomId,
+		@Payload Long messageId,
+		Principal principal) {
+		ChatMessageResponse response = chatMessageService.deleteMessage(roomId, messageId,
+			principal.getName());
 
-    @GetMapping("/chat/search/{roomId}")
-    public Page<ChatMessageSearchResponse> searchMessages(
-        @PathVariable("roomId") Long roomId,
-        @RequestParam("keyword") String keyword,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size
-    ) {
-        ChatMessageSearchRequest request = ChatMessageSearchRequest.builder()
-            .keyword(keyword)
-            .page(page)
-            .pageSize(size)
-            .build();
+		messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
 
-        return chatMessageService.searchMessages(roomId, request);
-    }
+		return response;
+	}
+
+	@PostMapping("/send-image")
+	public Long uploadImage(@RequestParam MultipartFile image) {
+		ImageFile imageFile = imageFileService.saveImageFile(image, ImageType.CHAT_IMAGE);
+		return imageFile.getImageId();
+	}
+
 }
