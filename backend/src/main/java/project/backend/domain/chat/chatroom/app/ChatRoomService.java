@@ -1,18 +1,22 @@
 package project.backend.domain.chat.chatroom.app;
 
 
+import java.util.List;
 import java.util.Optional;
 
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
+import project.backend.domain.chat.chatroom.dto.ChatRoomNameResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
+import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.member.app.MemberService;
@@ -123,17 +127,32 @@ public class ChatRoomService {
 	}
 
 	@Transactional(readOnly = true)
-	public Page<ChatRoomDetailResponse> findChatRoomsByParticipantId(Long memberId,
-		Pageable pageable) {
+	public Page<ChatRoomNameResponse> findChatRoomsByMemberId(Long memberId, Pageable pageable) {
 
-		Page<ChatRoom> chatRooms = chatRoomRepository.findByParticipants_Participant_Id(memberId,
-			pageable);
+		Page<ChatRoom> chatRooms = chatRoomRepository.findChatRoomsByParticipantId(
+			memberId, pageable);
 
 		if (chatRooms.isEmpty()) {
 			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
 		}
 
-		return chatRooms.map(ChatRoomMapper::toDetailResponse);
+		return chatRooms.map(ChatRoomMapper::toListResponse);
+	}
+
+	// 채팅방의 참가자 목록 조회
+	@Transactional(readOnly = true)
+	public List<ParticipantResponse> getParticipants(Long roomId) {
+		ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+
+		List<ChatParticipant> participants = chatParticipantRepository.findByChatRoom(chatRoom);
+
+		Member owner = chatRoom.getOwner();
+
+		return participants.stream()
+			.map(participant -> new ParticipantResponse(participant.getParticipant().getNickname(),
+				participant.getParticipant().getId().equals(owner.getId())))
+			.collect(Collectors.toList());
 	}
 
 	//임창인
