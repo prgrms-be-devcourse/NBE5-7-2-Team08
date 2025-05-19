@@ -2,6 +2,7 @@ package project.backend.domain.chat.chatroom.api;
 
 
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
+import project.backend.domain.chat.chatroom.dto.ChatRoomNameResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinRequest;
@@ -25,6 +27,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
+import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
 import project.backend.domain.member.dto.MemberDetails;
 import project.backend.global.exception.errorcode.AuthErrorCode;
@@ -70,7 +73,7 @@ public class ChatRoomController {
 	}
 
 	@GetMapping
-	public Page<ChatRoomDetailResponse> findAllChatRooms(
+	public Page<ChatRoomNameResponse> getChatRooms(
 		@AuthenticationPrincipal MemberDetails memberDetails,
 		@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		if (memberDetails == null) {
@@ -78,7 +81,19 @@ public class ChatRoomController {
 		}
 		Long memberId = memberDetails.getId();
 		// 채팅방 목록 리스트로 가져오기
-		return chatRoomService.findChatRoomsByParticipantId(memberId, pageable);
+		return chatRoomService.findChatRoomsByMemberId(memberId, pageable);
+	}
+
+	@GetMapping("/{roomId}/participants")
+	public List<ParticipantResponse> getParticipants(
+		@PathVariable Long roomId,
+		@AuthenticationPrincipal MemberDetails memberDetails) {
+
+		if (memberDetails == null) {
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+		}
+
+		return chatRoomService.getParticipants(roomId);
 	}
 
 	// 자신이 만든 채팅방 가져오기 -> 주후 인증객체 id로 조회가능 할듯(Authentication)

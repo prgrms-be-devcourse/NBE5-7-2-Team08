@@ -16,6 +16,8 @@ public class ChatRoomNameResponse {
 
 	private String roomName;
 
+	private String inviteCode;
+
 }
 
 

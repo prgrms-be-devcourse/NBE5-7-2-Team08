@@ -24,6 +24,7 @@ public class ChatRoomMapper {
 		return ChatRoomNameResponse.builder()
 			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
+			.inviteCode(chatRoom.getInviteCode())
 			.build();
 	}
 
