@@ -15,7 +15,7 @@ public class DefaultProfileInitializer {
 
     private final ImageFileRepository imageFileRepository;
 
-    @Value("${file.default-profile}")
+    @Value("${file.images.profile.default}")
     private String defaultProfile;
 
     @PostConstruct

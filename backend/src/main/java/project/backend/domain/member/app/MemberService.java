@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileService;
+import project.backend.domain.imagefile.ImageType;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.dto.MemberDetails;
 import project.backend.domain.member.dto.MemberResponse;
@@ -30,8 +31,8 @@ public class MemberService {
     private final ImageFileService imageFileService;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${file.default-profile}")
-    private String defaultProfile;
+    @Value("${file.images.profile.default}")
+    private String defaultProfilePath;
 
     public MemberResponse saveMember(SignUpRequest request) {
 
@@ -40,7 +41,8 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.MEMBER_ALREADY_EXISTS);
         }
 
-        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(defaultProfile);
+        ImageFile defaultProfileImg = imageFileService.getProfileImageByStoreFileName(
+            defaultProfilePath);
 
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -66,7 +68,8 @@ public class MemberService {
         }
 
         if (request.getProfileImg() != null) {
-            ImageFile newProfile = imageFileService.saveProfileImageFile(request.getProfileImg());
+            ImageFile newProfile = imageFileService.saveImageFile(request.getProfileImg(),
+                ImageType.PROFILE_IMAGE);
             targetMember.setProfileImage(newProfile);
         }
 
@@ -101,7 +104,6 @@ public class MemberService {
     private boolean checkIfMemberExists(String email) {
         return memberRepository.findByEmail(email).isPresent();
     }
-
 
     public MemberResponse getMemberDetails(Authentication auth) {
         MemberDetails loginMember = (MemberDetails) auth.getPrincipal();

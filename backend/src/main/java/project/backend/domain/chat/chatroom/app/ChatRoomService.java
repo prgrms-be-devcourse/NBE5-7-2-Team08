@@ -2,6 +2,7 @@ package project.backend.domain.chat.chatroom.app;
 
 
 import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -88,7 +89,8 @@ public class ChatRoomService {
 
 		room.addParticipant(chatParticipant);
 
-		return ChatRoomMapper.toInviteJoinResponse(room.getId(), room.getInviteCode(), room.getName());
+		return ChatRoomMapper.toInviteJoinResponse(room.getId(), room.getInviteCode(),
+			room.getName());
 	}
 
 
@@ -113,22 +115,12 @@ public class ChatRoomService {
 	}
 
 	public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
-		checkMemberExists(memberId);
 
 		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId,
 			pageable);
-		if (allRoomsByOwnerId.isEmpty()) {
-			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
-		}
+
 		return allRoomsByOwnerId.map(ChatRoomMapper::toProfileResponse);
 	}
-
-
-	private void checkMemberExists(Long memberId) {
-		chatRoomRepository.findById(memberId)
-			.orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
-	}
-
 
 	@Transactional(readOnly = true)
 	public Page<ChatRoomDetailResponse> findChatRoomsByParticipantId(Long memberId,
@@ -149,7 +141,8 @@ public class ChatRoomService {
 	public void leaveChatRoom(Long roomId, Long memberId) {
 		ChatRoom room = findById(roomId);
 
-		ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndParticipantId(roomId,memberId)
+		ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndParticipantId(
+				roomId, memberId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
 		room.getParticipants().remove(participant);
@@ -164,6 +157,11 @@ public class ChatRoomService {
 		return chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
-}
 
+	@Transactional(readOnly = true)
+	public ChatRoom getRoomById(Long roomId) {
+		return chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+	}
+}
 
