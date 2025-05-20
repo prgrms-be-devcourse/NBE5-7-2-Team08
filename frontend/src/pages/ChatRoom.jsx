@@ -452,7 +452,7 @@ const ChatRoom = () => {
     try {
       // 백엔드 API 엔드포인트 수정 - 작동하는 URL 패턴으로 변경
       const response = await fetch(
-        `http://localhost:8080/chat/search/${roomId}?keyword=${keyword}&page=${page}&size=20`,
+        `http://localhost:8080/chat/search/${roomId}?keyword=${keyword}&page=${page}&size=10`,
         {
           // Add credentials to include cookies for authentication
           credentials: 'include',
