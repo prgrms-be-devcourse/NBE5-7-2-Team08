@@ -59,12 +59,17 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 		Member member = oAuthSignUpService.OAuthSignUp(userDto);
 
 		Token token = jwtProvider.generateTokenPair(userDto);
+		// 깃허브 엑세스 토큰
+		var githubAccess = (String) oAuth2User.getAttributes().get("githubAccess");
 
 		//쿠키 생성 및 저장
 		CookieUtils.saveCookie(response, token.accessToken());
 
+		log.info("githubAccess = {}", githubAccess);
+
 		tokenRedisRepository.save(
-			new TokenRedis(member.getId(), token.accessToken(), token.refreshToken()));
+			new TokenRedis(member.getId(), token.accessToken(), token.refreshToken(),
+				githubAccess));
 
 		log.info("OAuth 로그인 성공");
 		log.info("AccessToken = {}", token.accessToken());

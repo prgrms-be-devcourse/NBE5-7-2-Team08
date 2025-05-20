@@ -39,7 +39,8 @@ public class FormSuccessHandler implements AuthenticationSuccessHandler {
 		CookieUtils.saveCookie(response, token.accessToken());
 
 		tokenRedisRepository.save(
-			new TokenRedis(memberDetails.getId(), token.accessToken(), token.refreshToken())
+			new TokenRedis(memberDetails.getId(), token.accessToken(), token.refreshToken(),
+				null)
 		);
 
 		response.setStatus(HttpServletResponse.SC_OK);

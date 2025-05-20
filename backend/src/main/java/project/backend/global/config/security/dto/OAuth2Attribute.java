@@ -13,7 +13,8 @@ public record OAuth2Attribute(
 	String attributeKey,
 	String email,
 	String name,
-	String login
+	String login,
+	String githubAccess
 
 ) {
 
@@ -34,7 +35,8 @@ public record OAuth2Attribute(
 			attributeKey,
 			(String) attributes.get("email"),
 			(String) attributes.get("name"),
-			(String) attributes.get("login")
+			(String) attributes.get("login"),
+			(String) attributes.get("githubAccess")
 		);
 	}
 
@@ -44,6 +46,7 @@ public record OAuth2Attribute(
 		map.put("name", name);
 		map.put("email", email);
 		map.put("login", login);
+		map.put("githubAccess", githubAccess);
 		return map;
 	}
 }
