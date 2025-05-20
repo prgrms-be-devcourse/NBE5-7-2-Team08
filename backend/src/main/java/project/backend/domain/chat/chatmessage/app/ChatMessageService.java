@@ -1,18 +1,22 @@
 package project.backend.domain.chat.chatmessage.app;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
+import project.backend.domain.chat.chatmessage.dao.ChatMessageSearchRepository;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageEditRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchRequest;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchResponse;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
+import project.backend.domain.chat.chatmessage.entity.ChatMessageSearch;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
@@ -44,7 +48,7 @@ public class ChatMessageService {
 	private final ChatParticipantRepository chatParticipantRepository;
 	private final ImageFileService imageFileService;
 	private final ChatRoomRepository chatRoomRepository;
-	private final MemberRepository memberRepository;
+	private final ChatMessageSearchRepository chatMessageSearchRepository;
 
 	private final ChatMessageMapper messageMapper;
 
@@ -74,23 +78,42 @@ public class ChatMessageService {
 
 		chatMessageRepository.save(message);
 
+		// 검색용 테이블에도 저장된 메시지의 id(pk), roomId, content를 다시 뽑아서 저장
+		if (isSearchable(message)) {
+			ChatMessageSearch searchMessage = messageMapper.toSearchEntity(message);
+			chatMessageSearchRepository.save(searchMessage);
+		}
+
 		return messageMapper.toResponse(message);
+	}
+
+	private boolean isSearchable(ChatMessage message) {
+		return message.getType() != MessageType.IMAGE;
 	}
 
 	@Transactional(readOnly = true)
 	public Page<ChatMessageSearchResponse> searchMessages(Long roomId,
-		ChatMessageSearchRequest request) {
-		if (request.getKeyword() == null || request.getKeyword().trim().length() < 2) {
-			throw new ChatMessageException(ChatMessageErrorCode.INVALID_KEYWORD_LENGTH);
-		}
-		PageRequest pageable = PageRequest.of(request.getPage(), request.getPageSize());
+		@Valid ChatMessageSearchRequest request) {
 
-		Page<ChatMessage> resultPage = chatMessageRepository.searchByKeywordAndRoomId(
-			request.getKeyword(),
+		String keyword = request.getKeyword();
+		int page = request.getPage();
+		int size = request.getPageSize();
+		int offset = page * size;
+
+		List<Long> messageIds = chatMessageSearchRepository.searchIdsByKeywordAndRoomId(keyword,
 			roomId,
-			pageable
-		);
-		return resultPage.map(messageMapper::toSearchResponse);
+			size, offset);
+
+		long totalCount = chatMessageSearchRepository.countByKeywordAndRoomId(keyword, roomId);
+
+		List<ChatMessage> chatMessages = chatMessageRepository.findByIdInOrderBySendAtDesc(
+			messageIds);
+
+		List<ChatMessageSearchResponse> resultList = chatMessages.stream()
+			.map(messageMapper::toSearchResponse).toList();
+
+		// PageImpl 구체 클래스로 담아서 반환
+		return new PageImpl<>(resultList, PageRequest.of(page, size), totalCount);
 	}
 
 	@Transactional

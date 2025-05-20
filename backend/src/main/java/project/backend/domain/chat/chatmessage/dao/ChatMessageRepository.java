@@ -22,13 +22,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 		""", nativeQuery = true)
 	Optional<Long> findMostRecentRoomIdByMemberEmail(@Param("email") String email);
 
-	@Query(value = """
-		SELECT * 
-		FROM chat_message 
-		WHERE room_id = :roomId 
-		AND MATCH(content) AGAINST (:keyword IN NATURAL LANGUAGE MODE)
-		""", nativeQuery = true)
-	Page<ChatMessage> searchByKeywordAndRoomId(String keyword, Long roomId, Pageable pageable);
-
 	List<ChatMessage> findByChatRoom_IdOrderBySendAtAsc(Long roomId);
+
+	List<ChatMessage> findByIdInOrderBySendAtDesc(List<Long> ids);
 }
