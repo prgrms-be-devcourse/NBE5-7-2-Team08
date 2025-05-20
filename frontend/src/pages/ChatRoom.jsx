@@ -279,9 +279,15 @@ const ChatRoom = () => {
         if (response.ok) {
           const data = await response.json();
           const validatedData = data.map(msg => {
+            // 날짜 유효성 검사
             if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
-              return { ...msg, sendAt: new Date().toISOString() };
+              msg = { ...msg, sendAt: new Date().toISOString() };
             }
+            
+            // isEdited와 isDeleted 속성이 undefined이면 기본값 설정
+            if (msg.edited === undefined) msg.edited = !!msg.isEdited;
+            if (msg.deleted === undefined) msg.deleted = !!msg.isDeleted;
+            
             return msg;
           });
 
@@ -321,6 +327,11 @@ const ChatRoom = () => {
           try {
             const received = JSON.parse(message.body);
             received.sendAt ||= new Date().toISOString();
+            
+            // isEdited와 isDeleted 속성을 편집 및 삭제 상태로 변환
+            if (received.isEdited !== undefined) received.edited = received.isEdited;
+            if (received.isDeleted !== undefined) received.deleted = received.isDeleted;
+            
             setMessages(prev =>
               prev.some(m => m.messageId === received.messageId)
                 ? prev.map(m => m.messageId === received.messageId ? received : m)
@@ -907,7 +918,7 @@ const ChatRoom = () => {
                 </div>
               </div>
             )
-              : msg.deleted ? (
+              :(msg.deleted || msg.isDeleted) ? (
                 <div style={{
                   fontSize: '14px',
                   lineHeight: '1.5',
@@ -996,7 +1007,7 @@ const ChatRoom = () => {
                       whiteSpace: 'pre-wrap'
                     }}>
                       {msg.content}
-                      {msg.edited && (
+                      {(msg.edited || msg.isEdited) && (
                         <span style={{
                           marginLeft: '6px',
                           fontSize: '11px',
