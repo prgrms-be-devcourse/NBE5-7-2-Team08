@@ -31,8 +31,10 @@ public class GitHubClient {
                 error.bodyToMono(String.class)
                     .map(errorBody -> {
                         if (error.statusCode() == HttpStatus.UNAUTHORIZED) {
+                            log.error(errorBody);
                             return new GitHubException(GitHubErrorCode.INVALID_TOKEN);
                         } else if (error.statusCode() == HttpStatus.NOT_FOUND) {
+                            log.error(errorBody);
                             return new GitHubException(GitHubErrorCode.REPO_NOT_FOUND);
                         } else {
                             log.error("GitHubErrorCode.CLIENT_ERROR: {}", errorBody);

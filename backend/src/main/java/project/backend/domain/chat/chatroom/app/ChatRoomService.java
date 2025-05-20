@@ -61,7 +61,7 @@ public class ChatRoomService {
         ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
 
         gitMessageService.registerWebhook(request.getRepositoryUrl(),
-            savedRoom.getId()); //지은 추가(웹훅 자동 등록)
+            savedRoom.getId(), owner.getId()); //지은 추가(웹훅 자동 등록)
 
         return chatRoomMapper.toSimpleResponse(savedRoom);
     }
