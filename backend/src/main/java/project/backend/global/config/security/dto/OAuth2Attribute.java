@@ -3,7 +3,9 @@ package project.backend.global.config.security.dto;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import project.backend.global.config.github.GitHubApiService;
 import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.ex.AuthException;
 
@@ -39,6 +41,7 @@ public record OAuth2Attribute(
 			(String) attributes.get("githubAccess")
 		);
 	}
+
 
 	public Map<String, Object> convertToMap() {
 		Map<String, Object> map = new HashMap<>();
