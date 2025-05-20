@@ -55,7 +55,12 @@ file:
     chat:
       path: images/chat/
 
+url:
+  ngrok: ${NGROK_URL}
 
+github:
+  personal:
+    access_token: ${ACCESS_TOKEN}
 
 jwt:
   redirection:
