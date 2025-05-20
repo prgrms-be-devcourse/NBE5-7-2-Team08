@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
-import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
@@ -32,18 +31,11 @@ public class ChatRoomEventListener {
 	@Async
 	@EventListener
 	public void handleMemberJoin(JoinChatRoomEvent joinEvent) {
-		ChatRoom chatRoom = chatRoomRepository.findById(joinEvent.roomId())
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+		ChatRoom chatRoom = getChatRoomById(joinEvent.roomId());
+		ChatParticipant participant = getParticipantByRoomAndMember(joinEvent.roomId(),
+			joinEvent.memberId());
 
-		// 2. ChatParticipant 엔티티 조회 (입장하는 사용자)
-		ChatParticipant participant = chatParticipantRepository
-			.findByChatRoom_IdAndParticipant_Id(joinEvent.roomId(), joinEvent.memberId())
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
-
-		// 3. ChatMessage 엔티티 생성 및 저장 -> 매퍼로 분리 예정
-		ChatMessage message = chatMessageMapper.toEntityWithEvent(chatRoom, participant,
-			joinEvent);
-
+		ChatMessage message = chatMessageMapper.toEntityWithEvent(chatRoom, participant, joinEvent);
 		chatMessageRepository.save(message);
 
 		EventMessageResponse eventMessageResponse = ChatRoomMapper.toEventMessageResponse(
@@ -53,10 +45,19 @@ public class ChatRoomEventListener {
 		simpMessagingTemplate.convertAndSend("/topic/chat/" + joinEvent.roomId(),
 			eventMessageResponse);
 
-		// 입장한 인원에 대한 채팅방 인원 갱신 트리거
+		// 채팅방 인원 갱신 트리거 전송
 		simpMessagingTemplate.convertAndSend("/topic/chat/" + joinEvent.roomId() + "/refresh",
-			joinEvent.roomId()
-		);
+			joinEvent.roomId());
+	}
+
+	private ChatRoom getChatRoomById(Long roomId) {
+		return chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+	}
+
+	private ChatParticipant getParticipantByRoomAndMember(Long roomId, Long memberId) {
+		return chatParticipantRepository.findByChatRoom_IdAndParticipant_Id(roomId, memberId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
 }
 
