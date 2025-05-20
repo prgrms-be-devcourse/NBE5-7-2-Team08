@@ -8,7 +8,9 @@ import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageSearchResponse;
 import project.backend.domain.chat.chatmessage.dto.git.GitMessage;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
+import project.backend.domain.chat.chatmessage.entity.ChatMessageSearch;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
+import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.imagefile.ImageFile;
@@ -56,6 +58,26 @@ public class ChatMessageMapper {
 			.type(MessageType.GIT)
 			.content(gitMessage.getContent())
 			.sendAt(LocalDateTime.now())
+			.build();
+	}
+
+	public ChatMessage toEntityWithEvent(ChatRoom room, ChatParticipant participant,
+		JoinChatRoomEvent joinEvent) {
+		return ChatMessage.builder()
+			.chatRoom(room)
+			.sender(participant)
+			.content(joinEvent.nickname() + "님이 입장했습니다.")
+			.type(MessageType.EVENT)
+			.sendAt(joinEvent.joinedAt())
+			.build();
+	}
+
+	// 저장된 메시지에서 ID, roomId, content만 꺼내서 저장하므로 ChatMessage 사용
+	public ChatMessageSearch toSearchEntity(ChatMessage message) {
+		return ChatMessageSearch.builder()
+			.id(message.getId())
+			.roomId(message.getChatRoom().getId())
+			.content(message.getContent())
 			.build();
 	}
 
