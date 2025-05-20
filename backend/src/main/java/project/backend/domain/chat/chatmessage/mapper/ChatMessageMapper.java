@@ -84,24 +84,26 @@ public class ChatMessageMapper {
     public ChatMessageResponse toResponse(ChatMessage message) {
         String senderName = message.getSender().getParticipant().getNickname();
 
-        return ChatMessageResponse.builder()
-            .senderName(senderName)
-            .content(message.getContent())
-            .type(message.getType())
-            .sendAt(message.getSendAt())
-            .language(message.getCodeLanguage())
-            .profileImageUrl(
-                Optional.ofNullable(message.getSender().getParticipant().getProfileImage())
-                    .map(ImageFile::getStoreFileName)
-                    .orElse("default_image.jpg"))
-            .chatImageUrl(
-                Optional.ofNullable(message.getChatImage())
-                    .map(ImageFile::getStoreFileName)
-                    .orElse(null)
-            )
-            .senderId(message.getSender().getParticipant().getId())
-            .messageId(message.getId())
-            .build();
+      return ChatMessageResponse.builder()
+        .senderName(senderName)
+        .content(message.getContent())
+        .type(message.getType())
+        .sendAt(message.getSendAt())
+        .language(message.getCodeLanguage())
+        .profileImageUrl(
+          Optional.ofNullable(message.getSender().getParticipant().getProfileImage())
+            .map(ImageFile::getStoreFileName)
+            .orElse("default_image.jpg"))
+        .chatImageUrl(
+          Optional.ofNullable(message.getChatImage())
+            .map(ImageFile::getStoreFileName)
+            .orElse(null)
+        )
+        .senderId(message.getSender().getParticipant().getId())
+        .messageId(message.getId())
+        .isDeleted(message.isDeleted())
+        .isEdited(message.isEdited())
+        .build();
     }
 
     public ChatMessageSearchResponse toSearchResponse(ChatMessage message) {
