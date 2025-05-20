@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
+import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.event.EventMessageResponse;
@@ -26,6 +27,7 @@ public class ChatRoomEventListener {
 	private final ChatMessageRepository chatMessageRepository;
 	private final ChatRoomRepository chatRoomRepository;
 	private final ChatParticipantRepository chatParticipantRepository;
+	private final ChatMessageMapper chatMessageMapper;
 
 	@Async
 	@EventListener
@@ -39,15 +41,10 @@ public class ChatRoomEventListener {
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
 		// 3. ChatMessage 엔티티 생성 및 저장 -> 매퍼로 분리 예정
-		ChatMessage chatMessage = ChatMessage.builder()
-			.chatRoom(chatRoom)
-			.sender(participant)
-			.type(MessageType.EVENT)
-			.content(joinEvent.nickname() + "님이 입장했습니다.")
-			.sendAt(joinEvent.joinedAt())
-			.build();
+		ChatMessage message = chatMessageMapper.toEntityWithEvent(chatRoom, participant,
+			joinEvent);
 
-		chatMessageRepository.save(chatMessage);
+		chatMessageRepository.save(message);
 
 		EventMessageResponse eventMessageResponse = ChatRoomMapper.toEventMessageResponse(
 			joinEvent);

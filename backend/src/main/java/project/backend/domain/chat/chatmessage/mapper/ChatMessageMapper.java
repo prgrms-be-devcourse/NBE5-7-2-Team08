@@ -10,6 +10,7 @@ import project.backend.domain.chat.chatmessage.dto.git.GitMessage;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.entity.ChatMessageSearch;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
+import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.imagefile.ImageFile;
@@ -57,6 +58,17 @@ public class ChatMessageMapper {
 			.type(MessageType.GIT)
 			.content(gitMessage.getContent())
 			.sendAt(LocalDateTime.now())
+			.build();
+	}
+
+	public ChatMessage toEntityWithEvent(ChatRoom room, ChatParticipant participant,
+		JoinChatRoomEvent joinEvent) {
+		return ChatMessage.builder()
+			.chatRoom(room)
+			.sender(participant)
+			.content(joinEvent.nickname() + "님이 입장했습니다.")
+			.type(MessageType.EVENT)
+			.sendAt(joinEvent.joinedAt())
 			.build();
 	}
 
