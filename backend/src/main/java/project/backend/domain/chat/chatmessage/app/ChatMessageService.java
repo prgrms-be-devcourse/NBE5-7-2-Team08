@@ -2,6 +2,10 @@ package project.backend.domain.chat.chatmessage.app;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -100,17 +104,26 @@ public class ChatMessageService {
 		int size = request.getPageSize();
 		int offset = page * size;
 
+		// messageIds는 DESC 정렬 보장
 		List<Long> messageIds = chatMessageSearchRepository.searchIdsByKeywordAndRoomId(keyword,
-			roomId,
-			size, offset);
+			roomId, size, offset);
 
 		long totalCount = chatMessageSearchRepository.countByKeywordAndRoomId(keyword, roomId);
 
-		List<ChatMessage> chatMessages = chatMessageRepository.findByIdInOrderBySendAtDesc(
+		// findByIdIn은 정렬 보장이 안되므로, chatMessages에 대한 정렬 필요
+		List<ChatMessage> chatMessages = chatMessageRepository.findByIdIn(
 			messageIds);
 
-		List<ChatMessageSearchResponse> resultList = chatMessages.stream()
-			.map(messageMapper::toSearchResponse).toList();
+		// chatMessage의 빠른 정렬 수행을 위해 Map으로 변환
+		Map<Long, ChatMessage> messageMap = chatMessages.stream()
+			.collect(Collectors.toMap(ChatMessage::getId, Function.identity()));
+
+		// messageIds의 정렬순서에 맞춰서 chatMessages 정렬 수행
+		List<ChatMessageSearchResponse> resultList = messageIds.stream()
+			.map(messageMap::get)
+			.filter(Objects::nonNull)
+			.map(messageMapper::toSearchResponse)
+			.collect(Collectors.toList());
 
 		// PageImpl 구체 클래스로 담아서 반환
 		return new PageImpl<>(resultList, PageRequest.of(page, size), totalCount);
