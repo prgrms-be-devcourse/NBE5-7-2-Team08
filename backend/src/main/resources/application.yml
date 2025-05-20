@@ -58,10 +58,6 @@ file:
 url:
   ngrok: ${NGROK_URL}
 
-github:
-  personal:
-    access_token: ${ACCESS_TOKEN}
-
 jwt:
   redirection:
     base: http://localhost:3000/
