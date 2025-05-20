@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   FaInfoCircle,
   FaTimes,
@@ -7,24 +7,73 @@ import {
   FaUser,
   FaCrown
 } from 'react-icons/fa';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
+import axios from 'axios';
 
 const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
-  // Copy invite code to clipboard
+  const [participants, setParticipants] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const stompClientRef = useRef(null);
+  const hasLoadedInitialData = useRef(false);
+
   const copyInviteCode = () => {
     if (room?.inviteCode) {
       navigator.clipboard.writeText(room.inviteCode)
-        .then(() => {
-          showToast('초대 코드가 클립보드에 복사되었습니다.');
-        })
-        .catch(err => {
-          console.error('클립보드 복사 실패:', err);
-        });
+        .then(() => showToast('초대 코드가 클립보드에 복사되었습니다.'))
+        .catch(err => console.error('클립보드 복사 실패:', err));
     }
   };
 
+  const fetchParticipants = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`http://localhost:8080/chat-rooms/${room.roomId}/participants`, {
+        withCredentials: true,
+      });
+      console.log('참가자 응답:', response.data);
+      setParticipants(response.data);
+    } catch (err) {
+      console.error('참가자 목록 가져오기 실패:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (room?.roomId && !hasLoadedInitialData.current) {
+      fetchParticipants();
+      hasLoadedInitialData.current = true;
+    }
+
+    if (!room?.roomId) return;
+
+    const socket = new SockJS('http://localhost:8080/ws');
+    const stomp = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      onConnect: () => {
+        stomp.subscribe(`/topic/chat/${room.roomId}/refresh`, () => {
+          fetchParticipants();
+        });
+      },
+      onStompError: (frame) => {
+        console.error('STOMP error', frame);
+      }
+    });
+
+    stomp.activate();
+    stompClientRef.current = stomp;
+
+    return () => {
+      stomp.deactivate();
+    };
+  }, [room?.roomId]);
+
   return (
     <>
-      <div className="modal-backdrop" 
+      <div
+        className="modal-backdrop"
         onClick={onClose}
         style={{
           position: 'fixed',
@@ -36,16 +85,15 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
           zIndex: 990
         }}
       />
-
       <div style={{
-        position: 'fixed', 
+        position: 'fixed',
         top: '50%',
         left: sidebarRef.current ? `calc(${sidebarRef.current.offsetWidth}px + 20px)` : '280px',
         transform: 'translateY(-50%)',
         width: '320px',
         maxHeight: '80vh',
-        backgroundColor: 'white', 
-        boxShadow: '0 5px 15px rgba(0,0,0,0.2)', 
+        backgroundColor: 'white',
+        boxShadow: '0 5px 15px rgba(0,0,0,0.2)',
         zIndex: 1000,
         borderRadius: '10px',
         overflow: 'hidden'
@@ -67,7 +115,7 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
               </span>
             </div>
           </h3>
-          <button 
+          <button
             onClick={onClose}
             style={{
               background: 'none',
@@ -79,11 +127,10 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
             <FaTimes size={16} />
           </button>
         </div>
-        
+
         <div style={{ padding: '16px', maxHeight: 'calc(80vh - 60px)', overflowY: 'auto' }}>
-          {/* Repository information */}
           {room.repositoryUrl && (
-            <div style={{ 
+            <div style={{
               marginBottom: '16px',
               padding: '12px',
               backgroundColor: '#f7f9fc',
@@ -91,9 +138,9 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
               borderRadius: '8px'
             }}>
               <div style={{ fontWeight: '500', marginBottom: '8px', fontSize: '14px' }}>GitHub Repository</div>
-              <a 
-                href={room.repositoryUrl} 
-                target="_blank" 
+              <a
+                href={room.repositoryUrl}
+                target="_blank"
                 rel="noopener noreferrer"
                 style={{
                   color: '#0366d6',
@@ -110,10 +157,9 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
               </a>
             </div>
           )}
-          
-          {/* Invite code */}
+
           {room.inviteCode && (
-            <div style={{ 
+            <div style={{
               marginBottom: '16px',
               padding: '12px',
               backgroundColor: '#f8f9fa',
@@ -150,21 +196,22 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
               </div>
             </div>
           )}
-          
-          {/* Member list */}
+
           <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
-            채팅방 멤버 {Array.isArray(room.participants) && (
-              <span>({room.participants.length}명)</span>
+            채팅방 멤버 {participants && (
+              <span>({participants.length}명)</span>
             )}
           </div>
-          
-          {Array.isArray(room.participants) && room.participants.length > 0 ? (
+
+          {loading ? (
+            <div style={{ padding: '16px', textAlign: 'center' }}>로딩 중...</div>
+          ) : participants && participants.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {/* Room owner */}
-              {room.participants.find(p => p.owner) && (
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+              {/* 방장(owner) 먼저 표시 */}
+              {participants.filter(p => p.owner).map((p, idx) => (
+                <div key={`owner-${idx}`} style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   padding: '8px 12px',
                   backgroundColor: 'rgba(255, 215, 0, 0.1)',
                   borderRadius: '6px',
@@ -185,7 +232,7 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
                   </div>
                   <div>
                     <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
-                      {room.participants.find(p => p.owner)?.nickname || '알 수 없음'}
+                      {p.nickname || '알 수 없음'}
                     </div>
                     <div style={{ fontSize: '12px', color: '#666' }}>
                       <span style={{
@@ -201,13 +248,13 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
                     </div>
                   </div>
                 </div>
-              )}
-              
-              {/* Regular members */}
-              {room.participants.filter(p => !p.owner).map((p, idx) => (
-                <div key={`member-${idx}`} style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+              ))}
+
+              {/* 일반 멤버 표시 */}
+              {participants.filter(p => !p.owner).map((p, idx) => (
+                <div key={`member-${idx}`} style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   padding: '8px 12px',
                   backgroundColor: '#f8f9fa',
                   borderRadius: '6px',
@@ -245,9 +292,9 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
               ))}
             </div>
           ) : (
-            <div style={{ 
-              padding: '16px', 
-              textAlign: 'center', 
+            <div style={{
+              padding: '16px',
+              textAlign: 'center',
               color: '#6c757d',
               backgroundColor: '#f8f9fa',
               borderRadius: '6px',
@@ -264,3 +311,4 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
 };
 
 export default RoomInfoModal;
+
