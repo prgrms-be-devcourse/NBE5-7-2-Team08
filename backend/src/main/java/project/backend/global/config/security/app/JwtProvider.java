@@ -7,8 +7,10 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.nimbusds.oauth2.sdk.token.TokenEncoding;
 import io.lettuce.core.RedisException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -111,6 +113,20 @@ public class JwtProvider {
 		return generateAccessToken(payload);
 	}
 
+	private String regenerateAccessToken(String refreshToken) {
+		DecodedJWT decodedJWT = getJwtVerifier(REFRESH_TOKEN_VALIDATION_SECOND).verify(
+			refreshToken);
+
+		String email = decodedJWT.getClaim("email").asString();
+		String nickname = decodedJWT.getClaim("nickname").asString();
+
+		Map<String, String> payload = Map.of(
+			"email", email,
+			"nickname", nickname
+		);
+		return generateAccessToken(payload);
+	}
+
 	private JWTVerifier getJwtVerifier(Long expiresSeconds) {
 		return JWT.require(getSignatureAlgorithm(SECRET_KEY))
 			.withIssuer(ISSUER)
@@ -145,48 +161,89 @@ public class JwtProvider {
 		}
 	}
 
-	private TokenRedis getTokenFromAuthentication(Authentication authentication) {
-		var memberDetail = (MemberDetails) authentication.getPrincipal();
-		log.info("memberDetail.getEmail() = {}", memberDetail.getEmail());
-		return tokenRedisRepository.findById(memberDetail.getId())
-			.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER)
-			);
+	private String getAccessTokenFromCookie(HttpServletRequest request) {
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				if ("accessToken".equals(cookie.getName())) {
+					return cookie.getValue();
+				}
+			}
+		}
+		return null;
 	}
 
-	public void validateAuthentication(Authentication authentication,
-		HttpServletResponse response) {
-		TokenRedis tokenRedis = getTokenFromAuthentication(authentication);
-		String accessToken = tokenRedis.getAccessToken();
-		String refreshToken = tokenRedis.getRefreshToken();
+	private TokenRedis getTokenFromRequest(HttpServletRequest request) {
+		String accessToken = getAccessTokenFromCookie(request);
+		if (accessToken == null) {
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+		}
+		String email = null;
+		try {
+			DecodedJWT decodedJWT = JWT.decode(accessToken);
+			email = decodedJWT.getClaim("email").asString();
+		} catch (JWTDecodeException e) {
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+		}
 
-		TokenStatus tokenStatus = validateAccessToken(accessToken);
-		log.info("tokenStatus = {}", tokenStatus);
-		switch (tokenStatus) {
-			case VALID:
-				response.setStatus(HttpServletResponse.SC_OK);
-				break;
+		Member member = memberRepository.findByEmail(email)
+			.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER));
 
-			case EXPIRED:
-				try {
-					String token = regenerateAccessToken(authentication);
-					JWTVerifier jwtVerifier = getJwtVerifier(REFRESH_TOKEN_VALIDATION_SECOND);
-					jwtVerifier.verify(refreshToken);
+		TokenRedis tokenRedis = tokenRedisRepository.findById(member.getId())
+			.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER));
 
-					CookieUtils.saveCookie(response, token); // regenerated token 저장
-					tokenRedis.updateAccessToken(token);
-					tokenRedisRepository.save(tokenRedis);
-				} catch (JWTVerificationException e) {
-					// refresh token 유효하지 않음 → 인증 실패 처리
+		if (!accessToken.equals(tokenRedis.getAccessToken())) {
+			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+		}
+
+		return tokenRedis;
+	}
+
+
+	public void validateAuthentication(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			TokenRedis tokenRedis = getTokenFromRequest(request);
+			String accessToken = tokenRedis.getAccessToken();
+			String refreshToken = tokenRedis.getRefreshToken();
+
+			log.info("accessToken = {}", accessToken);
+			log.info("refreshToken = {}", refreshToken);
+
+			TokenStatus tokenStatus = validateAccessToken(accessToken);
+			log.info("tokenStatus = {}", tokenStatus);
+
+			switch (tokenStatus) {
+				case VALID:
+					response.setStatus(HttpServletResponse.SC_OK);
+					break;
+
+				case EXPIRED:
+					try {
+						// refreshToken 재검증
+						JWTVerifier jwtVerifier = getJwtVerifier(REFRESH_TOKEN_VALIDATION_SECOND);
+						jwtVerifier.verify(refreshToken);
+
+						String newAccessToken = regenerateAccessToken(refreshToken);
+						CookieUtils.saveCookie(response, newAccessToken);
+						tokenRedis.updateAccessToken(newAccessToken);
+						tokenRedisRepository.save(tokenRedis);
+						log.info("액세스 토큰 재발급 완료");
+						response.setStatus(HttpServletResponse.SC_OK);
+					} catch (JWTVerificationException e) {
+						log.warn("리프레시 토큰이 유효하지 않습니다: {}", e.getMessage());
+						response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					}
+					break;
+
+				default:
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					return;
-				}
-				break;
-
-			default:
-				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				return;
+			}
+		} catch (JwtException e) {
+			log.warn("토큰 인증 실패: {}", e.getMessage());
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		}
 	}
+
 
 	private String doGenerateToken(Long expiration, Map<String, String> payload) {
 		long now = System.currentTimeMillis();
@@ -212,7 +269,7 @@ public class JwtProvider {
 
 		Member member = memberRepository.findByEmail(email)
 			.orElseThrow(
-				() -> new UsernameNotFoundException("토큰 email 정보가 적절하지 않습니다.(회원을 찾을 수 없습니다.)"));
+				() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER));
 		MemberDetails memberDetails = new MemberDetails(member);
 
 		return new UsernamePasswordAuthenticationToken(memberDetails, token,

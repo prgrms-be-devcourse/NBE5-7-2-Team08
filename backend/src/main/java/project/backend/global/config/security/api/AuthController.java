@@ -1,5 +1,6 @@
 package project.backend.global.config.security.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +20,8 @@ public class AuthController {
 	private final JwtProvider jwtProvider;
 
 	@GetMapping("/auth")
-	public void validateToken(Authentication authentication, HttpServletResponse response) {
-		jwtProvider.validateAuthentication(authentication, response);
+	public void validateToken(HttpServletRequest request, HttpServletResponse response) {
+		jwtProvider.validateAuthentication(request, response);
 	}
 
 }
