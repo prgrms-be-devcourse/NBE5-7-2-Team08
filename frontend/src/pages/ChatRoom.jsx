@@ -50,30 +50,38 @@ const ChatRoom = () => {
 
   //임창인(채팅방 나가기)
   const handleLeaveRoom = async () => {
-    try {
-      const res = await fetch(`http://localhost:8080/chat-rooms/${roomId}/leave`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+  try {
+    const res = await fetch(`http://localhost:8080/chat-rooms/${roomId}/leave`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
 
-      if (res.ok) {
-        setShowLeaveConfirm(false);
-        setShowLeaveSuccess(true);
-        setTimeout(() => {
-          setShowLeaveSuccess(false);
-          navigate('/');
-        }, 500);
-      } else {
+    if (res.ok) {
+      setShowLeaveConfirm(false);
+      setShowLeaveSuccess(true);
+      setTimeout(() => {
+        setShowLeaveSuccess(false);
+        navigate('/');
+      }, 500);
+    } else {
+      let errorMsg = '나가기 실패';
+      try {
+        const data = await res.json();
+        errorMsg = data.message || errorMsg;
+      } catch {
         const text = await res.text();
-        throw new Error(text || '나가기 실패');
+        if (text) errorMsg = text;
       }
-    } catch (err) {
-      console.error(err);
-      alert(err.message);
-    } finally {
-      setMenuOpen(false);
+      alert(errorMsg);
+      throw new Error(errorMsg);
     }
-  };
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setMenuOpen(false);
+  }
+};
+
 
   useEffect(() => {
     if (joinedOnceRef.current) return;   // 이미 한 번 호출됐다면 스킵

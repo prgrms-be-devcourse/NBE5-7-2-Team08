@@ -160,6 +160,10 @@ public class ChatRoomService {
 	public void leaveChatRoom(Long roomId, Long memberId) {
 		ChatRoom room = findById(roomId);
 
+		if (room.getOwner().getId().equals(memberId)) {
+			throw new ChatRoomException(ChatRoomErrorCode.OWNER_CANNOT_LEAVE);
+		}
+
 		ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndParticipantId(
 				roomId, memberId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
