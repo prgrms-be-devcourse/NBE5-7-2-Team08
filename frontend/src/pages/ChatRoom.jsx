@@ -8,6 +8,7 @@ import Sidebar from '../components/SideBar';
 import Header from '../components/header';
 import SearchSidebar from '../components/SearchSideBar';
 import { FaCopy, FaTrashAlt } from 'react-icons/fa';
+import axiosInstance from '../components/api/axiosInstance';
 
 const ChatRoom = () => {
 
@@ -52,10 +53,7 @@ const ChatRoom = () => {
   // 방 정보를 가져오는 함수 - fetchCurrentUser 함수 위나 아래에 추가
   const fetchRoomInfo = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/chat-rooms/check?inviteCode=${inviteCode}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+      const res = await axiosInstance.get(`/chat-rooms/check?inviteCode=${inviteCode}`, {
       });
 
       if (!res.ok) {
@@ -74,10 +72,7 @@ const ChatRoom = () => {
   //임창인(채팅방 나가기)
   const handleLeaveRoom = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/chat-rooms/${roomId}/leave`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const res = await axiosInstance.delete(`/chat-rooms/${roomId}/leave`);
 
       if (res.ok) {
         setShowLeaveConfirm(false);
@@ -112,11 +107,8 @@ const ChatRoom = () => {
 
     const checkAndJoin = async () => {
       try {
-        const res = await fetch('http://localhost:8080/chat-rooms/join', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',                    // ← 세션(cookie) 포함
-          body: JSON.stringify({ inviteCode })
+        const res = await axiosInstance.post('/chat-rooms/join', {
+          inviteCode: inviteCode
         });
 
         if (res.status === 401) {
@@ -249,11 +241,7 @@ const ChatRoom = () => {
     // 로그인 유저 정보 가져오기
     const fetchCurrentUser = async () => {
       try {
-        const res = await fetch('http://localhost:8080/user/details', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        });
+        const res = await axiosInstance.get('/user/details');
 
         if (!res.ok) {
           throw new Error('로그인 정보를 가져오지 못했습니다.');
@@ -272,27 +260,21 @@ const ChatRoom = () => {
     // 메시지 초기화
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/${roomId}/messages`, {
-          credentials: 'include',
+        const res = await axiosInstance.get(`/${roomId}/messages`);
+        const data = res.data;
+
+        const validatedData = data.map(msg => {
+          if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
+            return { ...msg, sendAt: new Date().toISOString() };
+          }
+          return msg;
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          const validatedData = data.map(msg => {
-            if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
-              return { ...msg, sendAt: new Date().toISOString() };
-            }
-            return msg;
-          });
+        const sortedData = validatedData.sort(
+          (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+        );
 
-          const sortedData = validatedData.sort(
-            (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
-          );
-
-          setMessages(sortedData);
-        } else {
-          console.error("Failed to fetch messages:", response.status);
-        }
+        setMessages(sortedData);
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
@@ -438,53 +420,22 @@ const ChatRoom = () => {
     setSearchKeyword(keyword);
     setErrorMessage(null); // 이전 에러 메시지 초기화
 
-    try {
-      // 백엔드 API 엔드포인트 수정 - 작동하는 URL 패턴으로 변경
-      const response = await fetch(
-        `http://localhost:8080/chat/search/${roomId}?keyword=${keyword}&page=${page}&size=20`,
-        {
-          // Add credentials to include cookies for authentication
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      // Handle non-OK responses
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('로그인이 필요합니다. 인증 후 다시 시도해주세요.');
-        } else if (response.status === 404) {
-          throw new Error('검색 API 경로를 찾을 수 없습니다. 백엔드 API 주소를 확인해주세요.');
-        }
-
-        // Safely try to parse error response
-        let errorData;
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            errorData = await response.json();
-          } catch (e) {
-            throw new Error(`서버 오류 (${response.status}): JSON 응답을 파싱할 수 없습니다.`);
-          }
-        } else {
-          throw new Error(`서버 오류 (${response.status}): 올바른 형식의 응답이 아닙니다.`);
-        }
-
-        throw new Error(errorData?.message || '검색 중 알 수 없는 오류가 발생했습니다.');
+  try {
+    const response = await axiosInstance.get(`/chat/search/${roomId}`, {
+      params: {
+        keyword,
+        page,
+        size: 20
       }
+    });
 
-      // Parse successful response
-      const data = await response.json();
-
-      // 검색 결과도 날짜/시간 유효성 검사
-      const validatedResults = (data.content || []).map(msg => {
-        if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
-          return { ...msg, sendAt: new Date().toISOString() };
-        }
-        return msg;
-      });
+    const data = response.data;
+    const validatedResults = (data.content || []).map(msg => {
+      if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
+        return { ...msg, sendAt: new Date().toISOString() };
+      }
+      return msg;
+    });
 
       setSearchResults(validatedResults);
       setCurrentPage(data.pageable?.pageNumber || 0);
@@ -492,11 +443,12 @@ const ChatRoom = () => {
       setTotalElements(data.totalElements || 0);
     } catch (err) {
       console.error('Search error:', err);
-      setErrorMessage(err.message || '검색 중 오류가 발생했습니다.');
+      setErrorMessage(err.response?.data?.message || '검색 중 오류가 발생했습니다.');
     } finally {
       setIsSearching(false);
     }
   };
+
 
   // 날짜를 YYYY-MM-DD 형식으로 변환하는 함수 (수정됨)
   const formatDate = (dateString) => {
@@ -561,45 +513,39 @@ const ChatRoom = () => {
   const fileInputRef = useRef(null);
 
   // 전송 버튼 클릭 시 호출되는 공통 핸들러 함수 (이미지 업로드 고려)
-  const handleUnifiedSend = async () => {
-    if (inputMode === 'IMAGE') {
-      // 이미지 업로드 모드일 경우
-      if (!imageFile) {
-        alert("이미지를 선택하세요.");
-        return;
-      }
+const handleUnifiedSend = async () => {
+  if (inputMode === 'IMAGE') {
+    if (!imageFile) {
+      alert("이미지를 선택하세요.");
+      return;
+    }
 
-      try {
-        const formData = new FormData();
-        formData.append('image', imageFile);
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
 
-        const response = await fetch('http://localhost:8080/send-image', {
-          method: 'POST',
-          body: formData,
-          credentials: 'include'
-        });
+      const response = await axiosInstance.post('/send-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
-        if (!response.ok) throw new Error('이미지 업로드 실패');
+      const imageId = response.data;
+      sendMessage({
+        type: 'IMAGE',
+        content: '',
+        imageFileId: imageId
+      });
 
-        const imageId = await response.json(); // 서버에서 imageId 반환
-
-        sendMessage({
-          type: 'IMAGE',
-          content: '',
-          imageFileId: imageId
-        });
-
-        setImageFile(null);
-      } catch (err) {
-        console.err("이미지 전송 실패: ", err);
-      }
       setImageFile(null);
       setImagePreviewUrl(null);
-    } else {
-      // TEXT 또는 CODE 모드일 경우 기존 sendMessage 호출
-      sendMessage();
+    } catch (err) {
+      console.error("이미지 전송 실패: ", err);
     }
-  };
+  } else {
+    sendMessage();
+  }
+};
 
   // 버튼 스타일 공통화
   const buttonStyle = {

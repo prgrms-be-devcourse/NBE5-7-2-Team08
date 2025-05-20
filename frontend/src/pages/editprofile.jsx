@@ -6,6 +6,7 @@ import Sidebar from "../components/SideBar"
 import Header from "../components/header"
 import { Edit2 } from "lucide-react"
 import styles from "../edit-profile-page.module.css"
+import axiosInstance from "../components/api/axiosInstance"
 
 const EditProfilePage = () => {
   const navigate = useNavigate()
@@ -22,35 +23,20 @@ const EditProfilePage = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const response = await fetch("http://localhost:8080/user/details", {
-          method: "GET",
-          credentials: "include",
-        })
+        const response = await axiosInstance.get("/user/details")
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          const status = response.status
-
-          if (!alertShownRef.current) {
-            alertShownRef.current = true
-            alert(errorData.message || "사용자 정보 조회 실패")
-            stopRequestRef.current = true
-
-            if (status === 401) {
-              navigate("/login")
-            }
-          }
-          return
-        }
-
-        const data = await response.json()
-        setUserDetails(data)
-        setNickname(data.nickname)
+        setUserDetails(response.data)
+        setNickname(response.data.nickname)
       } catch (error) {
         if (!alertShownRef.current) {
           alertShownRef.current = true
-          alert("서버 연결 실패")
+          const status = error?.response?.status
+          const msg = error?.response?.data?.message || "사용자 정보 조회 실패"
+          alert(msg)
           stopRequestRef.current = true
+          if (status === 401) {
+            navigate("/login")
+          }
         }
       }
     }
@@ -78,27 +64,16 @@ const EditProfilePage = () => {
     formData.append("password", password)
     formData.append("confirmPassword", confirmPassword)
     if (imageFile) {
-      formData.append("profileImg", imageFile) // 백엔드 필드명에 따라 변경 가능
+      formData.append("profileImg", imageFile)
     }
 
     try {
-      const response = await fetch("http://localhost:8080/user/update", {
-        method: "PUT",
-        credentials: "include",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        alert(errorData.message || "업데이트 실패")
-        return
-      }
-
-
+      await axiosInstance.put("/user/update", formData)
       alert("프로필이 성공적으로 수정되었습니다!")
       navigate("/myprofile")
     } catch (error) {
-      alert("요청 실패")
+      const msg = error?.response?.data?.message || "업데이트 실패"
+      alert(msg)
     }
   }
 
@@ -111,7 +86,6 @@ const EditProfilePage = () => {
       <Header />
       <div className={styles["content-wrapper"]}>
         <Sidebar />
-
         <div className={styles["main-content"]}>
           <h1 className={styles["page-title"]}>Edit Profile</h1>
           <div className={styles["edit-container"]}>

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import CreateRoomModal from '../components/modals/CreateRoomModal';
 import JoinRoomModal from '../components/modals/JoinRoomModal';
+import axiosInstance from '../components/api/axiosInstance';
 
 const BlankRoom = () => {
   const navigate = useNavigate();
@@ -14,11 +15,9 @@ const BlankRoom = () => {
   // 채팅방 생성 핸들러
   const handleCreateRoom = async (roomName, repoUrl) => {
     try {
-      const res = await fetch('http://localhost:8080/chat-rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name: roomName, repositoryUrl: repoUrl })
+      const res = await axiosInstance.post('http://localhost:8080/chat-rooms', {
+        name: roomName,
+        repositoryUrl: repoUrl
       });
       
       if (!res.ok) {
@@ -40,11 +39,8 @@ const BlankRoom = () => {
   // 채팅방 참여 핸들러
   const handleJoinRoom = async (inviteCode) => {
     try {
-      const res = await fetch('http://localhost:8080/chat-rooms/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ inviteCode })
+      const res = await axiosInstance.post('http://localhost:8080/chat-rooms/join', {
+        inviteCode
       });
       
       if (!res.ok) {

@@ -8,7 +8,7 @@ const Home = () => {
 
   useEffect(() => {
 
-    axios.get(`http://localhost:8080/user/detail`, {
+    axios.get(`http://localhost:8080/auth`, {
       withCredentials: true,
     })
       .catch(err => {

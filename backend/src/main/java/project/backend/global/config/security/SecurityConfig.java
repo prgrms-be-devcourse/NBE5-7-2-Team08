@@ -67,7 +67,7 @@ public class SecurityConfig {
 
 					.requestMatchers("/auth")
 					.permitAll()
-					
+
 					.anyRequest()
 					.authenticated();
 			})

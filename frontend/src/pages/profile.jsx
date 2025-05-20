@@ -3,50 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/SideBar';
 import Header from '../components/header';
 import styles from "../profile-page.module.css";
+import axiosInstance from '../components/api/axiosInstance';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [userDetails, setUserDetails] = useState(null);
   const [userRooms, setUserRooms] = useState([]);
-  const alertShownRef = useRef(false); // alert 여부 기억
-  const stopRequestRef = useRef(false); // 전체 중단 플래그
+  const alertShownRef = useRef(false);
+  const stopRequestRef = useRef(false);
 
   useEffect(() => {
-    if (stopRequestRef.current) return; // ❗ 예외 이후 모든 요청 차단
+    if (stopRequestRef.current) return;
 
     const fetchUserDetails = async () => {
       try {
-        const response = await fetch("http://localhost:8080/user/details", {
-          method: "GET",
-          credentials: "include"
-        });
-        
-        const status = response.status;
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          
-
-          if (!alertShownRef.current) {
-            alertShownRef.current = true;
-            alert(errorData.message || "사용자 정보 조회 실패");
-            stopRequestRef.current = true;
-
-            if (status === 401) {
-              navigate('/login');
-            }
-          }
-
-          return;
-        }
-
-        const data = await response.json();
-        setUserDetails(data);
+        const res = await axiosInstance.get("/user/details");
+        setUserDetails(res.data);
       } catch (error) {
         if (!alertShownRef.current) {
           alertShownRef.current = true;
-          alert("서버 연결 실패");
+          const status = error?.response?.status;
+          const msg = error?.response?.data?.message || "사용자 정보 조회 실패";
+          alert(msg);
           stopRequestRef.current = true;
+
+          if (status === 401) {
+            navigate("/login");
+          }
         }
       }
     };
@@ -57,46 +40,25 @@ const ProfilePage = () => {
   useEffect(() => {
     if (!userDetails || stopRequestRef.current) return;
 
-
     const fetchUserRooms = async () => {
-      if (stopRequestRef.current) return;
-
-
       try {
-        const response = await fetch(`http://localhost:8080/chat-rooms/mine/${userDetails.id}`, {
-          method: "GET",
-          credentials: "include"
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-
-          if (!alertShownRef.current) {
-            alertShownRef.current = true;
-            alert(errorData.message);
-            stopRequestRef.current = true;
-            navigate('/login');
-          }
-
-          return;
-        }
-
-        const data = await response.json();
-        setUserRooms(data.content);
+        const res = await axiosInstance.get(`/chat-rooms/mine/${userDetails.id}`);
+        setUserRooms(res.data.content);
       } catch (error) {
         if (!alertShownRef.current) {
           alertShownRef.current = true;
-          alert("채팅방 로딩 실패");
+          const msg = error?.response?.data?.message || "채팅방 로딩 실패";
+          alert(msg);
           stopRequestRef.current = true;
+          navigate("/login");
         }
       }
     };
 
     fetchUserRooms();
-  }, [userDetails ,navigate]);
+  }, [userDetails, navigate]);
 
-
-  const handleJoinClick = (roomId,inviteCode) => {
+  const handleJoinClick = (roomId, inviteCode) => {
     navigate(`/chat/${roomId}/${inviteCode}`);
   };
 
@@ -105,15 +67,12 @@ const ProfilePage = () => {
   }
 
   return (
-    
     <div className={styles["app-container"]}>
       <Header />
       <div className={styles["content-wrapper"]}>
         <Sidebar />
-
         <div className={styles["main-content"]}>
           <h1 className={styles["page-title"]}>My Profile</h1>
-
           <div className={styles["profile-container"]}>
             <div className={styles["profile-section"]}>
               <div className={styles["profile-card"]}>
@@ -132,12 +91,15 @@ const ProfilePage = () => {
                 </div>
                 <h2 className={styles["profile-name"]}>{userDetails.nickname}</h2>
                 <p className={styles["profile-email"]}>{userDetails.email}</p>
-                <button className={styles["edit-profile-button"]}
-                onClick={() => navigate("/myprofile/edit")}>Edit Profile</button>
+                <button
+                  className={styles["edit-profile-button"]}
+                  onClick={() => navigate("/myprofile/edit")}
+                >
+                  Edit Profile
+                </button>
               </div>
             </div>
 
-            {/* 오른쪽: 채팅방 리스트 */}
             <div className={styles["rooms-section"]}>
               <h2 className={styles["rooms-title"]}>Rooms I Created</h2>
               <div className={styles["rooms-list"]}>
@@ -146,7 +108,6 @@ const ProfilePage = () => {
                     <div key={room.id} className={styles["room-item"]}>
                       <div className={styles["room-info"]}>
                         <div className={styles["room-icon"]}>
-                          {/* 채팅방 아이콘 */}
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                           </svg>
@@ -164,8 +125,12 @@ const ProfilePage = () => {
                           </div>
                         </div>
                       </div>
-                      <button className={styles["join-button"]}
-                      onClick={() => handleJoinClick(room.roomId, room.inviteCode)}>Join</button>
+                      <button
+                        className={styles["join-button"]}
+                        onClick={() => handleJoinClick(room.roomId, room.inviteCode)}
+                      >
+                        Join
+                      </button>
                     </div>
                   ))
                 ) : (
