@@ -27,71 +27,69 @@ import project.backend.global.exception.ex.ChatRoomException;
 @RequiredArgsConstructor
 public class GitMessageService {
 
-    private final ChatRoomRepository chatRoomRepository;
-    private final ChatMessageMapper chatMessageMapper;
-    private final ChatMessageRepository chatMessageRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+	private final ChatRoomRepository chatRoomRepository;
+	private final ChatMessageMapper chatMessageMapper;
+	private final ChatMessageRepository chatMessageRepository;
+	private final SimpMessagingTemplate messagingTemplate;
 
-    @Value("${url.ngrok}")
-    private String ngrokUrl;
-    //    @Value("${github.personal.access_token}")
-//    private String accessToken;
-    private final GitHubClient gitHubClient;
-    private final TokenRedisRepository tokenRedisRepository;
+	@Value("${url.ngrok}")
+	private String ngrokUrl;
+	private final GitHubClient gitHubClient;
+	private final TokenRedisRepository tokenRedisRepository;
 
-    @Transactional
-    public void handleEvent(Long roomId, String eventType, Map<String, Object> payload) {
-        GitMessageDto gitMessage = switch (eventType) {
-            case "issues" -> GitMessageDto.fromIssue(payload);
-            case "pull_request" -> GitMessageDto.fromPullRequest(payload);
-            case "pull_request_review" -> GitMessageDto.fromPullRequestReview(payload);
-            default -> null;
-        };
+	@Transactional
+	public void handleEvent(Long roomId, String eventType, Map<String, Object> payload) {
+		GitMessageDto gitMessage = switch (eventType) {
+			case "issues" -> GitMessageDto.fromIssue(payload);
+			case "pull_request" -> GitMessageDto.fromPullRequest(payload);
+			case "pull_request_review" -> GitMessageDto.fromPullRequestReview(payload);
+			default -> null;
+		};
 
-        if (gitMessage == null) {
-            return;
-        }
+		if (gitMessage == null) {
+			return;
+		}
 
-        ChatRoom room = chatRoomRepository.findById(roomId)
-            .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+		ChatRoom room = chatRoomRepository.findById(roomId)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
-        sendGitMessage(roomId, gitMessage.attachRoom(gitMessage, room));
-    }
+		sendGitMessage(roomId, gitMessage.attachRoom(gitMessage, room));
+	}
 
-    private void sendGitMessage(Long roomId, GitMessageDto gitMessage) {
-        ChatMessage message = chatMessageMapper.toEntityWithGit(gitMessage);
-        chatMessageRepository.save(message);
-        ChatMessageResponse response = chatMessageMapper.toGitResponse(message);
+	private void sendGitMessage(Long roomId, GitMessageDto gitMessage) {
+		ChatMessage message = chatMessageMapper.toEntityWithGit(gitMessage);
+		chatMessageRepository.save(message);
+		ChatMessageResponse response = chatMessageMapper.toGitResponse(message);
 
-        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
-    }
+		messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+	}
 
-    @Transactional(readOnly = true)
-    public void registerWebhook(String repoUrl, Long roomId, Long memberId) {
-        GitRepoDto gitRepoDto = GitRepoUrlUtils.validateAndParseUrl(repoUrl);
+	@Transactional(readOnly = true)
+	public void registerWebhook(String repoUrl, Long roomId, Long memberId) {
+		GitRepoDto gitRepoDto = GitRepoUrlUtils.validateAndParseUrl(repoUrl);
 
-        log.info("owner = {}", gitRepoDto.ownerName());
-        log.info("repo = {}", gitRepoDto.repoName());
+		log.info("owner = {}", gitRepoDto.ownerName());
+		log.info("repo = {}", gitRepoDto.repoName());
 
-        TokenRedis tokenRedis = tokenRedisRepository.findById(memberId)
-            .orElseThrow(() -> new RuntimeException("토큰이 존재하지 않습니다."));
+		TokenRedis tokenRedis = tokenRedisRepository.findById(memberId)
+			.orElseThrow(() -> new RuntimeException("토큰이 존재하지 않습니다."));
 
-        log.info("gitHubAccessToken = {}", tokenRedis.getGithubAccess());
+		log.info("gitHubAccessToken = {}", tokenRedis.getGithubAccess());
 
-        // Webhook 자동 등록 시도
-        String webhookUrl = makeWebhookUrl(roomId);
+		// Webhook 자동 등록 시도
+		String webhookUrl = makeWebhookUrl(roomId);
 
-        //사용자가 해당 레포에 권한이 있는지 확인
-        gitHubClient.validateAdminPermission(tokenRedis.getGithubAccess(),
-            gitRepoDto.ownerName(), gitRepoDto.repoName());
+		//사용자가 해당 레포에 권한이 있는지 확인
+		gitHubClient.validateAdminPermission(tokenRedis.getGithubAccess(),
+			gitRepoDto.ownerName(), gitRepoDto.repoName());
 
-        //있으면 다음 단계로 넘어감
-        gitHubClient.registerWebhook(tokenRedis.getGithubAccess(),
-            gitRepoDto.ownerName(), gitRepoDto.repoName(), webhookUrl);
-    }
+		//있으면 다음 단계로 넘어감
+		gitHubClient.registerWebhook(tokenRedis.getGithubAccess(),
+			gitRepoDto.ownerName(), gitRepoDto.repoName(), webhookUrl);
+	}
 
-    private String makeWebhookUrl(Long roomId) {
-        return ngrokUrl + "/github/" + roomId;
-    }
+	private String makeWebhookUrl(Long roomId) {
+		return ngrokUrl + "/github/" + roomId;
+	}
 
 }
