@@ -16,9 +16,10 @@ public class ChatRoomNameResponse {
 
 	private String roomName;
 
-	private String inviteCode;
+	private String repositoryUrl;
 
 }
+
 
 
 
