@@ -24,33 +24,34 @@ import project.backend.global.config.security.dto.OAuth2Attribute;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
-    private final GitHubApiService gitHubApiService;
+	private final GitHubApiService gitHubApiService;
 
-    @Override
-    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService = new DefaultOAuth2UserService();
+	@Override
+	public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+		OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService = new DefaultOAuth2UserService();
 
-        OAuth2User oAuth2User = oAuth2UserService.loadUser(userRequest);
-        String accessToken = userRequest.getAccessToken().getTokenValue();
+		OAuth2User oAuth2User = oAuth2UserService.loadUser(userRequest);
+		String accessToken = userRequest.getAccessToken().getTokenValue();
 
-        //public이메일 없으면 primary이메일 가져와서 사용
-        String email = Optional.ofNullable((String) oAuth2User.getAttributes().get("email"))
-            .orElseGet(() -> gitHubApiService.getPrivateEmail(accessToken));
+		//public이메일 없으면 primary이메일 가져와서 사용
+		String email = Optional.ofNullable((String) oAuth2User.getAttributes().get("email"))
+			.orElseGet(() -> gitHubApiService.getPrivateEmail(accessToken));
 
-        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+		String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails()
-            .getUserInfoEndpoint().getUserNameAttributeName();
+		String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails()
+			.getUserInfoEndpoint().getUserNameAttributeName();
 
-        CustomOAuth2User customOAuth2User = new CustomOAuth2User(oAuth2User, email, accessToken);
+		CustomOAuth2User customOAuth2User = new CustomOAuth2User(oAuth2User, email, accessToken);
 
-        OAuth2Attribute oAuth2Attribute = OAuth2Attribute.of(registrationId, userNameAttributeName,
-            customOAuth2User.getAttributes());
+		OAuth2Attribute oAuth2Attribute = OAuth2Attribute.of(registrationId, userNameAttributeName,
+			customOAuth2User.getAttributes());
 
-        var memberAttribute = oAuth2Attribute.convertToMap();
+		var memberAttribute = oAuth2Attribute.convertToMap();
 
-        return new DefaultOAuth2User(
-            Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-            memberAttribute, "login");
-    }
+		return new DefaultOAuth2User(
+			Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+			memberAttribute, "login");
+	}
 }
+

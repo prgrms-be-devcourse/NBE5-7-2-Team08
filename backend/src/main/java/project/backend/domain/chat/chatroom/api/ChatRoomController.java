@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import project.backend.domain.chat.chatroom.app.ChatRoomService;
@@ -29,6 +30,7 @@ import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
 import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
+import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.global.config.security.dto.MemberDetails;
 import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.ex.AuthException;
@@ -113,4 +115,9 @@ public class ChatRoomController {
 		chatRoomService.leaveChatRoom(roomId, memberDetails.getId());
 	}
 	//임창인 끝
+
+	@GetMapping("/check")
+	public ChatRoomNameResponse getChatRoomName(@RequestParam String inviteCode) {
+		return chatRoomService.getChatRoomByInviteCode(inviteCode);
+	}
 }

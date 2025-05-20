@@ -4,3 +4,4 @@ ALTER TABLE chat_message_search
 
 ALTER TABLE chat_message_search
     ADD INDEX idx_room_id (room_id);
+

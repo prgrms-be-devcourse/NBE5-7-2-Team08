@@ -24,31 +24,31 @@ import project.backend.global.config.security.redis.entity.TokenRedis;
 @RequiredArgsConstructor
 public class FormSuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JwtProvider jwtProvider;
-    private final TokenRedisRepository tokenRedisRepository;
+	private final JwtProvider jwtProvider;
+	private final TokenRedisRepository tokenRedisRepository;
 
-    @Override
-    public void onAuthenticationSuccess(HttpServletRequest request,
-        HttpServletResponse response,
-        Authentication authentication) throws IOException {
+	@Override
+	public void onAuthenticationSuccess(HttpServletRequest request,
+		HttpServletResponse response,
+		Authentication authentication) throws IOException {
 
-        var memberDetails = (MemberDetails) authentication.getPrincipal();
+		var memberDetails = (MemberDetails) authentication.getPrincipal();
 
-        Token token = jwtProvider.generateTokenPair(memberDetails);
+		Token token = jwtProvider.generateTokenPair(memberDetails);
 
-        CookieUtils.saveCookie(response, token.accessToken());
+		CookieUtils.saveCookie(response, token.accessToken());
 
-        tokenRedisRepository.save(
-            new TokenRedis(memberDetails.getId(), token.accessToken(), token.refreshToken(),
-                null)
-        );
+		tokenRedisRepository.save(
+			new TokenRedis(memberDetails.getId(), token.accessToken(), token.refreshToken(),
+				null)
+		);
 
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setContentType("application/json");
+		response.setCharacterEncoding("UTF-8");
 
-        Map<String, String> result = Map.of("message", "로그인 성공");
-        new ObjectMapper().writeValue(response.getWriter(), result);
-        log.info("로그인 성공: {}", authentication.getName());
-    }
+		Map<String, String> result = Map.of("message", "로그인 성공");
+		new ObjectMapper().writeValue(response.getWriter(), result);
+		log.info("로그인 성공: {}", authentication.getName());
+	}
 }
