@@ -9,8 +9,11 @@ import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
+import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatroom.dto.*;
 
+import project.backend.domain.chat.chatroom.dto.EventMessageResponse;
+import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.imagefile.ImageFile;
@@ -85,5 +88,15 @@ public class ChatRoomMapper {
 
 	private static String generateInviteCode() {
 		return UUID.randomUUID().toString();
+	}
+
+	public static EventMessageResponse toEventMessageResponse(JoinChatRoomEvent joinEvent) {
+		return EventMessageResponse.builder()
+			.type(MessageType.EVENT)
+			.roomId(joinEvent.roomId())
+			.sender(joinEvent.nickname())
+			.content(joinEvent.nickname() + "님이 입장했습니다.")
+			.joinedAt(joinEvent.joinedAt())
+			.build();
 	}
 }
