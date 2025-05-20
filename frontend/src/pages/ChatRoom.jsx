@@ -693,7 +693,6 @@ const ChatRoom = () => {
             width: '38px',
             height: '38px',
             borderRadius: '50%',
-            backgroundColor: '#4a6cf7',
             marginRight: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -826,7 +825,7 @@ const ChatRoom = () => {
           </div>
 
           {/* 본문 영역 - 수정 중인 메시지는 textarea, 나머지는 content 렌더 */}
-          {editMessageId === msg.messageId ? (
+          {editMessageId === msg.messageId && msg.type !== 'GIT' ? (
             <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
               <textarea
                 value={editContent}
@@ -900,17 +899,19 @@ const ChatRoom = () => {
                     marginRight: '10px',
                     borderRadius: '2px'
                 }} />
-                <div style={{ whiteSpace: 'pre-line', lineHeight: '1.5', padding: '10px' }}>
-                    <strong style={{ display: 'block', marginBottom: '6px' }}>
-                    {msg.content.split('\n')[0]}
-                    </strong>
-                    {msg.content.split('\n').slice(1).map((line, i) => (
-                    <React.Fragment key={i}>
-                        {renderWithLink(line)}
-                        <br />
-                    </React.Fragment>
+                {msg.content && (
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5', padding: '10px' }}>
+                    {msg.content.split('\n').map((line, i) => (
+                      <div key={i}>
+                        {i === 0 ? (
+                          <strong>{renderWithLink(line)}</strong>
+                        ) : (
+                          <>{renderWithLink(line)}</>
+                        )}
+                      </div>
                     ))}
-                </div>
+                  </div>
+                )}
               </div>
             ): msg.type === 'CODE' || (msg.content && msg.content.startsWith('```')) ? (
               <div style={{ 

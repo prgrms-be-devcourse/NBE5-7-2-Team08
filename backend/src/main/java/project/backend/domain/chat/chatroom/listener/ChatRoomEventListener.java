@@ -10,7 +10,7 @@ import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
-import project.backend.domain.chat.chatroom.dto.EventMessageResponse;
+import project.backend.domain.chat.chatroom.dto.event.EventMessageResponse;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatroom.dto.*;
 
-import project.backend.domain.chat.chatroom.dto.EventMessageResponse;
+import project.backend.domain.chat.chatroom.dto.event.EventMessageResponse;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
