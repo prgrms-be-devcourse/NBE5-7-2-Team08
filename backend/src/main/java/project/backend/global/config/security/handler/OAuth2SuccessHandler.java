@@ -1,25 +1,30 @@
 package project.backend.global.config.security.handler;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.List;
+import java.util.Map;
 
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
+import project.backend.global.config.github.GitHubApiService;
 import project.backend.global.config.security.app.CookieUtils;
 import project.backend.global.config.security.app.OAuthSignUpService;
 import project.backend.global.config.security.dto.OAuthMemberDto;
@@ -63,20 +68,24 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 		//쿠키 생성 및 저장
 		CookieUtils.saveCookie(response, token.accessToken());
 
-		tokenRedisRepository.save(
-			new TokenRedis(member.getId(), token.accessToken(), token.refreshToken()));
+		// 깃허브 엑세스 토큰
+		var githubAccess = (String) oAuth2User.getAttributes().get("githubAccess");
 
-		log.info("OAuth 로그인 성공");
-		log.info("AccessToken = {}", token.accessToken());
-		log.info("Refresh Token = {}", token.refreshToken());
+		tokenRedisRepository.save(
+			new TokenRedis(member.getId(), token.accessToken(), token.refreshToken(),
+				githubAccess));
+
+		log.info("OAuth 로그인 성공: {}", member.getEmail());
 
 		String redirectUrl = UriComponentsBuilder.fromUriString(baseUrl)
 			.build().toUriString();
 
 		log.info("OAuth 로그인 후 리다이렉트 URL = {}", redirectUrl);
-
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setContentType("application/json");
 		response.sendRedirect(redirectUrl);
 
 	}
+
 
 }

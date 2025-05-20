@@ -19,6 +19,8 @@ public class TokenRedis {
 
 	private String refreshToken;
 
+	private String githubAccess;
+
 	public void updateAccessToken(String accessToken) {
 		this.accessToken = accessToken;
 	}
