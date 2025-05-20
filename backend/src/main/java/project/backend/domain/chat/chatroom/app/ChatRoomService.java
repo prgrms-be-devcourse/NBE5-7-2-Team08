@@ -187,7 +187,7 @@ public class ChatRoomService {
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
 
-	@Transactional
+	@Transactional(readOnly = true)
 	public ChatRoomNameResponse getChatRoomByInviteCode(String inviteCode) {
 		ChatRoom room = findByInviteCode(inviteCode);
 		return ChatRoomMapper.toListResponse(room);
