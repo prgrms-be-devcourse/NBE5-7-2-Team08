@@ -1,6 +1,5 @@
 package project.backend.domain.imagefile;
 
-import jakarta.transaction.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -12,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import project.backend.global.exception.ex.ImageFileException;
 import project.backend.global.exception.errorcode.ImageFileErrorCode;
@@ -89,11 +89,13 @@ public class ImageFileService {
 		}
 	}
 
+	@Transactional(readOnly = true)
 	public ImageFile getProfileImageByStoreFileName(String storeFileName) {
 		return imageFileRepository.findByStoreFileName(storeFileName)
 			.orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));
 	}
 
+	@Transactional(readOnly = true)
 	public ImageFile getImageById(Long imageFileId) {
 		return imageFileRepository.findById(imageFileId)
 			.orElseThrow(() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND));

@@ -5,6 +5,7 @@ import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.member.dto.MemberResponse;
 import project.backend.domain.member.dto.SignUpRequest;
 import project.backend.domain.member.entity.Member;
+import project.backend.domain.member.entity.ProviderType;
 import project.backend.global.config.security.dto.OAuthMemberDto;
 
 @RequiredArgsConstructor
@@ -16,7 +17,7 @@ public class MemberMapper {
 			.email(request.getEmail())
 			.password(encryptedPassword)
 			.nickname(request.getNickname())
-			.provider("local")
+			.provider(ProviderType.LOCAL)
 			.profileImage(defaultProfileImg)
 			.build();
 	}
@@ -34,7 +35,7 @@ public class MemberMapper {
 		return Member.builder()
 			.email(request.email())
 			.nickname(request.nickname())
-			.provider("gitHub")
+			.provider(ProviderType.GITHUB)
 			.gitHubUserName(request.login())
 			.profileImage(defaultProfileImg)
 			.build();

@@ -61,8 +61,8 @@ public class JwtProvider {
 	@Value("${jwt.info.issuer}")
 	private String ISSUER;
 
-	private Algorithm getSignatureAlgorithm(String secretKet) {
-		return Algorithm.HMAC256(secretKet);
+	private Algorithm getSignatureAlgorithm(String secretKey) {
+		return Algorithm.HMAC256(secretKey);
 	}
 
 	public Token generateTokenPair(OAuthMemberDto oAuthMemberDto) {
@@ -90,11 +90,11 @@ public class JwtProvider {
 		return new Token(accessToken, refreshToken);
 	}
 
-	public String generateAccessToken(Map<String, String> payload) {
+	private String generateAccessToken(Map<String, String> payload) {
 		return doGenerateToken(TOKEN_VALIDATION_SECOND, payload);
 	}
 
-	public String generateRefreshToken(Map<String, String> payload) {
+	private String generateRefreshToken(Map<String, String> payload) {
 		return doGenerateToken(REFRESH_TOKEN_VALIDATION_SECOND, payload);
 	}
 

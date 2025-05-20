@@ -53,8 +53,6 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 			(String) oAuth2User.getAttributes().get("name"),
 			(String) oAuth2User.getAttributes().get("login"));
 
-		Optional<Member> memberOptional = memberRepository.findByEmail(userDto.email());
-
 		// 기존에 없는 email이면 회원가입
 		Member member = oAuthSignUpService.OAuthSignUp(userDto);
 
@@ -65,11 +63,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
 		tokenRedisRepository.save(
 			new TokenRedis(member.getId(), token.accessToken(), token.refreshToken()));
-
-		HashMap<String, String> params = new HashMap<>();
-		params.put("access", token.accessToken());
-		params.put("refresh", token.refreshToken());
-
+		
 		log.info("OAuth 로그인 성공");
 		log.info("AccessToken = {}", token.accessToken());
 		log.info("Refresh Token = {}", token.refreshToken());

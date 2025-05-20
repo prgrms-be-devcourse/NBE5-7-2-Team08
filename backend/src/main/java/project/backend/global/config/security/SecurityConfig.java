@@ -61,13 +61,9 @@ public class SecurityConfig {
 
 			.authorizeHttpRequests(auth -> {
 				auth
-					.requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error")
+					.requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error",
+						"/github/**")
 					.anonymous()
-
-					.requestMatchers("/chat-rooms/join").permitAll()
-
-					.requestMatchers("/token/**")
-					.permitAll()
 
 					.anyRequest()
 					.authenticated();
@@ -80,7 +76,7 @@ public class SecurityConfig {
 					userInfoEndpoint.userService(oAuth2UserService);
 				});
 			})
-			
+
 			.logout(AbstractHttpConfigurer::disable)
 
 			.exceptionHandling(exception ->

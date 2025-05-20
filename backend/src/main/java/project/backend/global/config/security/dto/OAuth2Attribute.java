@@ -33,7 +33,7 @@ public record OAuth2Attribute(
 			attributes,
 			attributeKey,
 			(String) attributes.get("email"),
-			(String) attributes.get("name"),// 깃허브는 "username" (대문자 아님 주의!)
+			(String) attributes.get("name"),
 			(String) attributes.get("login")
 		);
 	}
