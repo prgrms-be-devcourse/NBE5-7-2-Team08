@@ -101,6 +101,8 @@ public class ChatMessageMapper {
 			)
 			.senderId(message.getSender().getParticipant().getId())
 			.messageId(message.getId())
+			.isDeleted(message.isDeleted())
+			.isEdited(message.isEdited())
 			.build();
 	}
 
