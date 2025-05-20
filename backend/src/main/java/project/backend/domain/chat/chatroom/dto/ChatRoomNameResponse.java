@@ -18,6 +18,8 @@ public class ChatRoomNameResponse {
 
 	private String repositoryUrl;
 
+	private String inviteCode;
+
 }
 
 

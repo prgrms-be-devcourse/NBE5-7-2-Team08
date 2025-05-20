@@ -28,6 +28,7 @@ public class ChatRoomMapper {
 			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
 			.repositoryUrl(chatRoom.getRepositoryUrl())
+			.inviteCode(chatRoom.getInviteCode())
 			.build();
 	}
 
