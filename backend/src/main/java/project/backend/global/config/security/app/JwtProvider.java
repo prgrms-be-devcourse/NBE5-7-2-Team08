@@ -70,10 +70,11 @@ public class JwtProvider {
 		return Algorithm.HMAC256(secretKey);
 	}
 
-	public Token generateTokenPair(OAuthMemberDto oAuthMemberDto) {
+	public Token generateTokenPair(Member member) {
 		Map<String, String> payload = Map.of(
-			"email", oAuthMemberDto.email(),
-			"nickname", oAuthMemberDto.nickname()
+			"id", member.getId().toString(),
+			"email", member.getEmail(),
+			"nickname", member.getNickname()
 		);
 
 		String accessToken = generateAccessToken(payload);
@@ -85,6 +86,7 @@ public class JwtProvider {
 	public Token generateTokenPair(MemberDetails memberDetails) {
 
 		Map<String, String> payload = Map.of(
+			"id", memberDetails.getId().toString(),
 			"email", memberDetails.getEmail(),
 			"nickname", memberDetails.getNickname()
 		);
@@ -106,6 +108,7 @@ public class JwtProvider {
 	private String regenerateAccessToken(Authentication authentication) {
 		var memberDetails = (MemberDetails) authentication.getPrincipal();
 		Map<String, String> payload = Map.of(
+			"id", memberDetails.getId().toString(),
 			"email", memberDetails.getEmail(),
 			"nickname", memberDetails.getNickname()
 		);
@@ -117,10 +120,12 @@ public class JwtProvider {
 		DecodedJWT decodedJWT = getJwtVerifier(REFRESH_TOKEN_VALIDATION_SECOND).verify(
 			refreshToken);
 
+		String id = decodedJWT.getClaim("id").asString();
 		String email = decodedJWT.getClaim("email").asString();
 		String nickname = decodedJWT.getClaim("nickname").asString();
 
 		Map<String, String> payload = Map.of(
+			"id", id,
 			"email", email,
 			"nickname", nickname
 		);
@@ -178,18 +183,15 @@ public class JwtProvider {
 		if (accessToken == null) {
 			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
 		}
-		String email = null;
+		String id = null;
 		try {
 			DecodedJWT decodedJWT = JWT.decode(accessToken);
-			email = decodedJWT.getClaim("email").asString();
+			id = decodedJWT.getClaim("id").asString();
 		} catch (JWTDecodeException e) {
 			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
 		}
 
-		Member member = memberRepository.findByEmail(email)
-			.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER));
-
-		TokenRedis tokenRedis = tokenRedisRepository.findById(member.getId())
+		TokenRedis tokenRedis = tokenRedisRepository.findById(Long.parseLong(id))
 			.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER));
 
 		if (!accessToken.equals(tokenRedis.getAccessToken())) {
@@ -280,12 +282,26 @@ public class JwtProvider {
 		String token) throws IOException {
 		try {
 			Optional<TokenRedis> tokenRedisOpt = tokenRedisRepository.findByAccessToken(token);
-			if (tokenRedisOpt.isEmpty()) {
-				log.warn("토큰 없음: 로그인 페이지로 이동");
-				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				return null;
+
+			TokenRedis tokenRedis;
+
+			if (tokenRedisOpt.isPresent()) {
+				tokenRedis = tokenRedisOpt.get();
+			} else {
+				String id;
+				try {
+					DecodedJWT decodedJWT = JWT.decode(token);
+					id = decodedJWT.getClaim("id")
+						.asString();
+				} catch (JWTDecodeException e) {
+					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					return null;
+				}
+
+				tokenRedis = tokenRedisRepository.findById(Long.parseLong(id))
+					.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER));
 			}
-			TokenRedis tokenRedis = tokenRedisOpt.get();
+			
 			String refreshToken = tokenRedis.getRefreshToken();
 
 			//리프레쉬 토큰 유효성 검사

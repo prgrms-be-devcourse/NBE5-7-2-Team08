@@ -13,6 +13,7 @@ import CreateRoomModal from './modals/CreateRoomModal';
 import JoinRoomModal from './modals/JoinRoomModal';
 import RoomInfoModal from './modals/RoomInfoModal';
 import Toast from './common/Toast';
+import axiosInstance from "./api/axiosInstance"
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -45,18 +46,10 @@ const Sidebar = () => {
     fetchChatRooms(currentPage);
   }, [currentPage]);
 
-  // 현재 사용자 정보 가져오기
   const fetchCurrentUser = async () => {
     try {
-      const userRes = await fetch('http://localhost:8080/users/current', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        setCurrentUser(userData);
-      }
+      const res = await axiosInstance.get('/users/current');
+      setCurrentUser(res.data);
     } catch (err) {
       console.error('사용자 정보 로딩 오류:', err);
     }
@@ -65,21 +58,14 @@ const Sidebar = () => {
   const fetchChatRooms = async (page) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:8080/chat-rooms?page=${page}&size=10`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const res = await axiosInstance.get(`/chat-rooms?page=${page}&size=10`);
+      const data = res.data;
 
-      if (!res.ok) throw new Error('채팅방 목록을 가져오지 못했습니다.');
-      const data = await res.json();
-      
-      // 백엔드 응답 형식에 맞게 데이터 처리
       const validatedRooms = (data.content || []).map(room => {
         const id = room.roomId || room.id;
         return { ...room, uniqueId: id };
       }).filter(room => room.uniqueId);
-      
+
       setChatRooms(validatedRooms);
       setTotalPages(data.totalPages);
       setTotalElements(data.totalElements);
@@ -185,11 +171,9 @@ const Sidebar = () => {
   // 채팅방 생성 핸들러
   const handleCreateRoom = async (roomName, repoUrl) => {
     try {
-      const res = await fetch('http://localhost:8080/chat-rooms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name: roomName, repositoryUrl: repoUrl })
+      const res = await axiosInstance.post('/chat-rooms', {
+        name: roomName,
+        repositoryUrl: repoUrl
       });
       
       if (!res.ok) {
@@ -240,11 +224,8 @@ const Sidebar = () => {
   // 채팅방 참여 핸들러
   const handleJoinRoom = async (inviteCode) => {
     try {
-      const res = await fetch('http://localhost:8080/chat-rooms/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ inviteCode })
+      const res = await axiosInstance.post('/chat-rooms/join', {
+        inviteCode
       });
 
       if (!res.ok) {

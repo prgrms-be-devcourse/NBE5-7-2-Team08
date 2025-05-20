@@ -1,6 +1,7 @@
 package project.backend.global.exception;
 
 
+import java.util.HashMap;
 import java.util.Map;
 
 import java.util.Optional;
@@ -39,10 +40,9 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(AuthException.class)
 	public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex) {
 
-		Map<String, Object> details = Map.of(
-			"roomId", ex.getRoomId(),
-			"inviteCode", ex.getInviteCode()
-		);
+		Map<String, Object> details = new HashMap<>();
+		details.put("roomId", ex.getRoomId());
+		details.put("error", ex.getErrorCode());
 
 		ErrorResponse response = ErrorResponse.toResponse(ex.getErrorCode(), details);
 		return ResponseEntity.status(ex.getStatus()).body(response);
