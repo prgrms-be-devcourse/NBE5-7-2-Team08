@@ -5,10 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class CustomOAuth2User implements OAuth2User {
 
 	private final OAuth2User oAuth2User;
