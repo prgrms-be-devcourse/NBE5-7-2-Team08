@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 import project.backend.domain.member.dao.MemberRepository;
 import project.backend.domain.member.entity.Member;
@@ -41,6 +42,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 	private final TokenRedisRepository tokenRedisRepository;
 
 	@Override
+	@Transactional
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 		Authentication authentication) throws IOException, ServletException {
 
@@ -63,7 +65,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
 		tokenRedisRepository.save(
 			new TokenRedis(member.getId(), token.accessToken(), token.refreshToken()));
-		
+
 		log.info("OAuth 로그인 성공");
 		log.info("AccessToken = {}", token.accessToken());
 		log.info("Refresh Token = {}", token.refreshToken());
