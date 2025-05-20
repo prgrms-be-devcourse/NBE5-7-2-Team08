@@ -138,6 +138,13 @@ public class ChatMessageService {
 			message.updateLanguage(request.language());
 		}
 
+		if (isSearchable(message)) {
+			chatMessageSearchRepository.findById(message.getId())
+				.ifPresent(searchEntity -> {
+					searchEntity.updateContent(message.getContent());
+				});
+		}
+
 		ChatMessageResponse response = messageMapper.toResponse(message);
 		response.setEdited(true);
 
@@ -159,6 +166,11 @@ public class ChatMessageService {
 		}
 
 		message.delete();
+
+		if (isSearchable(message)) {
+			chatMessageSearchRepository.findById(message.getId())
+				.ifPresent(ChatMessageSearch::deleteContent);
+		}
 
 		ChatMessageResponse response = messageMapper.toResponse(message);
 		response.setDeleted(true);

@@ -29,4 +29,12 @@ public class ChatMessageSearch {
 		this.roomId = roomId;
 		this.content = content;
 	}
+
+	public void updateContent(String content) {
+		this.content = content;
+	}
+
+	public void deleteContent() {
+		this.content = "";
+	}
 }
