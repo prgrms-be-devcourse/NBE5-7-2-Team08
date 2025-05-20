@@ -3,6 +3,7 @@ package project.backend.global.exception;
 
 import java.util.Map;
 
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
@@ -32,7 +33,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(UsernameNotFoundException.class)
 	public ResponseEntity<?> handleUsernameNotFound(UsernameNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-			.body(Map.of("error", ex.getMessage()));
+			.body(Map.of("error", Optional.ofNullable(ex.getMessage()).orElse("인증 실패")));
 	}
 
 	@ExceptionHandler(AuthException.class)
