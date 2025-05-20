@@ -1099,7 +1099,7 @@ const ChatRoom = () => {
                 color: '#4a5568'
               }}
             >
-              ⋯
+              +
             </button>
 
             {/* 드롭다운 메뉴 */}

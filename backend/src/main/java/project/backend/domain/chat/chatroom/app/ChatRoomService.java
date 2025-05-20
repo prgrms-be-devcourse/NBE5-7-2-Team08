@@ -186,5 +186,11 @@ public class ChatRoomService {
 		return chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
+
+	@Transactional
+	public ChatRoomNameResponse getChatRoomByInviteCode(String inviteCode) {
+		ChatRoom room = findByInviteCode(inviteCode);
+		return ChatRoomMapper.toListResponse(room);
+	}
 }
 
