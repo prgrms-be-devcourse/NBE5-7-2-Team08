@@ -55,7 +55,8 @@ file:
     chat:
       path: images/chat/
 
-
+url:
+  ngrok: ${NGROK_URL}
 
 jwt:
   redirection:

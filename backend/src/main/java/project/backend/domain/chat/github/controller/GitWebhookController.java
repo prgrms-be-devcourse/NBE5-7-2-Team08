@@ -1,4 +1,4 @@
-package project.backend.domain.chat.chatmessage.api;
+package project.backend.domain.chat.github.controller;
 
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import project.backend.domain.chat.chatmessage.app.GitMessageService;
+import project.backend.domain.chat.github.app.GitMessageService;
 
 @RestController
 @RequestMapping("/github")
