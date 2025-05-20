@@ -176,12 +176,7 @@ const Sidebar = () => {
         repositoryUrl: repoUrl
       });
       
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || '채팅방 생성에 실패했습니다.');
-      }
-      
-      const created = await res.json();
+      const created = res.data;
       setShowCreateModal(false);
       fetchChatRooms(0);
       
@@ -228,12 +223,7 @@ const Sidebar = () => {
         inviteCode
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || '방 입장에 실패했습니다.');
-      }
-
-      const joined = await res.json();
+      const joined = await res.data();
       setShowJoinModal(false);
       setCurrentPage(0);
       fetchChatRooms(0);

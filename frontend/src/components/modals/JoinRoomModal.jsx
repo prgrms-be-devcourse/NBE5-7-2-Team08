@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axiosInstance from "../api/axiosInstance"
 import { 
   FaTimes,
   FaLink,
@@ -26,27 +27,19 @@ const JoinRoomModal = ({ onClose, onSubmit }) => {
     setError(null);
     
     try {
-      // 방 정보를 가져오기 위한 API 호출
-      const res = await fetch(`http://localhost:8080/chat-rooms/check?inviteCode=${inviteCode.trim()}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || '유효하지 않은 초대 코드입니다.');
-      }
-
-      const data = await res.json();
-      setRoomInfo(data);
+      const res = await axiosInstance.get(`/chat-rooms/check?inviteCode=${inviteCode.trim()}`);
+      setRoomInfo(res.data);
     } catch (err) {
       console.error('초대 코드 확인 오류:', err);
-      setError(err.message || '방 정보를 가져올 수 없습니다. 초대 코드를 확인해주세요.');
+      const message =
+        err.response?.data?.message || // 백엔드에서 내려준 에러 메시지
+        err.message ||                // 일반 JS 에러 메시지
+        '방 정보를 가져올 수 없습니다. 초대 코드를 확인해주세요.'; // 기본 메시지
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   // 최종 참여 확인
   const confirmJoin = () => {
