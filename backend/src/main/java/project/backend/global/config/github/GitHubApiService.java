@@ -36,9 +36,6 @@ public class GitHubApiService {
 		String privateEmail = null;
 
 		for (Map<String, Object> email : emailList) {
-			System.out.println(email.get("email"));
-			System.out.println("primary = " + email.get("primary"));
-
 			if (Boolean.TRUE.equals(email.get("primary"))) {
 				privateEmail = (String) email.get("email");
 				break;

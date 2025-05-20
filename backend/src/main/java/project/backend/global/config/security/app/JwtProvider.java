@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,7 +41,9 @@ import java.util.Map;
 import project.backend.global.config.security.jwt.TokenStatus;
 import project.backend.global.config.security.redis.dao.TokenRedisRepository;
 import project.backend.global.config.security.redis.entity.TokenRedis;
+import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.errorcode.TokenErrorCode;
+import project.backend.global.exception.ex.AuthException;
 import project.backend.global.exception.ex.TokenException;
 
 
@@ -108,14 +111,12 @@ public class JwtProvider {
 		return generateAccessToken(payload);
 	}
 
-
 	private JWTVerifier getJwtVerifier(Long expiresSeconds) {
 		return JWT.require(getSignatureAlgorithm(SECRET_KEY))
 			.withIssuer(ISSUER)
 			.acceptExpiresAt(expiresSeconds)
 			.build();
 	}
-
 
 	public TokenStatus validateAccessToken(String token) {
 		try {
@@ -144,6 +145,48 @@ public class JwtProvider {
 		}
 	}
 
+	private TokenRedis getTokenFromAuthentication(Authentication authentication) {
+		var memberDetail = (MemberDetails) authentication.getPrincipal();
+		log.info("memberDetail.getEmail() = {}", memberDetail.getEmail());
+		return tokenRedisRepository.findById(memberDetail.getId())
+			.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER)
+			);
+	}
+
+	public void validateAuthentication(Authentication authentication,
+		HttpServletResponse response) {
+		TokenRedis tokenRedis = getTokenFromAuthentication(authentication);
+		String accessToken = tokenRedis.getAccessToken();
+		String refreshToken = tokenRedis.getRefreshToken();
+
+		TokenStatus tokenStatus = validateAccessToken(accessToken);
+		log.info("tokenStatus = {}", tokenStatus);
+		switch (tokenStatus) {
+			case VALID:
+				response.setStatus(HttpServletResponse.SC_OK);
+				break;
+
+			case EXPIRED:
+				try {
+					String token = regenerateAccessToken(authentication);
+					JWTVerifier jwtVerifier = getJwtVerifier(REFRESH_TOKEN_VALIDATION_SECOND);
+					jwtVerifier.verify(refreshToken);
+
+					CookieUtils.saveCookie(response, token); // regenerated token 저장
+					tokenRedis.updateAccessToken(token);
+					tokenRedisRepository.save(tokenRedis);
+				} catch (JWTVerificationException e) {
+					// refresh token 유효하지 않음 → 인증 실패 처리
+					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
+				}
+				break;
+
+			default:
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				return;
+		}
+	}
 
 	private String doGenerateToken(Long expiration, Map<String, String> payload) {
 		long now = System.currentTimeMillis();

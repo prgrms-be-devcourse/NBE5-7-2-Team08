@@ -65,6 +65,9 @@ public class SecurityConfig {
 						"/github/**")
 					.anonymous()
 
+					.requestMatchers("/auth")
+					.permitAll()
+					
 					.anyRequest()
 					.authenticated();
 			})

@@ -59,6 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					log.warn("JWT 토큰 인증 처리 불가: {}", token);
 					log.warn("재로그인 필요");
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
 				}
 			}
 		}
