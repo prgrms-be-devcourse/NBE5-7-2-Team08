@@ -119,12 +119,12 @@ public class ChatRoomService {
 	}
 
 	public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
-
 		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId,
 			pageable);
 
 		return allRoomsByOwnerId.map(ChatRoomMapper::toProfileResponse);
 	}
+
 
 	@Transactional(readOnly = true)
 	public Page<ChatRoomNameResponse> findChatRoomsByMemberId(Long memberId, Pageable pageable) {

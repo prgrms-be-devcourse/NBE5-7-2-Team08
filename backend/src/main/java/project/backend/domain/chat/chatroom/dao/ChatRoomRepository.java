@@ -23,7 +23,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 		Pageable pageable);
 
 	Optional<ChatRoom> findByInviteCode(String inviteCode);
-
+	
 	Page<ChatRoom> findAllRoomsByOwnerId(Long ownerId, Pageable pageable);
 
 }

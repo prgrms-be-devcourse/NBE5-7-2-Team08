@@ -8,12 +8,18 @@ const Home = () => {
 
   useEffect(() => {
 
-    // const token = localStorage.getItem('accessToken'); // 또는 sessionStorage
-
-    // if (!token) {
-    //   navigate('/login'); // 토큰 없으면 로그인
-    //   return;
-    // }
+    axios.get(`http://localhost:8080/user/detail`, {
+      withCredentials: true,
+    })
+      .catch(err => {
+        const status = err.response?.status;
+        if(status===401) {
+          navigate("/login")
+        } else {
+          console.error("에러 발생", err);
+          navigate("/login")
+        }
+      })
 
     axios.get(`http://localhost:8080/chat-rooms/recent`, { 
         withCredentials: true,
