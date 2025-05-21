@@ -45,17 +45,12 @@ const BlankRoom = () => {
         inviteCode
       });
       
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || '방 입장에 실패했습니다.');
-      }
-      
-      const data = await res.json();
+      const data = await res;
       setShowJoinModal(false);
       
       navigate(`/chat/${data.id}/${data.inviteCode}`);
     } catch (err) {
-      alert(err.message);
+      alert(err.response?.data?.message || err.message || "방 입장에 실패했습니다.");
     }
   };
   

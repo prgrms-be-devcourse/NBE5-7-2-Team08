@@ -56,11 +56,7 @@ const ChatRoom = () => {
       const res = await axiosInstance.get(`/chat-rooms/check?inviteCode=${inviteCode}`, {
       });
 
-      if (!res.ok) {
-        throw new Error('방 정보를 가져오지 못했습니다.');
-      }
-
-      const roomData = await res.json();
+      const roomData = res.data;
       setRoomName(roomData.roomName || `채팅방 #${roomId}`);
     } catch (error) {
       console.error('방 정보 요청 실패:', error);
@@ -73,28 +69,24 @@ const ChatRoom = () => {
   const handleLeaveRoom = async () => {
     try {
       const res = await axiosInstance.delete(`/chat-rooms/${roomId}/leave`);
+      
+      // 성공 처리
+      setShowLeaveConfirm(false);
+      setShowLeaveSuccess(true);
 
-      if (res.ok) {
-        setShowLeaveConfirm(false);
-        setShowLeaveSuccess(true);
-        setTimeout(() => {
-          setShowLeaveSuccess(false);
-          navigate('/');
-        }, 500);
-      } else {
-        let errorMsg = '나가기 실패';
-        try {
-          const data = await res.json();
-          errorMsg = data.message || errorMsg;
-        } catch {
-          const text = await res.text();
-          if (text) errorMsg = text;
-        }
-        alert(errorMsg);
-        throw new Error(errorMsg);
-      }
+      setTimeout(() => {
+        setShowLeaveSuccess(false);
+        navigate('/');
+      }, 500);
     } catch (err) {
-      console.error(err);
+      // 실패 처리
+      const errorMsg =
+        err.response?.data?.message || // 백엔드에서 보낸 메시지
+        err.message ||                 // 일반 오류 메시지
+        '나가기 실패';                 // 기본 메시지
+
+      alert(errorMsg);
+      console.error('채팅방 나가기 실패:', err);
     } finally {
       setMenuOpen(false);
     }
