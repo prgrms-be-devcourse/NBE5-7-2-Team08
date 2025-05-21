@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
+import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
@@ -33,4 +34,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 	List<ChatMessage> findByChatRoom_IdOrderBySendAtAsc(Long roomId);
 
 	List<ChatMessage> findByIdIn(List<Long> ids);
+
+	List<ChatMessage> findAllBySender(ChatParticipant sender);
 }

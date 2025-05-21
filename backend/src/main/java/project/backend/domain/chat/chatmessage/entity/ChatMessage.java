@@ -17,6 +17,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.imagefile.ImageFile;
@@ -31,7 +32,8 @@ public class ChatMessage {
     @Column(name = "message_id")
     private Long id;
 
-    @ManyToOne
+    @Setter
+	@ManyToOne
     @JoinColumn(name = "sender_id")
     private ChatParticipant sender;
 
@@ -87,4 +89,5 @@ public class ChatMessage {
     public void delete() {
         this.isDeleted = true;
     }
+
 }

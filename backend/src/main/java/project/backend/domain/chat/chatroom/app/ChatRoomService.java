@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.ChatRoomNameResponse;
@@ -173,7 +174,14 @@ public class ChatRoomService {
                 roomId, memberId)
             .orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
+        List<ChatMessage> messages = chatMessageRepository.findAllBySender(participant);
+
+        for (ChatMessage message : messages) {
+            message.setSender(null);
+        }
+
         room.getParticipants().remove(participant);
+
     }
 
     private ChatRoom findByInviteCode(String inviteCode) {
