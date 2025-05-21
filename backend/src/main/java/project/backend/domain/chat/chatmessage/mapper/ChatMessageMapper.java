@@ -123,7 +123,7 @@ public class ChatMessageMapper {
 
 	public ChatMessageResponse toGitResponse(ChatMessage message) {
 		return ChatMessageResponse.builder()
-			.senderName("GitHub")
+			.senderName("깃허브봇")
 			.content(message.getContent())
 			.type(message.getType())
 			.sendAt(message.getSendAt())

@@ -79,7 +79,7 @@ public class ChatRoomService {
 
 	@Transactional(readOnly = true)
 	public String getInviteCode(Long roomId) {
-		ChatRoom room = findById(roomId);
+		ChatRoom room = getRoomById(roomId);
 
 		return room.getInviteCode();
 	}
@@ -174,7 +174,7 @@ public class ChatRoomService {
 	//임창인
 	@Transactional
 	public void leaveChatRoom(Long roomId, Long memberId) {
-		ChatRoom room = findById(roomId);
+		ChatRoom room = getRoomById(roomId);
 
 		if (room.getOwner().getId().equals(memberId)) {
 			throw new ChatRoomException(ChatRoomErrorCode.OWNER_CANNOT_LEAVE);
@@ -189,11 +189,6 @@ public class ChatRoomService {
 
 	private ChatRoom findByInviteCode(String inviteCode) {
 		return chatRoomRepository.findByInviteCode(inviteCode)
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
-	}
-
-	private ChatRoom findById(Long roomId) {
-		return chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
 

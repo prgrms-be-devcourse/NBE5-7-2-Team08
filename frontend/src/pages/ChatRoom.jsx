@@ -290,7 +290,7 @@ const ChatRoom = () => {
     // WebSocket 연결 설정
     const client = new Client({
       webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-      reconnectDelay: 1000,
+      // reconnectDelay: 1000,
       heartbeatIncoming: 15000,
       heartbeatOutgoing: 10000,
       debug: (str) => console.log(`[STOMP] ${str}`),
@@ -336,13 +336,19 @@ const ChatRoom = () => {
         }, 20000);
       },
 
-      onWebSocketClose: () => {
-        console.warn("❌ WebSocket closed.");
-        if (!hasConnectedRef.current) {
-          console.warn("🔒 Initial connection failed. Possibly due to 401.");
-          navigate("/login");
-        } else {
-          console.log("🔁 Will attempt reconnect...");
+      onWebSocketClose: async () => {
+        try {
+          const res = await fetch('http://localhost:8080/auth', {
+            credentials: "include"
+          });
+
+          if (res.status === 401) {
+            console.warn("세션 만료 → 로그인 페이지로 이동");
+            window.location.href = '/login';
+          }
+        } catch (err) {
+          console.warn("네트워크 오류 → 로그인 페이지로 이동", err);
+          window.location.href = '/login';
         }
       },
 
