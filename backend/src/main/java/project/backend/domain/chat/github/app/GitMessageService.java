@@ -11,12 +11,16 @@ import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
 import project.backend.domain.chat.chatmessage.dto.ChatMessageResponse;
 import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.mapper.ChatMessageMapper;
+import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
+import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.github.GitHubClient;
 import project.backend.domain.chat.github.GitRepoUrlUtils;
 import project.backend.domain.chat.github.dto.GitMessageDto;
 import project.backend.domain.chat.github.dto.GitRepoDto;
+import project.backend.domain.member.app.MemberService;
+import project.backend.domain.member.entity.Member;
 import project.backend.global.config.security.redis.dao.TokenRedisRepository;
 import project.backend.global.config.security.redis.entity.TokenRedis;
 import project.backend.global.exception.errorcode.ChatRoomErrorCode;
@@ -31,11 +35,15 @@ public class GitMessageService {
 	private final ChatMessageMapper chatMessageMapper;
 	private final ChatMessageRepository chatMessageRepository;
 	private final SimpMessagingTemplate messagingTemplate;
+	private final MemberService memberService;
 
 	@Value("${url.ngrok}")
 	private String ngrokUrl;
+	@Value("${github.email-key}")
+	private String githubEmailKey;
 	private final GitHubClient gitHubClient;
 	private final TokenRedisRepository tokenRedisRepository;
+	private final ChatParticipantRepository chatParticipantRepository;
 
 	@Transactional
 	public void handleEvent(Long roomId, String eventType, Map<String, Object> payload) {
@@ -53,15 +61,20 @@ public class GitMessageService {
 		ChatRoom room = chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
-		sendGitMessage(roomId, gitMessage.attachRoom(gitMessage, room));
+		sendGitMessage(room, gitMessage.attachRoom(gitMessage, room));
 	}
 
-	private void sendGitMessage(Long roomId, GitMessageDto gitMessage) {
-		ChatMessage message = chatMessageMapper.toEntityWithGit(gitMessage);
+	private void sendGitMessage(ChatRoom room, GitMessageDto gitMessage) {
+		Member githubBot = memberService.getMemberByEmail(githubEmailKey);
+		ChatParticipant gitParticipant = chatParticipantRepository.findByParticipantAndChatRoom(
+				githubBot, room)
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
+
+		ChatMessage message = chatMessageMapper.toEntityWithGit(gitMessage, gitParticipant);
 		chatMessageRepository.save(message);
 		ChatMessageResponse response = chatMessageMapper.toGitResponse(message);
 
-		messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+		messagingTemplate.convertAndSend("/topic/chat/" + room.getId(), response);
 	}
 
 	@Transactional(readOnly = true)

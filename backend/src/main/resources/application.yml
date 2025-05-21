@@ -52,9 +52,12 @@ file:
     profile:
       path: images/profile/
       default: default-profile.png
+      github: github-profile.png
     chat:
       path: images/chat/
 
+github:
+  email-key: github@github.com
 
 url:
   ngrok: ${NGROK_URL}

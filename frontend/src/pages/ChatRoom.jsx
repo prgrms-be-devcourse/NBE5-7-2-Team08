@@ -689,9 +689,7 @@ const handleUnifiedSend = async () => {
             fontWeight: '600',
             fontSize: '16px',
             flexShrink: 0,
-            backgroundImage: msg.type === 'GIT'
-              ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
-              : `url("http://localhost:8080/images/profile/${msg.profileImageUrl}")`,
+            backgroundImage: `url("http://localhost:8080/images/profile/${msg.profileImageUrl}")`,
             backgroundSize: 'cover'
           }}>
           </div>
@@ -1067,19 +1065,18 @@ const handleUnifiedSend = async () => {
             </div>
           </div>
 
-          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', padding: '0 24px', marginTop: '8px' }}>
-            {/* ... 버튼 */}
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', padding: '0 24px', marginRight: '20px',marginTop: '15px' }}>
             <button
               onClick={() => setMenuOpen(prev => !prev)}
               style={{
-                fontSize: '20px',
+                fontSize: '30px',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
                 color: '#4a5568'
               }}
             >
-              +
+               ⋮
             </button>
 
             {/* 드롭다운 메뉴 */}
