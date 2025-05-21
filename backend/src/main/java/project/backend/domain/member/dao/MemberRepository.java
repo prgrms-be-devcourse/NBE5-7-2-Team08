@@ -13,5 +13,4 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 	@EntityGraph(attributePaths = {"profileImage"})
 	Optional<Member> findByEmail(String email);
 
-	String email(String email);
 }
