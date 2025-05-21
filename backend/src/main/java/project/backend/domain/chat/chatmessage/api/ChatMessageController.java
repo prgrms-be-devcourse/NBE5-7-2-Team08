@@ -28,38 +28,38 @@ import project.backend.domain.imagefile.ImageType;
 @RequiredArgsConstructor
 public class ChatMessageController {
 
-    private final ChatMessageService chatMessageService;
-    private final ImageFileService imageFileService;
-    private final SimpMessagingTemplate messagingTemplate;
+	private final ChatMessageService chatMessageService;
+	private final ImageFileService imageFileService;
+	private final SimpMessagingTemplate messagingTemplate;
 
-    @MessageMapping("/send-message/{roomId}") //클라이언트가 메세지를 보낼 경로
-    public ChatMessageResponse sendMessage(@DestinationVariable Long roomId,
-        @Payload ChatMessageRequest request, Principal principal) {
-        ChatMessageResponse response = chatMessageService.save(roomId, request,
-            principal.getName());
+	@MessageMapping("/send-message/{roomId}") //클라이언트가 메세지를 보낼 경로
+	public ChatMessageResponse sendMessage(@DestinationVariable Long roomId,
+		@Payload ChatMessageRequest request, Principal principal) {
+		ChatMessageResponse response = chatMessageService.save(roomId, request,
+			principal.getName());
 
-        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+		messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
 
-        return response;
-    }
+		return response;
+	}
 
-    @MessageMapping("/edit-message/{roomId}")
-    public ChatMessageResponse editMessage(@DestinationVariable Long roomId, @Payload
-    ChatMessageEditRequest request, Principal principal) {
-        ChatMessageResponse response = chatMessageService.editMessage(roomId, request,
-            principal.getName());
+	@MessageMapping("/edit-message/{roomId}")
+	public ChatMessageResponse editMessage(@DestinationVariable Long roomId, @Payload
+	ChatMessageEditRequest request, Principal principal) {
+		ChatMessageResponse response = chatMessageService.editMessage(roomId, request,
+			principal.getName());
 
-        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
+		messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
 
-        return response;
-    }
+		return response;
+	}
 
 	@GetMapping("/chat/search/{roomId}")
 	public Page<ChatMessageSearchResponse> searchMessages(
 		@PathVariable("roomId") Long roomId,
 		@RequestParam("keyword") String keyword,
 		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "20") int size
+		@RequestParam(defaultValue = "10") int size
 	) {
 		ChatMessageSearchRequest request = ChatMessageSearchRequest.of(keyword, page, size);
 

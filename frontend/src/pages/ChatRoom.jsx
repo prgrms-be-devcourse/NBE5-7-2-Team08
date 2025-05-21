@@ -443,7 +443,7 @@ const ChatRoom = () => {
       params: {
         keyword,
         page,
-        size: 20
+        size: 10
       }
     });
 
