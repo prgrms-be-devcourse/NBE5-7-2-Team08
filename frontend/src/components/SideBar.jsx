@@ -225,7 +225,7 @@ const Sidebar = () => {
         inviteCode
       });
 
-      const joined = await res.data();
+      const joined = await res.data;
       setShowJoinModal(false);
       setCurrentPage(0);
       fetchChatRooms(0);
@@ -266,7 +266,8 @@ const Sidebar = () => {
         navigate(`/chat/${joined.id}/${joined.inviteCode}`);
       }
     } catch (err) {
-      alert(err.message);
+      
+      alert(err.response?.data?.message || err.message || "채팅방 참여에 실패했습니다.");
     }
   };
 
