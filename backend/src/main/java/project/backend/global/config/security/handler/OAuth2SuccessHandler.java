@@ -61,7 +61,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 		// 기존에 없는 email이면 회원가입
 		Member member = oAuthSignUpService.OAuthSignUp(userDto);
 
-		Token token = jwtProvider.generateTokenPair(userDto);
+		Token token = jwtProvider.generateTokenPair(member);
 
 		//쿠키 생성 및 저장
 		CookieUtils.saveCookie(response, token.accessToken());

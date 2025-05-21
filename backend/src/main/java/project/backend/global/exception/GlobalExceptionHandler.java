@@ -1,13 +1,16 @@
 package project.backend.global.exception;
 
 
+import java.util.HashMap;
 import java.util.Map;
 
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,17 +29,20 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 			.status(ex.getStatus())
 			.body(response);
+	}
 
-
+	@ExceptionHandler(UsernameNotFoundException.class)
+	public ResponseEntity<?> handleUsernameNotFound(UsernameNotFoundException ex) {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+			.body(Map.of("error", Optional.ofNullable(ex.getMessage()).orElse("인증 실패")));
 	}
 
 	@ExceptionHandler(AuthException.class)
 	public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex) {
 
-		Map<String, Object> details = Map.of(
-			"roomId", ex.getRoomId(),
-			"inviteCode", ex.getInviteCode()
-		);
+		Map<String, Object> details = new HashMap<>();
+		details.put("roomId", ex.getRoomId());
+		details.put("error", ex.getErrorCode());
 
 		ErrorResponse response = ErrorResponse.toResponse(ex.getErrorCode(), details);
 		return ResponseEntity.status(ex.getStatus()).body(response);

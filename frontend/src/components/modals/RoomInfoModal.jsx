@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fa';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-import axios from 'axios';
+import axiosInstance from "../api/axiosInstance"
 
 const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
   const [participants, setParticipants] = useState([]);
@@ -20,9 +20,7 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
   const fetchParticipants = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:8080/chat-rooms/${room.roomId}/participants`, {
-        withCredentials: true,
-      });
+      const response = await axiosInstance.get(`/chat-rooms/${room.roomId}/participants`);
       console.log('참가자 응답:', response.data);
       setParticipants(response.data);
     } catch (err) {

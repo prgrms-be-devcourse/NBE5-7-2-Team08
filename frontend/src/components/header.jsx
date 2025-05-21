@@ -2,30 +2,23 @@
 
 import { useState, useEffect } from "react"
 import "./header.css"
+import axiosInstance from "./api/axiosInstance"
 
 export function Header() {
   const [memberId, setMemberId] = useState(null)
   const [profileImage, setProfileImage] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  
 
   useEffect(() => {
-    // Fetch profile image from backend server
     const fetchProfileImage = async () => {
       try {
         setIsLoading(true)
-        // Replace with your actual API endpoint
-        const response = await fetch("http://localhost:8080/user/details" ,{
-          method: "GET",
-          credentials: "include"
-        });
-        
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch profile image")
-        }
+        // ✅ axiosInstance 사용하여 인증 포함된 요청 처리
+        const { data } = await axiosInstance.get("/user/details")
 
-        const data = await response.json()
         setProfileImage(data.profileImg)
         setMemberId(data.id)
         setIsLoading(false)
@@ -37,7 +30,6 @@ export function Header() {
     }
 
     fetchProfileImage()
-    
   }, [])
 
   return (

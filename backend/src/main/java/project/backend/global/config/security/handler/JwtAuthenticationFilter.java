@@ -32,6 +32,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		FilterChain filterChain)
 		throws ServletException, IOException {
 
+		String uri = request.getRequestURI();
+
+		if (uri.equals("/auth")) {
+			filterChain.doFilter(request, response); // JWT 검사 건너뜀
+			return;
+		}
+
 		Optional<Cookie> accessToken = CookieUtils.getCookie((HttpServletRequest) request,
 			"accessToken");
 
@@ -59,6 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					log.warn("JWT 토큰 인증 처리 불가: {}", token);
 					log.warn("재로그인 필요");
 					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					return;
 				}
 			}
 		}
