@@ -215,6 +215,8 @@ const Sidebar = () => {
       alert(err.response?.data?.message || // 백엔드에서 내려준 에러 메시지
         err.message ||                // 일반 JS 에러 메시지
         '방 생성에 실패했습니다.. ㅋㅋ루삥뽕뽕'); // 기본 메시지);
+      
+      throw err;
     }
   };
 
@@ -266,8 +268,8 @@ const Sidebar = () => {
         navigate(`/chat/${joined.id}/${joined.inviteCode}`);
       }
     } catch (err) {
-      
       alert(err.response?.data?.message || err.message || "채팅방 참여에 실패했습니다.");
+      throw err;
     }
   };
 

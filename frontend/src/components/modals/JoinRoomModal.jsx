@@ -42,9 +42,17 @@ const JoinRoomModal = ({ onClose, onSubmit }) => {
   }
 
   // 최종 참여 확인
-  const confirmJoin = () => {
+  const confirmJoin = async() => {
     if (inviteCode.trim()) {
-      onSubmit(inviteCode.trim());
+      setLoading(true);
+      try {
+        await onSubmit(inviteCode.trim());
+      } catch (error) {
+        console.error("참여 실패:", error);
+        onClose(); // 실패 시 모달 닫기
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

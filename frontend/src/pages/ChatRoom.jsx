@@ -290,7 +290,7 @@ const ChatRoom = () => {
     // WebSocket 연결 설정
     const client = new Client({
       webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-      // reconnectDelay: 1000,
+      reconnectDelay: 1000,
       heartbeatIncoming: 15000,
       heartbeatOutgoing: 10000,
       debug: (str) => console.log(`[STOMP] ${str}`),

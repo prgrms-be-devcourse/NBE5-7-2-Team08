@@ -34,6 +34,8 @@ const BlankRoom = () => {
              // JS 오류 메시지
         '방 생성에 실패했습니다.'    // 기본 메시지
       );
+
+      throw err;
     }
   };
 
@@ -51,6 +53,7 @@ const BlankRoom = () => {
       navigate(`/chat/${data.id}/${data.inviteCode}`);
     } catch (err) {
       alert(err.response?.data?.message || err.message || "방 입장에 실패했습니다.");
+      throw err;
     }
   };
   
