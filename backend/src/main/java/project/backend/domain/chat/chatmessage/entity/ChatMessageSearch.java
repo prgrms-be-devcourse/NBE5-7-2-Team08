@@ -3,6 +3,7 @@ package project.backend.domain.chat.chatmessage.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,8 +20,9 @@ public class ChatMessageSearch {
 
 	@Column(name = "room_id", nullable = false)
 	private Long roomId;
-
-	@Column(name = "content", nullable = false)
+	
+	@Lob
+	@Column(columnDefinition = "TEXT", nullable = false)
 	private String content;
 
 	@Builder

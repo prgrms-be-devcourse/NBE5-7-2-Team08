@@ -17,14 +17,6 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
   const stompClientRef = useRef(null);
   const hasLoadedInitialData = useRef(false);
 
-  const copyInviteCode = () => {
-    if (room?.inviteCode) {
-      navigator.clipboard.writeText(room.inviteCode)
-        .then(() => showToast('초대 코드가 클립보드에 복사되었습니다.'))
-        .catch(err => console.error('클립보드 복사 실패:', err));
-    }
-  };
-
   const fetchParticipants = async () => {
     setLoading(true);
     try {
@@ -155,46 +147,6 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
               </a>
             </div>
           )}
-
-          {room.inviteCode && (
-            <div style={{
-              marginBottom: '16px',
-              padding: '12px',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '8px',
-              border: '1px solid #e9ecef'
-            }}>
-              <div style={{ fontWeight: '500', marginBottom: '8px', fontSize: '14px' }}>초대 코드</div>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={{
-                  flex: 1,
-                  backgroundColor: '#fff',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '4px',
-                  padding: '8px 12px',
-                  fontSize: '14px',
-                  fontFamily: 'monospace'
-                }}>
-                  {room.inviteCode}
-                </div>
-                <button
-                  onClick={copyInviteCode}
-                  style={{
-                    marginLeft: '8px',
-                    backgroundColor: '#e9ecef',
-                    border: 'none',
-                    borderRadius: '4px',
-                    padding: '8px',
-                    cursor: 'pointer'
-                  }}
-                  title="초대 코드 복사"
-                >
-                  <FaCopy size={14} color="#495057" />
-                </button>
-              </div>
-            </div>
-          )}
-
           <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px' }}>
             채팅방 멤버 {participants && (
               <span>({participants.length}명)</span>
@@ -309,4 +261,3 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
 };
 
 export default RoomInfoModal;
-

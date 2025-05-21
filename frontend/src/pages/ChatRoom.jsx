@@ -107,8 +107,11 @@ const ChatRoom = () => {
 
     const checkAndJoin = async () => {
       try {
-        const res = await axiosInstance.post('/chat-rooms/join', {
-          inviteCode: inviteCode
+        const res = await fetch('http://localhost:8080/chat-rooms/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',                    // ← 세션(cookie) 포함
+          body: JSON.stringify({ inviteCode })
         });
 
         if (res.status === 401) {
@@ -241,7 +244,11 @@ const ChatRoom = () => {
     // 로그인 유저 정보 가져오기
     const fetchCurrentUser = async () => {
       try {
-        const res = await axiosInstance.get('/user/details');
+        const res = await fetch('http://localhost:8080/user/details', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
 
         if (!res.ok) {
           throw new Error('로그인 정보를 가져오지 못했습니다.');
@@ -264,14 +271,20 @@ const ChatRoom = () => {
         const data = res.data;
 
         const validatedData = data.map(msg => {
+          // 날짜 유효성 검사
           if (!msg.sendAt || new Date(msg.sendAt).getFullYear() === 1970) {
-            return { ...msg, sendAt: new Date().toISOString() };
+            msg = { ...msg, sendAt: new Date().toISOString() };
           }
+
+          // isEdited와 isDeleted 속성이 undefined이면 기본값 설정
+          if (msg.edited === undefined) msg.edited = !!msg.isEdited;
+          if (msg.deleted === undefined) msg.deleted = !!msg.isDeleted;
+
           return msg;
         });
 
         const sortedData = validatedData.sort(
-          (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
+            (a, b) => new Date(a.sendAt).getTime() - new Date(b.sendAt).getTime()
         );
 
         setMessages(sortedData);
@@ -303,6 +316,11 @@ const ChatRoom = () => {
           try {
             const received = JSON.parse(message.body);
             received.sendAt ||= new Date().toISOString();
+            
+            // isEdited와 isDeleted 속성을 편집 및 삭제 상태로 변환
+            if (received.isEdited !== undefined) received.edited = received.isEdited;
+            if (received.isDeleted !== undefined) received.deleted = received.isDeleted;
+            
             setMessages(prev =>
               prev.some(m => m.messageId === received.messageId)
                 ? prev.map(m => m.messageId === received.messageId ? received : m)
@@ -853,7 +871,7 @@ const handleUnifiedSend = async () => {
                 </div>
               </div>
             )
-              : msg.deleted ? (
+              :(msg.deleted || msg.isDeleted) ? (
                 <div style={{
                   fontSize: '14px',
                   lineHeight: '1.5',
@@ -942,7 +960,7 @@ const handleUnifiedSend = async () => {
                       whiteSpace: 'pre-wrap'
                     }}>
                       {msg.content}
-                      {msg.edited && (
+                      {(msg.edited || msg.isEdited) && (
                         <span style={{
                           marginLeft: '6px',
                           fontSize: '11px',

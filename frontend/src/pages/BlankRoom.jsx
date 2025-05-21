@@ -19,22 +19,24 @@ const BlankRoom = () => {
         name: roomName,
         repositoryUrl: repoUrl
       });
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || '채팅방 생성에 실패했습니다.');
-      }
-      
-      const created = await res.json();
+
+      const created = res.data;
       setShowCreateModal(false);
-      
+
       if (created?.id) {
         navigate(`/chat/${created.id}/${created.inviteCode}`);
       }
     } catch (err) {
-      alert(err.message);
+      const backendMessage = err.response?.data?.message;
+
+      alert(
+        backendMessage ||            // 백엔드에서 내려준 메시지
+             // JS 오류 메시지
+        '방 생성에 실패했습니다.'    // 기본 메시지
+      );
     }
   };
+
 
   // 채팅방 참여 핸들러
   const handleJoinRoom = async (inviteCode) => {

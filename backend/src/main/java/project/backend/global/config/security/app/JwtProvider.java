@@ -194,9 +194,11 @@ public class JwtProvider {
 		TokenRedis tokenRedis = tokenRedisRepository.findById(Long.parseLong(id))
 			.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER));
 
-		if (!accessToken.equals(tokenRedis.getAccessToken())) {
-			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
-		}
+//		if (!accessToken.equals(tokenRedis.getAccessToken())) {
+//			log.info("AuthErrorCode.UNAUTHORIZED_USER = {}",
+//				AuthErrorCode.UNAUTHORIZED_USER.getMessage());
+//			throw new AuthException(AuthErrorCode.UNAUTHORIZED_USER);
+//		}
 
 		return tokenRedis;
 	}
@@ -301,7 +303,7 @@ public class JwtProvider {
 				tokenRedis = tokenRedisRepository.findById(Long.parseLong(id))
 					.orElseThrow(() -> new AuthException(AuthErrorCode.UNAUTHORIZED_USER));
 			}
-			
+
 			String refreshToken = tokenRedis.getRefreshToken();
 
 			//리프레쉬 토큰 유효성 검사

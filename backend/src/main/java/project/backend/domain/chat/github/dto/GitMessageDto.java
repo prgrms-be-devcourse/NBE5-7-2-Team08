@@ -1,4 +1,4 @@
-package project.backend.domain.chat.chatmessage.dto.git;
+package project.backend.domain.chat.github.dto;
 
 import java.util.Map;
 import lombok.Builder;
@@ -7,14 +7,14 @@ import project.backend.domain.chat.chatroom.entity.ChatRoom;
 
 @Getter
 @Builder
-public class GitMessage {
+public class GitMessageDto {
 
     private GitEventType type;
     private String actor;
     private String content;
     private ChatRoom room;
 
-    public static GitMessage fromIssue(Map<String, Object> payload) {
+    public static GitMessageDto fromIssue(Map<String, Object> payload) {
         String action = (String) payload.get("action");
 
         //오픈된 이슈만 처리
@@ -31,11 +31,11 @@ public class GitMessage {
 
         String content = "[ISSUE " + action + "] " + title + " by " + author + "\n" + url;
 
-        return GitMessage.of(GitEventType.ISSUE_OPEN, author,
+        return GitMessageDto.of(GitEventType.ISSUE_OPEN, author,
             content);
     }
 
-    public static GitMessage fromPullRequest(Map<String, Object> payload) {
+    public static GitMessageDto fromPullRequest(Map<String, Object> payload) {
         String action = (String) payload.get("action");
         Map<String, Object> pr = (Map<String, Object>) payload.get("pull_request");
         Map<String, Object> sender = (Map<String, Object>) payload.get("sender");
@@ -63,10 +63,10 @@ public class GitMessage {
             return null;
         }
 
-        return GitMessage.of(type, author, content);
+        return GitMessageDto.of(type, author, content);
     }
 
-    public static GitMessage fromPullRequestReview(Map<String, Object> payload) {
+    public static GitMessageDto fromPullRequestReview(Map<String, Object> payload) {
         String action = (String) payload.get("action");
         if (!action.equals("submitted")) {
             return null;
@@ -84,20 +84,20 @@ public class GitMessage {
         String content = "[PR review: " + state + "] " + prTitle + " review by " + reviewer +
             (body != null ? "\n" + body : "") + "\n" + reviewUrl;
 
-        return GitMessage.of(GitEventType.PR_REVIEW, reviewer,
+        return GitMessageDto.of(GitEventType.PR_REVIEW, reviewer,
             content);
     }
 
-    public static GitMessage of(GitEventType type, String actor,
+    public static GitMessageDto of(GitEventType type, String actor,
         String content) {
-        return GitMessage.builder()
+        return GitMessageDto.builder()
             .type(type)
             .actor(actor)
             .content(content)
             .build();
     }
 
-    public GitMessage attachRoom(GitMessage gitMessage, ChatRoom room) {
+    public GitMessageDto attachRoom(GitMessageDto gitMessage, ChatRoom room) {
         gitMessage.room = room;
         return gitMessage;
     }
