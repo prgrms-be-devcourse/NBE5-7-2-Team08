@@ -33,7 +33,7 @@ public class ChatMessage {
     private Long id;
 
     @Setter
-	@ManyToOne
+    @ManyToOne
     @JoinColumn(name = "sender_id")
     private ChatParticipant sender;
 
