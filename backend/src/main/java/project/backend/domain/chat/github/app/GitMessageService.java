@@ -77,7 +77,6 @@ public class GitMessageService {
 		messagingTemplate.convertAndSend("/topic/chat/" + room.getId(), response);
 	}
 
-	@Transactional(readOnly = true)
 	public void registerWebhook(String repoUrl, Long roomId, Long memberId) {
 		GitRepoDto gitRepoDto = GitRepoUrlUtils.validateAndParseUrl(repoUrl);
 
