@@ -1,6 +1,7 @@
 package project.backend.domain.chat.chatroom.app;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,6 +9,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
@@ -18,6 +20,7 @@ import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
+import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.github.app.GitMessageService;
@@ -47,6 +50,7 @@ public class ChatRoomService {
 	private final ChatRoomMapper chatRoomMapper;
 	private final MemberService memberService;
 	private final GitMessageService gitMessageService;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Value("${github.email-key}")
 	private String githubEmailKey;
@@ -108,6 +112,10 @@ public class ChatRoomService {
 		ChatParticipant chatParticipant = ChatParticipant.of(member, room);
 
 		room.addParticipant(chatParticipant);
+
+		eventPublisher.publishEvent(
+			new JoinChatRoomEvent(room.getId(), memberId, member.getNickname(),
+				LocalDateTime.now()));
 
 		return ChatRoomMapper.toInviteJoinResponse(room.getId(), room.getInviteCode(),
 			room.getName());
