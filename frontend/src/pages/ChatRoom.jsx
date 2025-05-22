@@ -93,43 +93,34 @@ const ChatRoom = () => {
   };
 
 
-  useEffect(() => {
-    if (joinedOnceRef.current) return;   // 이미 한 번 호출됐다면 스킵
-    joinedOnceRef.current = true;
+useEffect(() => {
+  if (joinedOnceRef.current) return;
+  joinedOnceRef.current = true;
 
-    const checkAndJoin = async () => {
-      try {
-        const res = await fetch('http://localhost:8080/chat-rooms/join', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',                    // ← 세션(cookie) 포함
-          body: JSON.stringify({ inviteCode })
-        });
+  const checkAndJoin = async () => {
+    try {
+      const res = await axiosInstance.post('/chat-rooms/join', {
+        inviteCode, // ✅ axios는 body 대신 바로 객체
+      });
 
-        if (res.status === 401) {
-          const data = await res.json();
-          console.log("[DEBUG] 401 응답 data:", data);
-          const redirectPath = `/chat/${data.details.roomId}/${data.details.inviteCode}`;
-          navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
-          return;
-        }
+      // axios는 오류 상태(401, 500 등)이면 catch로 바로 빠짐
+      setJoined(true);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        const data = err.response.data;
+        console.log("[DEBUG] 401 응답 data:", data);
 
-        if (!res.ok) {
-          const text = await res.text(); // 응답 본문도 확인
-          console.error("[DEBUG] 실패 상태:", res.status, text);
-          throw new Error('채팅방 입장 실패');
-        }
-
-
-        // join 성공 → DB에 참가자 저장됨
-        setJoined(true);
-      } catch (err) {
-        console.error(err);
-
+        const redirectPath = `/chat/${data.details.roomId}/${data.details.inviteCode}`;
+        navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+      } else {
+        console.error("[DEBUG] 실패 상태:", err.response?.status, err.response?.data);
+        alert('채팅방 입장 실패');
       }
-    };
-    checkAndJoin();
-  }, [inviteCode, location.pathname, navigate, setJoined]);
+    }
+  };
+
+  checkAndJoin();
+}, [inviteCode, location.pathname, navigate, setJoined]);
 
   const handleContextMenu = (e) => {
     e.preventDefault();
@@ -236,7 +227,7 @@ const ChatRoom = () => {
     // 로그인 유저 정보 가져오기
     const fetchCurrentUser = async () => {
       try {
-        const res = await fetch('http://localhost:8080/user/details', {
+        const res = await fetch('/user/details', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -289,7 +280,7 @@ const ChatRoom = () => {
 
     // WebSocket 연결 설정
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('https://52.78.93.133/ws'),
       reconnectDelay: 1000,
       heartbeatIncoming: 15000,
       heartbeatOutgoing: 10000,
@@ -691,7 +682,7 @@ const handleUnifiedSend = async () => {
             flexShrink: 0,
             backgroundImage: msg.type === 'GIT'
               ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
-              : `url("http://localhost:8080/images/profile/${msg.profileImageUrl}")`,
+              : `url("https://52.78.93.133/images/profile/${msg.profileImageUrl}")`,
             backgroundSize: 'cover'
           }}>
           </div>
@@ -932,7 +923,7 @@ const handleUnifiedSend = async () => {
                     boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)'
                   }}>
                     <img
-                      src={`http://localhost:8080/images/chat/${msg.chatImageUrl}`}
+                      src={`https://52.78.93.133/images/chat/${msg.chatImageUrl}`}
                       alt="업로드된 이미지"
                       style={{
                         width: '100%',

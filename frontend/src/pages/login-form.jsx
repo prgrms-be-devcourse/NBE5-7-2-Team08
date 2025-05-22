@@ -13,7 +13,7 @@ function App() {
     params.append("email", email)
     params.append("password", password)
     try {
-      const response = await fetch("http://localhost:8080/login", {
+      const response = await fetch("https://52.78.93.133/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -42,7 +42,7 @@ function App() {
   }
   /* 추가: GitHub OAuth 로그인 핸들러 */
 const handleGithubLogin = () => {
-  window.location.href = "http://localhost:8080/oauth2/authorization/github"
+  window.location.href = "https://52.78.93.133/oauth2/authorization/github"
 }
   return (
     <div className="app-container">

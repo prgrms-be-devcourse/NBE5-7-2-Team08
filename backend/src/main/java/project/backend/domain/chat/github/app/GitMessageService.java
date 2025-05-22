@@ -32,8 +32,8 @@ public class GitMessageService {
 	private final ChatMessageRepository chatMessageRepository;
 	private final SimpMessagingTemplate messagingTemplate;
 
-	@Value("${url.ngrok}")
-	private String ngrokUrl;
+	@Value("${jwt.redirection.base}")
+	private String frontBaseUrl;
 	private final GitHubClient gitHubClient;
 	private final TokenRedisRepository tokenRedisRepository;
 
@@ -89,7 +89,7 @@ public class GitMessageService {
 	}
 
 	private String makeWebhookUrl(Long roomId) {
-		return ngrokUrl + "/github/" + roomId;
+		return frontBaseUrl + "/github/" + roomId;
 	}
 
 }

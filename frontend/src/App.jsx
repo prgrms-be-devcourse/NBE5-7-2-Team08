@@ -6,8 +6,8 @@ import Login from "./pages/login-form"
 import Signup from "./pages/signup"
 import MyPage from "./pages/profile"
 import EditProfilePage from "./pages/editprofile"
-
-
+import OAuthRedirectHandler from './components/common/OAuthRedirectHandler';
+import RedirectToBackend from './components/common/RedirectToBackend';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 
@@ -23,7 +23,8 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/myprofile" element={<MyPage />} />
         <Route path="/myprofile/edit" element={<EditProfilePage />} />
- 
+        <Route path="/oauth/success" element={<OAuthRedirectHandler />} />
+        <Route path="/login/oauth2/code/github" element={<RedirectToBackend />} />
 
       </Routes>
     </BrowserRouter>

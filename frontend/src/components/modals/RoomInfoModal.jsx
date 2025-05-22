@@ -38,7 +38,7 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
 
     if (!room?.roomId) return;
 
-    const socket = new SockJS('http://localhost:8080/ws');
+    const socket = new SockJS('https://52.78.93.133/ws');
     const stomp = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,

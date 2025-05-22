@@ -4,23 +4,33 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 
 public class CookieUtils {
 
 	public static void saveCookie(HttpServletResponse response, String accessToken) {
-		Cookie cookie = new Cookie("accessToken", accessToken);
-		cookie.setPath("/");
-		cookie.setHttpOnly(true);
-		cookie.setMaxAge(60 * 10);
-		response.addCookie(cookie);
+		ResponseCookie cookie = ResponseCookie.from("accessToken", accessToken)
+			.httpOnly(true)
+			.secure(true)
+			.sameSite("None")
+			.path("/")
+			.maxAge(60 * 10)
+			.build();
+
+		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 	}
 
 	public static void deleteCookie(HttpServletResponse response) {
-		Cookie cookie = new Cookie("accessToken", null);
-		cookie.setPath("/");
-		cookie.setHttpOnly(true);
-		cookie.setMaxAge(0);
-		response.addCookie(cookie);
+		ResponseCookie cookie = ResponseCookie.from("accessToken", "")
+			.httpOnly(true)
+			.secure(true)
+			.sameSite("None")
+			.path("/")
+			.maxAge(0)
+			.build();
+
+		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 	}
 
 	public static Optional<Cookie> getCookie(HttpServletRequest request, String name) {

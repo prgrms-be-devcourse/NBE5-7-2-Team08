@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'https://52.78.93.133',
   withCredentials: true,
 });
 
@@ -9,7 +9,7 @@ axiosInstance.interceptors.request.use(async (config) => {
   if (config.url === '/auth') return config; // /auth 요청 자체는 검사 X
 
   try {
-    const authCheck = await axios.get('http://localhost:8080/auth', {
+    const authCheck = await axiosInstance.get('/auth', {
       withCredentials: true,
     });
     if (authCheck.status === 200) {

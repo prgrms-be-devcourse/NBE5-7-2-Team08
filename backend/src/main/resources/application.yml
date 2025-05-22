@@ -6,7 +6,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
-    url: jdbc:mysql://localhost:3306/FLYING_TRUCK_PROJECT
+    url: jdbc:mysql://mydb.cbuu0s6iucb8.ap-northeast-2.rds.amazonaws.com:3306/mydb
 
   flyway:
     enabled: false
@@ -32,6 +32,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_SECRET}
+            redirect-uri: "https://d31jo47k92du0.cloudfront.net/login/oauth2/code/github"
             scope:
               - repo
               - admin:repo_hook
@@ -41,7 +42,7 @@ spring:
             user-name-attribute: login
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         show_sql: true
@@ -56,14 +57,13 @@ file:
       path: images/chat/
 
 
-url:
-  ngrok: ${NGROK_URL}
-
-
 jwt:
   redirection:
-    base: http://localhost:3000/
+    base: https://d31jo47k92du0.cloudfront.net
 
   info:
     issuer: "대한민국26세 달성 배씨 배문성의 허가가 있는 토큰이올시다."
     secret: 36b2294c1079470409d860ac57402fc152524d134a75b7cb223d92644b63adba980d90dcefd0d53c02a5cbb43c2678d49128dae2299f652f5f71033fee640686
+
+server:
+  forward-headers-strategy: native
