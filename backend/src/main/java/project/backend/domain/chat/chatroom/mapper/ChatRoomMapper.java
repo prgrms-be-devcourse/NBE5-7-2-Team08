@@ -1,17 +1,16 @@
 package project.backend.domain.chat.chatroom.mapper;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
-import project.backend.domain.chat.chatroom.dto.*;
-
+import project.backend.domain.chat.chatroom.dto.ChatParticipantResponse;
+import project.backend.domain.chat.chatroom.dto.ChatRoomNameResponse;
+import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
+import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
+import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
+import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.event.EventMessageResponse;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
@@ -75,7 +74,7 @@ public class ChatRoomMapper {
 			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
 			.participantCount(chatRoom.getParticipants().size())
-			.inviteCode(generateInviteCode())
+			.inviteCode(chatRoom.getInviteCode())
 			.build();
 	}
 

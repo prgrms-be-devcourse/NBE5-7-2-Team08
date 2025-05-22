@@ -336,13 +336,19 @@ const ChatRoom = () => {
         }, 20000);
       },
 
-      onWebSocketClose: () => {
-        console.warn("❌ WebSocket closed.");
-        if (!hasConnectedRef.current) {
-          console.warn("🔒 Initial connection failed. Possibly due to 401.");
-          navigate("/login");
-        } else {
-          console.log("🔁 Will attempt reconnect...");
+      onWebSocketClose: async () => {
+        try {
+          const res = await fetch('http://localhost:8080/auth', {
+            credentials: "include"
+          });
+
+          if (res.status === 401) {
+            console.warn("세션 만료 → 로그인 페이지로 이동");
+            window.location.href = '/login';
+          }
+        } catch (err) {
+          console.warn("네트워크 오류 → 로그인 페이지로 이동", err);
+          window.location.href = '/login';
         }
       },
 
@@ -689,9 +695,7 @@ const handleUnifiedSend = async () => {
             fontWeight: '600',
             fontSize: '16px',
             flexShrink: 0,
-            backgroundImage: msg.type === 'GIT'
-              ? 'url("https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")'
-              : `url("http://localhost:8080/images/profile/${msg.profileImageUrl}")`,
+            backgroundImage: `url("http://localhost:8080/images/profile/${msg.profileImageUrl}")`,
             backgroundSize: 'cover'
           }}>
           </div>
@@ -1067,19 +1071,18 @@ const handleUnifiedSend = async () => {
             </div>
           </div>
 
-          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', padding: '0 24px', marginTop: '8px' }}>
-            {/* ... 버튼 */}
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', padding: '0 24px', marginRight: '20px',marginTop: '15px' }}>
             <button
               onClick={() => setMenuOpen(prev => !prev)}
               style={{
-                fontSize: '20px',
+                fontSize: '30px',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
                 color: '#4a5568'
               }}
             >
-              +
+               ⋮
             </button>
 
             {/* 드롭다운 메뉴 */}
