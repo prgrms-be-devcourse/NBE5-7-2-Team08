@@ -7,7 +7,7 @@ import 'highlight.js/styles/github.css';
 import Sidebar from '../components/SideBar';
 import Header from '../components/header';
 import SearchSidebar from '../components/SearchSideBar';
-import { FaCopy, FaTrashAlt } from 'react-icons/fa';
+import { FaCopy, FaTrashAlt, FaUserPlus, FaClock } from 'react-icons/fa';
 import axiosInstance from '../components/api/axiosInstance';
 
 const ChatRoom = () => {
@@ -425,6 +425,28 @@ const ChatRoom = () => {
     setInputMode('TEXT');
   };
 
+  // 검색 결과 이동
+  const scrollToMessage = (messageId) => {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement) {
+      messageElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      
+      // 깔끔한 하이라이트
+      messageElement.style.backgroundColor = '#e8f4fd';
+      messageElement.style.borderRadius = '6px';
+      messageElement.style.transition = 'all 0.3s ease';
+      
+      // 2초 후 제거
+      setTimeout(() => {
+        messageElement.style.backgroundColor = '';
+        messageElement.style.borderRadius = '';
+      }, 2000);
+    }
+  };
+
   const handleSearch = async (keyword, page = 0) => {
     // Check if roomId is defined before proceeding
     if (!roomId) {
@@ -675,9 +697,61 @@ const handleUnifiedSend = async () => {
         );
       }
 
+      // 입장 알림 메시지 처리 (EVENT 타입)
+      if (msg.type === 'EVENT') {
+        result.push(
+          <div key={`event-${index}`} style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            margin: '12px 0', // 상하 마진 줄임
+            padding: '0 16px'
+          }}>
+            <div style={{
+              backgroundColor: '#f0f9ff',
+              borderRadius: '16px',
+              padding: '8px 16px', // 패딩 줄임
+              display: 'flex',
+              alignItems: 'center', // 가로 정렬로 변경
+              gap: '8px',
+              color: '#0369a1',
+              fontSize: '13px',
+              fontWeight: '500',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #e0f2fe',
+              maxWidth: '80%'
+            }}>
+              {/* 유저 아이콘 */}
+              <FaUserPlus size={12} style={{ flexShrink: 0 }} />
+              
+              {/* 메인 메시지 */}
+              <span>{msg.content}</span>
+              
+              {/* 입장 시간 표시 (구분선과 함께) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '12px',
+                color: '#60a5fa',
+                borderLeft: '1px solid #bfdbfe',
+                paddingLeft: '8px',
+                marginLeft: '4px'
+              }}>
+                <FaClock size={10} />
+                {formatTime(msg.joinedAt || msg.sendAt)}
+              </div>
+            </div>
+          </div>
+        );
+        return;
+      }
+
       // 메시지 추가
       result.push(
-        <div key={`msg-${index}`} style={{
+        <div key={`msg-${index}`} 
+          id={`message-${msg.messageId}`} 
+          style={{
           marginBottom: '18px',
           display: 'flex',
           alignItems: 'flex-start',
@@ -1474,6 +1548,7 @@ const handleUnifiedSend = async () => {
             totalElements={totalElements}
             onClose={() => setShowSearchSidebar(false)}
             onPageChange={(page) => handleSearch(searchKeyword, page)}
+            onMessageClick={scrollToMessage}
           />
         )}
       </div>
