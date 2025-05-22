@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
 import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
 import project.backend.domain.chat.chatroom.dto.RecentChatRoomResponse;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
+import project.backend.domain.member.entity.Member;
 import project.backend.global.config.security.dto.MemberDetails;
 import project.backend.global.exception.errorcode.AuthErrorCode;
 import project.backend.global.exception.ex.AuthException;
@@ -119,5 +121,12 @@ public class ChatRoomController {
 	@GetMapping("/check")
 	public ChatRoomNameResponse getChatRoomName(@RequestParam String inviteCode) {
 		return chatRoomService.getChatRoomByInviteCode(inviteCode);
+	}
+
+	//배문성 배포버젼 v1
+	@GetMapping("/{roomId}/check/exists")
+	public boolean existsMember(@AuthenticationPrincipal MemberDetails memberDetails,
+		@PathVariable Long roomId) {
+		return chatRoomService.checkMemberExistsInChatRoom(memberDetails, roomId);
 	}
 }

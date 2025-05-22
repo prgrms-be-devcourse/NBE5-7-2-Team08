@@ -18,7 +18,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		registry.addEndpoint("/ws")
 			.setAllowedOriginPatterns(
-				"http://flying-truck-react.s3-website.ap-northeast-2.amazonaws.com")
+				"https://d31jo47k92du0.cloudfront.net")
 			.withSockJS();
 	}
 

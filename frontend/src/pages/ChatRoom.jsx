@@ -92,36 +92,6 @@ const ChatRoom = () => {
     }
   };
 
-
-useEffect(() => {
-  if (joinedOnceRef.current) return;
-  joinedOnceRef.current = true;
-
-  const checkAndJoin = async () => {
-    try {
-      const res = await axiosInstance.post('/chat-rooms/join', {
-        inviteCode, // ✅ axios는 body 대신 바로 객체
-      });
-
-      // axios는 오류 상태(401, 500 등)이면 catch로 바로 빠짐
-      setJoined(true);
-    } catch (err) {
-      if (err.response?.status === 401) {
-        const data = err.response.data;
-        console.log("[DEBUG] 401 응답 data:", data);
-
-        const redirectPath = `/chat/${data.details.roomId}/${data.details.inviteCode}`;
-        navigate(`/login?redirect=${encodeURIComponent(redirectPath)}`);
-      } else {
-        console.error("[DEBUG] 실패 상태:", err.response?.status, err.response?.data);
-        alert('채팅방 입장 실패');
-      }
-    }
-  };
-
-  checkAndJoin();
-}, [inviteCode, location.pathname, navigate, setJoined]);
-
   const handleContextMenu = (e) => {
     e.preventDefault();
     setContextMenuVisible(true);
@@ -227,17 +197,10 @@ useEffect(() => {
     // 로그인 유저 정보 가져오기
     const fetchCurrentUser = async () => {
       try {
-        const res = await fetch('/user/details', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+        const res = await axiosInstance.get('/user/details', {
         });
 
-        if (!res.ok) {
-          throw new Error('로그인 정보를 가져오지 못했습니다.');
-        }
-
-        const user = await res.json(); // { id, email, nickname, profileImg }
+        const user = await res.data; // { id, email, nickname, profileImg }
         setCurrentUser(user);
       } catch (error) {
         console.error('사용자 정보 요청 실패:', error);
