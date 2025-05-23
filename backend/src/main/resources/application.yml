@@ -1,11 +1,44 @@
 spring:
+  session:
+    store-type: none
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
     url: jdbc:mysql://localhost:3306/FLYING_TRUCK_PROJECT
 
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  profiles:
+    active: dev
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_SECRET}
+            scope:
+              - repo
+              - admin:repo_hook
+              - user
+        provider:
+          github:
+            user-name-attribute: login
   jpa:
     hibernate:
       ddl-auto: create
@@ -13,3 +46,27 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+
+file:
+  images:
+    profile:
+      path: images/profile/
+      default: default-profile.png
+      github: github-profile.png
+    chat:
+      path: images/chat/
+
+github:
+  email-key: github@github.com
+
+url:
+  ngrok: ${NGROK_URL}
+
+
+jwt:
+  redirection:
+    base: http://localhost:3000/
+
+  info:
+    issuer: "대한민국26세 달성 배씨 배문성의 허가가 있는 토큰이올시다."
+    secret: 36b2294c1079470409d860ac57402fc152524d134a75b7cb223d92644b63adba980d90dcefd0d53c02a5cbb43c2678d49128dae2299f652f5f71033fee640686
