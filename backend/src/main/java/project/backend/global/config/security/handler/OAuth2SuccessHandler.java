@@ -37,7 +37,7 @@ import project.backend.global.config.security.redis.dao.TokenRedisRepository;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	@Value("${url.oauth-redirect}")
-	private String baseUrl;
+	private String redirectUrl;
 
 	private final JwtProvider jwtProvider;
 	private final OAuthSignUpService oAuthSignUpService;
@@ -75,12 +75,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
 		log.info("OAuth 로그인 성공: {}", member.getEmail());
 
-		String redirectUrl = UriComponentsBuilder.fromUriString(baseUrl)
-			.build().toUriString();
-
 		log.info("OAuth 로그인 후 리다이렉트 URL = {}", redirectUrl);
 		response.setStatus(HttpServletResponse.SC_OK);
-		response.setContentType("application/json");
 		response.sendRedirect(redirectUrl);
 
 	}

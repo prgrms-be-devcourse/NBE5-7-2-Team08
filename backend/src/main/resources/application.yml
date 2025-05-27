@@ -51,17 +51,18 @@ spring:
 file:
   images:
     profile:
-      path: images/profile/
+      path: /home/ubuntu/images/profile/
       default: default-profile.png
       github: github-profile.png
     chat:
-      path: images/chat/
+      path: /home/ubuntu/images/chat/
 
 github:
   email-key: github@github.com
 
 url:
   front-url: https://d31jo47k92du0.cloudfront.net
+  s3-url : http://flying-truck-react.s3-website.ap-northeast-2.amazonaws.com
   oauth-redirect: https://d31jo47k92du0.cloudfront.net/oauth/success
 
 jwt:

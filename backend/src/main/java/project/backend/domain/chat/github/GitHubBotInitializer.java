@@ -19,31 +19,39 @@ public class GitHubBotInitializer {
 
 	@Value("${file.images.profile.github}")
 	private String githubProfile;
+
+	@Value("${github.email-key}")
+	private String githubBotEmail;
+
 	private final ImageFileRepository imageFileRepository;
 	private final MemberRepository memberRepository;
 
 	@PostConstruct
 	public void init() {
+		boolean exists = memberRepository.existsByEmail(githubBotEmail);
 
-		imageFileRepository.save(ImageFile.builder()
-			.storeFileName(githubProfile)
-			.uploadFileName(githubProfile)
-			.imageType(ImageType.PROFILE_IMAGE)
-			.build());
+		if (!exists) {
+			imageFileRepository.save(ImageFile.builder()
+				.storeFileName(githubProfile)
+				.uploadFileName(githubProfile)
+				.imageType(ImageType.PROFILE_IMAGE)
+				.build());
 
-		imageFileRepository.flush();
+			imageFileRepository.flush();
 
-		Member gitHubBot = Member.builder()
-			.email("github@github.com")
-			.nickname("깃허브봇")
-			.profileImage(
-				imageFileRepository.findByStoreFileName(githubProfile).orElseThrow(
-					() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND)
-				))
-			.build();
+			Member gitHubBot = Member.builder()
+				.email(githubBotEmail)
+				.nickname("깃허브봇")
+				.profileImage(
+					imageFileRepository.findByStoreFileName(githubProfile).orElseThrow(
+						() -> new ImageFileException(ImageFileErrorCode.FILE_NOT_FOUND)
+					))
+				.build();
 
-		memberRepository.save(gitHubBot);
-		memberRepository.flush();
+			memberRepository.save(gitHubBot);
+			memberRepository.flush();
+		}
+
 	}
 
 }

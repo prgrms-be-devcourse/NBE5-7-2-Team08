@@ -24,4 +24,9 @@ public class AuthController {
 		jwtProvider.validateAuthentication(request, response);
 	}
 
+	@RequestMapping({"/oauth/success", "/chat/**", "/login", "/signup"})
+	public String forwardToReact() {
+		return "forward:/index.html";
+	}
+
 }
