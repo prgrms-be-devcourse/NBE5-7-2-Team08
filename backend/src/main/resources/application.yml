@@ -51,11 +51,11 @@ spring:
 file:
   images:
     profile:
-      path: images/profile/
+      path: /home/ubuntu/images/profile/
       default: default-profile.png
       github: github-profile.png
     chat:
-      path: images/chat/
+      path: /home/ubuntu/images/chat/
 
 github:
   email-key: github@github.com

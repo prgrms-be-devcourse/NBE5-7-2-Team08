@@ -11,3 +11,4 @@ const RedirectToBackend = () => {
 };
 
 export default RedirectToBackend;
+
