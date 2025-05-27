@@ -75,7 +75,7 @@ const ChatRoom = () => {
   // 3. 로그인 유저 정보 가져오기
   const fetchCurrentUser = async () => {
     try {
-      const res = await fetch('http://localhost:8080/user/details', {
+      const res = await fetch('https://52.78.93.133/user/details', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

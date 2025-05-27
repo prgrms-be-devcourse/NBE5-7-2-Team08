@@ -62,7 +62,7 @@ export function Header() {
           ) : (
             <a href= {"/myprofile"}>
             <img 
-              src={`http://localhost:8080/images/profile/${profileImage}`}
+              src={`https://52.78.93.133/images/profile/${profileImage}`}
               alt="User profile"
               className="profile-image"
             />
@@ -80,7 +80,7 @@ export function Header() {
             }}
             onClick={async () => {
               try {
-                const response = await fetch("http://localhost:8080/logout", {
+                const response = await fetch("https://52.78.93.133/logout", {
                   method: "POST",
                   credentials: "include" // ✅ 세션 쿠키 포함 (JSESSIONID)
                 });

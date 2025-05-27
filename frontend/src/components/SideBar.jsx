@@ -50,7 +50,7 @@ const Sidebar = () => {
     if (chatRooms.length === 0) return;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('https://52.78.93.133/ws'),
       reconnectDelay: 1000,
       heartbeatIncoming: 15000,
       heartbeatOutgoing: 10000,

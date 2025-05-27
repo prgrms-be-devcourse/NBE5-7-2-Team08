@@ -36,7 +36,7 @@ import project.backend.global.config.security.redis.dao.TokenRedisRepository;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-	@Value("${url.front-url}")
+	@Value("${url.oauth-redirect}")
 	private String baseUrl;
 
 	private final JwtProvider jwtProvider;

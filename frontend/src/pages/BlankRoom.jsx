@@ -15,7 +15,7 @@ const BlankRoom = () => {
   // 채팅방 생성 핸들러
   const handleCreateRoom = async (roomName, repoUrl) => {
     try {
-      const res = await axiosInstance.post('http://localhost:8080/chat-rooms', {
+      const res = await axiosInstance.post('/chat-rooms', {
         name: roomName,
         repositoryUrl: repoUrl
       });

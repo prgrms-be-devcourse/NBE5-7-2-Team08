@@ -1,61 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../components/api/axiosInstance';
+
+let initRan = false;
 
 const Home = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true); // 로딩 상태
 
-  useEffect(() => {
+  if (!initRan) {
+    initRan = true;
 
-    axios.get(`http://localhost:8080/auth`, {
-      withCredentials: true,
-    })
-      .catch(err => {
-        const status = err.response?.status;
-        if(status===401) {
-          navigate("/login")
-        } else {
-          console.error("에러 발생", err);
-          navigate("/login")
-        }
-      })
+    (async () => {
+      try {
+        const res = await axiosInstance.get('/chat-rooms/recent');
+        const { roomId, inviteCode } = res.data;
 
-    axios.get(`http://localhost:8080/chat-rooms/recent`, { 
-        withCredentials: true,
-
-    })
-      .then(res => {
-        const roomId = res.data.roomId;
-        const inviteCode = res.data.inviteCode;
-        console.log(roomId);
         if (roomId) {
-            navigate(`/chat/${roomId}/${inviteCode}`);
+          navigate(`/chat/${roomId}/${inviteCode}`);
         } else {
-            console.warn('roomId가 응답에 없음');
-            navigate('/blank'); // fallback
+          console.warn('roomId 없음');
+          navigate('/blank');
         }
-      })
-      .catch(err => {
+
+      } catch (err) {
+        console.error('🚨 에러 발생:', err);
         const status = err.response?.status;
+
         if (status === 404) {
-          navigate('/blank'); // 참여 중인 채팅방 없음
+          navigate('/blank');
         } else if (status === 401) {
-          navigate('/login'); // 인증 필요
+          alert('인증이 필요합니다.');
+          navigate('/login');
         } else {
-          console.error('채팅방 이동 실패:', status);
-          alert(err);
-
+          alert('서버 오류로 채팅방 이동 실패');
+          navigate('/');
         }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [navigate]);
-
-  if(loading){
-    return <div>가장 최근 채팅방으로 이동 중...</div>;
+      }
+    })();
   }
+
+  return <div>가장 최근 채팅방으로 이동 중...</div>;
 };
 
 export default Home;

@@ -62,6 +62,7 @@ github:
 
 url:
   front-url: https://d31jo47k92du0.cloudfront.net
+  oauth-redirect: https://d31jo47k92du0.cloudfront.net/oauth/success
 
 jwt:
   info:

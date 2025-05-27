@@ -1,24 +1,33 @@
+// axiosInstance.jsx
+
 import axios from 'axios';
 
+// ✅ 따로 fallback axios 사용
+const rawAxios = axios.create({
+  baseURL: 'https://52.78.93.133',
+
+});
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'https://52.78.93.133',
   withCredentials: true,
 });
 
 axiosInstance.interceptors.request.use(async (config) => {
-  if (config.url === '/auth') return config; // /auth 요청 자체는 검사 X
+  if (config.url === '/auth') return config;
 
   try {
-    const authCheck = await axios.get('http://localhost:8080/auth', {
+    const authCheck = await rawAxios.get('/auth', {
       withCredentials: true,
     });
+
     if (authCheck.status === 200) {
-      return config; // 통과 시 요청 진행
+      return config;
     }
   } catch (err) {
     console.warn('토큰 검사 실패 → 로그인 페이지로 이동');
+    alert("로그인해주세요");
     window.location.href = '/login';
-    throw new axios.Cancel('인증 실패로 요청 취소됨'); // 요청 중단
   }
 }, (error) => {
   return Promise.reject(error);
