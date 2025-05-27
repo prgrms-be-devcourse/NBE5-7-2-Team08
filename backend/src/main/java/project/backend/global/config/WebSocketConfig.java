@@ -1,5 +1,6 @@
 package project.backend.global.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -12,12 +13,15 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    @Value("${url.front-url}")
+    private String frontUrl;
+
     //클라이언트가 연결할 웹소켓 엔드포인트 지정
     //해당 주소로 접속 시 웹소켓 핸드셰이크 커넥션 생성
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-            .setAllowedOriginPatterns("http://localhost:3000")
+            .setAllowedOriginPatterns(frontUrl)
             .withSockJS();
     }
 
