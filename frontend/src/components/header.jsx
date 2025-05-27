@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import "./header.css"
 import axiosInstance from "./api/axiosInstance"
+import { Link } from "react-router-dom"
 
 export function Header() {
   const [memberId, setMemberId] = useState(null)
@@ -35,9 +36,9 @@ export function Header() {
   return (
     <header className="header">
       <div className="container">
-          <a href="/">
-            <img src="/images/devchat-logo.png" alt="DevChat Logo" className="header-logo-image" />     
-          </a>
+          <Link to="/">
+            <img src="/images/devchat-logo.png" alt="DevChat Logo" className="header-logo-image" />
+          </Link>
         <div className="profile-container">
           {isLoading ? (
             <div className="profile-image-loading"></div>
