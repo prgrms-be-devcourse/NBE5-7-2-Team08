@@ -16,22 +16,36 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
 
 	//fixme chat_participant에 join_at 추가해서 가장 마지막에 참여한 채팅방을 반환하도록 변경
 	@Query("""
-		select cp.chatRoom.id 
-		from ChatParticipant cp 
-		where cp.participant.email = :email 
-		order by cp.chatRoom.id desc 
-		limit 1
-		""")
-	Optional<Long> findMostLargeRoomIdByEmail(@Param("email") String email);
+        SELECT cp.chatRoom.id 
+        FROM ChatParticipant cp 
+        WHERE cp.participant.email = :email 
+        AND cp.isActive = true
+        ORDER BY cp.chatRoom.id DESC
+        LIMIT 1
+        """)
+	Optional<Long> findMostLargeRoomIdByEmailAndIsActiveTrue(@Param("email") String email);
 
 	boolean existsByParticipantIdAndChatRoomId(Long participantId, Long chatRoomId);
 
 	@EntityGraph(attributePaths = {"participant"})
-	List<ChatParticipant> findByChatRoom(ChatRoom chatRoom);
+	@Query("SELECT cp FROM ChatParticipant cp WHERE cp.chatRoom = :chatRoom AND cp.isActive = true")
+	List<ChatParticipant> findByChatRoomAndIsActiveTrue(@Param("chatRoom") ChatRoom chatRoom);
 
 	Optional<ChatParticipant> findByChatRoomIdAndParticipantId(Long chatRoomId, Long participantId);
 
 	Optional<ChatParticipant> findByChatRoom_IdAndParticipant_Id(Long ChatRoomId,
 		Long participantId);
+
+	@Query("""
+		SELECT cp FROM ChatParticipant cp 
+		WHERE cp.chatRoom.id = :roomId 
+		AND cp.participant.id = :participantId 
+		AND cp.isActive = true
+		""")
+	Optional<ChatParticipant> findByChatRoomIdAndParticipantIdAndIsActiveTrue(
+		@Param("roomId") Long roomId,
+		@Param("participantId") Long participantId
+	);
+
 }
 

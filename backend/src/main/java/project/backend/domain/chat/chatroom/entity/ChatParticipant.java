@@ -33,6 +33,9 @@ public class ChatParticipant {
 	@JoinColumn(name = "room_id")
 	private ChatRoom chatRoom;
 
+	@Column(name = "is_active", nullable = false)
+	private Boolean isActive = true;
+
 	@Builder
 	public ChatParticipant(Long id, Member participant, ChatRoom chatRoom) {
 		this.id = id;
@@ -47,5 +50,8 @@ public class ChatParticipant {
 			.build();
 	}
 
+	public void leave() {
+		this.isActive = false;
+	}
 }
 

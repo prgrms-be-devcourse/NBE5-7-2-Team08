@@ -11,6 +11,7 @@ import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 import project.backend.domain.chat.chatmessage.entity.ChatMessageSearch;
 import project.backend.domain.chat.chatmessage.entity.MessageType;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
+import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.github.dto.GitMessageDto;
@@ -71,6 +72,17 @@ public class ChatMessageMapper {
 			.content(joinEvent.nickname() + "님이 입장했습니다.")
 			.type(MessageType.EVENT)
 			.sendAt(joinEvent.joinAt())
+			.build();
+	}
+
+	public ChatMessage toEntityWithEventLeave(ChatRoom room, ChatParticipant participant,
+		LeaveChatRoomEvent leaveEvent) {
+		return ChatMessage.builder()
+			.chatRoom(room)
+			.sender(participant)
+			.content(leaveEvent.nickname() + "님이 나갔습니다.")
+			.type(MessageType.EVENT)
+			.sendAt(LocalDateTime.now())
 			.build();
 	}
 

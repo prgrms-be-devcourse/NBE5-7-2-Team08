@@ -11,16 +11,26 @@ import project.backend.domain.chat.chatmessage.entity.ChatMessage;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
-	@Query(value = """
-		select m.room_id 
-		from chat_message m 
-		join chat_participant cp on cp.room_id = m.room_id 
-		join member mb on cp.member_id = mb.member_id 
-		where mb.email = :email 
-		order by m.send_at desc 
-		limit 1
-		""", nativeQuery = true)
-	Optional<Long> findMostRecentRoomIdByMemberEmail(@Param("email") String email);
+//	@Query(value = """
+//		select m.room_id
+//		from chat_message m
+//		join chat_participant cp on cp.room_id = m.room_id
+//		join member mb on cp.member_id = mb.member_id
+//		where mb.email = :email
+//		order by m.send_at desc
+//		limit 1
+//		""", nativeQuery = true)
+//	Optional<Long> findMostRecentRoomIdByMemberEmail(@Param("email") String email);
+
+	@Query("""
+        SELECT cm.chatRoom.id 
+        FROM ChatMessage cm
+        JOIN ChatParticipant cp ON cp.chatRoom.id = cm.chatRoom.id AND cp.participant.email = :email
+        WHERE cp.isActive = true
+        ORDER BY cm.sendAt DESC
+        LIMIT 1
+        """)
+	Optional<Long> findMostRecentRoomIdByMemberEmailAndIsActiveTrue(@Param("email") String email);
 
 	@Query(value = """
 		SELECT * 
@@ -33,4 +43,5 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 	List<ChatMessage> findByChatRoom_IdOrderBySendAtAsc(Long roomId);
 
 	List<ChatMessage> findByIdIn(List<Long> ids);
+
 }

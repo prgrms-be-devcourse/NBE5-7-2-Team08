@@ -22,6 +22,7 @@ import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
+import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.github.app.GitMessageService;
@@ -100,7 +101,6 @@ public class ChatRoomService {
 	@Transactional
 	public InviteJoinResponse joinChatRoom(String inviteCode, Long memberId) {
 		ChatRoom room = findByInviteCode(inviteCode);
-
 		Member member = memberService.getMemberById(memberId);
 
 		boolean isAlreadyParticipant = chatParticipantRepository
@@ -125,15 +125,16 @@ public class ChatRoomService {
 
 	public Long getMostRecentRoomId(String email) {
 
-		// 1순위: 가장 최근 메시지가 도착한 채팅방
-		Optional<Long> recentRoomId = chatMessageRepository.findMostRecentRoomIdByMemberEmail(
-			email);
+		// 1순위: 가장 최근 메시지가 도착한 활성 참가자인 채팅방
+		Optional<Long> recentRoomId = chatMessageRepository
+			.findMostRecentRoomIdByMemberEmailAndIsActiveTrue(email);
 		if (recentRoomId.isPresent()) {
 			return recentRoomId.get();
 		}
 
-		// 2순위: 채팅방에 메세지가 없을 때 참여중인 채팅방 중 roomId가 가장 큰 채팅방
-		Optional<Long> fallbackRoomId = chatParticipantRepository.findMostLargeRoomIdByEmail(email);
+		// 2순위: 활성 참가자인 채팅방 중 roomId가 가장 큰 채팅방
+		Optional<Long> fallbackRoomId = chatParticipantRepository
+			.findMostLargeRoomIdByEmailAndIsActiveTrue(email);
 		if (fallbackRoomId.isPresent()) {
 			return fallbackRoomId.get();
 		}
@@ -144,7 +145,7 @@ public class ChatRoomService {
 	}
 
 	public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
-		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId,
+		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findActiveChatRoomsByParticipantId(memberId,
 			pageable);
 
 		return allRoomsByOwnerId.map(ChatRoomMapper::toProfileResponse);
@@ -154,7 +155,7 @@ public class ChatRoomService {
 	@Transactional(readOnly = true)
 	public Page<ChatRoomNameResponse> findChatRoomsByMemberId(Long memberId, Pageable pageable) {
 
-		Page<ChatRoom> chatRooms = chatRoomRepository.findChatRoomsByParticipantId(
+		Page<ChatRoom> chatRooms = chatRoomRepository.findActiveChatRoomsByParticipantId(
 			memberId, pageable);
 
 		if (chatRooms.isEmpty()) {
@@ -170,9 +171,7 @@ public class ChatRoomService {
 		ChatRoom chatRoom = chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
-		List<ChatParticipant> participants = chatParticipantRepository.findByChatRoom(chatRoom);
-
-		Member owner = chatRoom.getOwner();
+		List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomAndIsActiveTrue(chatRoom);
 
 		return participants.stream()
 			.map(ChatRoomMapper::toParticipantResponse).collect(Collectors.toList());
@@ -187,11 +186,16 @@ public class ChatRoomService {
 			throw new ChatRoomException(ChatRoomErrorCode.OWNER_CANNOT_LEAVE);
 		}
 
-		ChatParticipant participant = chatParticipantRepository.findByChatRoomIdAndParticipantId(
-				roomId, memberId)
+		ChatParticipant participant = chatParticipantRepository
+			.findByChatRoomIdAndParticipantIdAndIsActiveTrue(roomId, memberId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.NOT_PARTICIPANT));
 
-		room.getParticipants().remove(participant);
+		participant.leave();
+
+		eventPublisher.publishEvent(
+			new LeaveChatRoomEvent(roomId, memberId,
+				participant.getParticipant().getNickname())
+		);
 	}
 
 	private ChatRoom findByInviteCode(String inviteCode) {

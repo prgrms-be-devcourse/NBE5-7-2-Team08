@@ -15,6 +15,7 @@ import project.backend.domain.chat.chatroom.app.ChatRoomService;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
 import project.backend.domain.chat.chatroom.dto.event.EventMessageResponse;
+import project.backend.domain.chat.chatroom.dto.event.LeaveChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
@@ -52,6 +53,30 @@ public class ChatRoomEventListener {
 		// 채팅방 인원 갱신 트리거 전송
 		simpMessagingTemplate.convertAndSend("/topic/chat/" + joinEvent.roomId() + "/refresh",
 			joinEvent.roomId());
+	}
+
+	@Async
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void handleMemberLeave(LeaveChatRoomEvent leaveEvent) {
+		ChatRoom chatRoom = chatRoomService.getRoomById(leaveEvent.roomId());
+
+		ChatParticipant participant = chatParticipantRepository
+			.findByChatRoomIdAndParticipantId(leaveEvent.roomId(), leaveEvent.memberId())
+			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
+
+		ChatMessage message = chatMessageMapper.toEntityWithEventLeave(chatRoom, participant,
+			leaveEvent);
+		chatMessageRepository.save(message);
+
+		EventMessageResponse eventMessageResponse = ChatRoomMapper.toLeaveEventMessageResponse(
+			leaveEvent);
+
+		simpMessagingTemplate.convertAndSend("/topic/chat/" + leaveEvent.roomId(),
+			eventMessageResponse);
+
+		simpMessagingTemplate.convertAndSend("/topic/chat/" + leaveEvent.roomId() + "/refresh",
+			leaveEvent.roomId());
+
 	}
 
 	private ChatParticipant getParticipantByRoomAndMember(Long roomId, Long memberId) {
