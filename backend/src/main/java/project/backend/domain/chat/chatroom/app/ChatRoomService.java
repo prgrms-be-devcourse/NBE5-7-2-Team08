@@ -157,10 +157,6 @@ public class ChatRoomService {
 		Page<ChatRoom> chatRooms = chatRoomRepository.findChatRoomsByParticipantId(
 			memberId, pageable);
 
-		if (chatRooms.isEmpty()) {
-			throw new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND);
-		}
-
 		return chatRooms.map(ChatRoomMapper::toListResponse);
 	}
 

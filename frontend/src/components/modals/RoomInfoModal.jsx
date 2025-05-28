@@ -9,6 +9,7 @@ import {
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import axiosInstance from "../api/axiosInstance"
+import transportList from 'sockjs-client/lib/transport-list';
 
 const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
   const [participants, setParticipants] = useState([]);
@@ -37,7 +38,10 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
 
     if (!room?.roomId) return;
 
-    const socket = new SockJS('https://52.78.93.133/ws');
+    const socket = new SockJS('https://52.78.93.133/ws', null, {
+        transports: ['websocket'],
+        withCredentials: true
+    });
     const stomp = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,

@@ -34,7 +34,7 @@ public class ChatRoom {
 
 	private String inviteCode;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id")
 	private Member owner;
 
@@ -45,7 +45,8 @@ public class ChatRoom {
 	private List<ChatParticipant> participants = new ArrayList<>();
 
 	@Builder
-	public ChatRoom(String name, LocalDateTime createdAt, String repositoryUrl,String inviteCode, Member owner,
+	public ChatRoom(String name, LocalDateTime createdAt, String repositoryUrl, String inviteCode,
+		Member owner,
 		List<ChatMessage> messages, List<ChatParticipant> participants) {
 		this.name = name;
 		this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();

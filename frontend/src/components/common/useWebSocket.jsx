@@ -16,7 +16,10 @@ const useWebSocket = ({
 
     useEffect(() => {
         const client = new Client({
-            webSocketFactory: () => new SockJS('https://52.78.93.133/ws'),
+            webSocketFactory: () => new SockJS('https://52.78.93.133/ws', null, {
+                transports: ['websocket'],
+                withCredentials: true
+            }),
             reconnectDelay: 1000,
             heartbeatIncoming: 15000,
             heartbeatOutgoing: 10000,
