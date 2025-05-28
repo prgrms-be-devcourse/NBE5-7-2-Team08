@@ -74,7 +74,9 @@ public class ChatRoomMapper {
 		return MyChatRoomResponse.builder()
 			.roomId(chatRoom.getId())
 			.roomName(chatRoom.getName())
-			.participantCount(chatRoom.getParticipants().size())
+			.participantCount((int) chatRoom.getParticipants().stream()
+				.filter(ChatParticipant::getIsActive)
+				.count())	//참여중인(isActive==true) 참가자의 수만 세도록
 			.inviteCode(chatRoom.getInviteCode())
 			.build();
 	}

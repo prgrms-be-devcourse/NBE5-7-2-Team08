@@ -145,7 +145,7 @@ public class ChatRoomService {
 	}
 
 	public Page<MyChatRoomResponse> findAllRoomsByOwnerId(Long memberId, Pageable pageable) {
-		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findActiveChatRoomsByParticipantId(memberId,
+		Page<ChatRoom> allRoomsByOwnerId = chatRoomRepository.findAllRoomsByOwnerId(memberId,
 			pageable);
 
 		return allRoomsByOwnerId.map(ChatRoomMapper::toProfileResponse);
