@@ -20,7 +20,6 @@ const RoomHeader= ({roomName, inviteCode, onSearch, onLeaveRoom}) => {
             setTimeout(() => {
                 setShowLeaveSuccess(false);
                 navigate('/'); 
-       
             }, 500);
         } else {
             alert(result.error);
