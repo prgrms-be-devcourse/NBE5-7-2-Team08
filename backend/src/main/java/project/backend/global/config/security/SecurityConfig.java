@@ -61,8 +61,7 @@ public class SecurityConfig {
 
 			.authorizeHttpRequests(auth -> {
 				auth
-					.requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error",
-						"/github/**")
+					.requestMatchers("/signup", "/login", "/", "/login/oauth2/**", "/error")
 					.anonymous()
 
 					.requestMatchers("/auth", "/oauth/**", "/webhook", "/github/**","/ws/**")

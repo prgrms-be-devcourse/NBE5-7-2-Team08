@@ -2,6 +2,8 @@
 import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"  // ← useLocation 추가
 import "../App.css"
+import { Link } from "react-router-dom" 
+
 function App() {
   const navigate = useNavigate()
   const location = useLocation()  // ← 현재 URL 정보
@@ -20,7 +22,6 @@ function App() {
           "Accept": "application/json",
         },
         body: params.toString(),
-        credentials: "include",
       })
       if (!response.ok) {
         const errorData = await response.json()
@@ -48,13 +49,13 @@ const handleGithubLogin = () => {
     <div className="app-container">
       <div className="form-container">
         <div className="logo-container">
-          <a href="/">
+          <Link to="/">
             <img
               src="/images/devchat-logo.png"
               alt="DevChat Logo"
               className="logo-image"
             />
-          </a>
+          </Link>
         </div>
         <h1 className="heading">Welcome Back!</h1>
          <form onSubmit={handleSubmit}>

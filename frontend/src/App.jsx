@@ -12,7 +12,6 @@ import RedirectToBackend from './components/common/RedirectToBackend';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 
-
 function App() {
   return (
     <BrowserRouter>
