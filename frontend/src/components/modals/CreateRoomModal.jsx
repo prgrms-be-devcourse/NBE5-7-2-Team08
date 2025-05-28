@@ -25,11 +25,17 @@ const CreateRoomModal = ({ onClose, onSubmit }) => {
     setShowConfirmation(true);
   };
 
-  // 최종 생성 확인
-  const confirmCreate = () => {
+  const confirmCreate = async () => {
     if (roomName.trim()) {
       setLoading(true);
-      onSubmit(roomName.trim(), repoUrl.trim());
+      try {
+        await onSubmit(roomName.trim(), repoUrl.trim()); // 실패 시 catch로 넘어감
+      } catch (error) {
+        console.error("방 생성 실패:", error);
+        onClose(); // 실패했을 때 모달 닫기
+      } finally {
+        setLoading(false); // 항상 로딩 상태 해제
+      }
     }
   };
 

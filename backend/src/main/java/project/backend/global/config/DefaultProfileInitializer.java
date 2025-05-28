@@ -5,6 +5,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.imagefile.ImageFile;
 import project.backend.domain.imagefile.ImageFileRepository;
 import project.backend.domain.imagefile.ImageType;
@@ -13,24 +14,23 @@ import project.backend.domain.imagefile.ImageType;
 @RequiredArgsConstructor
 public class DefaultProfileInitializer {
 
-    private final ImageFileRepository imageFileRepository;
+	private final ImageFileRepository imageFileRepository;
 
-    @Value("${file.images.profile.default}")
-    private String defaultProfile;
+	@Value("${file.images.profile.default}")
+	private String defaultProfile;
 
-    @PostConstruct
-    public void initializeDefaultProfile() {
-        boolean exists = imageFileRepository.existsByStoreFileName(defaultProfile);
+	@PostConstruct
+	public void initializeDefaultProfile() {
+		boolean exists = imageFileRepository.existsByStoreFileName(defaultProfile);
 
-        if (!exists) {
-            imageFileRepository.save(ImageFile.builder()
-                    .storeFileName(defaultProfile)
-                    .uploadFileName(defaultProfile)
-                    .imageType(ImageType.PROFILE_IMAGE)
-                    .build());
+		if (!exists) {
+			imageFileRepository.save(ImageFile.builder()
+				.storeFileName(defaultProfile)
+				.uploadFileName(defaultProfile)
+				.imageType(ImageType.PROFILE_IMAGE)
+				.build());
 
-            imageFileRepository.flush();
-        }
-
-    }
+			imageFileRepository.flush();
+		}
+	}
 }

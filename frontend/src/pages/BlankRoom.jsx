@@ -34,12 +34,14 @@ const BlankRoom = () => {
              // JS 오류 메시지
         '방 생성에 실패했습니다.'    // 기본 메시지
       );
+
+      throw err;
     }
   };
 
 
   // 채팅방 참여 핸들러
-  const handleJoinRoom = async (inviteCode) => {
+   const handleJoinRoom = async (inviteCode) => {
     try {
       const res = await axiosInstance.post('/chat-rooms/join', {
         inviteCode
@@ -51,12 +53,11 @@ const BlankRoom = () => {
       navigate(`/chat/${data.id}/${data.inviteCode}`);
     } catch (err) {
       alert(err.response?.data?.message || err.message || "방 입장에 실패했습니다.");
+      throw err;
     }
-  };
-  
+  };  
   // 버튼 스타일 공통화
   const buttonStyle = {
-    backgroundColor: '#4a6cf7',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -65,11 +66,9 @@ const BlankRoom = () => {
     fontSize: '14px',
     fontWeight: '500',
     cursor: 'pointer',
-    transition: 'background-color 0.2s',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
   };
 
   return (

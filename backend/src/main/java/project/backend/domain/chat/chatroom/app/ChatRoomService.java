@@ -1,23 +1,27 @@
 package project.backend.domain.chat.chatroom.app;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.backend.domain.chat.chatroom.dao.ChatParticipantRepository;
 import project.backend.domain.chat.chatroom.dao.ChatRoomRepository;
+import project.backend.domain.chat.chatroom.dto.ChatParticipantResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomNameResponse;
 import project.backend.domain.chat.chatroom.dto.ChatRoomRequest;
 import project.backend.domain.chat.chatroom.dto.ChatRoomSimpleResponse;
 import project.backend.domain.chat.chatroom.dto.InviteJoinResponse;
 import project.backend.domain.chat.chatroom.dto.MyChatRoomResponse;
 import project.backend.domain.chat.chatroom.dto.ParticipantResponse;
+import project.backend.domain.chat.chatroom.dto.event.JoinChatRoomEvent;
 import project.backend.domain.chat.chatroom.entity.ChatParticipant;
 import project.backend.domain.chat.chatroom.entity.ChatRoom;
 import project.backend.domain.chat.github.app.GitMessageService;
@@ -29,7 +33,6 @@ import org.springframework.data.domain.Pageable;
 import project.backend.domain.chat.chatmessage.dao.ChatMessageRepository;
 import project.backend.domain.chat.chatroom.dto.ChatRoomDetailResponse;
 import project.backend.domain.chat.chatroom.mapper.ChatRoomMapper;
-import project.backend.global.config.security.dto.MemberDetails;
 import project.backend.global.exception.errorcode.MemberErrorCode;
 import project.backend.global.exception.ex.ChatRoomException;
 import project.backend.global.exception.errorcode.ChatRoomErrorCode;
@@ -43,13 +46,15 @@ public class ChatRoomService {
 
 
 	private final ChatRoomRepository chatRoomRepository;
-	private final MemberRepository memberRepository;
 	private final ChatMessageRepository chatMessageRepository;
 	private final ChatParticipantRepository chatParticipantRepository;
 	private final ChatRoomMapper chatRoomMapper;
 	private final MemberService memberService;
 	private final GitMessageService gitMessageService;
+	private final ApplicationEventPublisher eventPublisher;
 
+	@Value("${github.email-key}")
+	private String githubEmailKey;
 
 	@Transactional
 	public ChatRoomSimpleResponse createChatRoom(ChatRoomRequest request, Long ownerId) {
@@ -62,15 +67,24 @@ public class ChatRoomService {
 
 		ChatRoom savedRoom = chatRoomRepository.save(chatRoom);
 
-		gitMessageService.registerWebhook(request.getRepositoryUrl(),
-			savedRoom.getId(), owner.getId()); //지은 추가(웹훅 자동 등록)
+		if (request.getRepositoryUrl() != null) {
+			gitMessageService.registerWebhook(request.getRepositoryUrl(),
+				savedRoom.getId(), owner.getId()); //웹훅 자동 등록
+			joinGitHubBot(savedRoom); //깃허브봇 채팅 참가
+		}
 
 		return chatRoomMapper.toSimpleResponse(savedRoom);
 	}
 
+	private void joinGitHubBot(ChatRoom room) {
+		Member githubBot = memberService.getMemberByEmail(githubEmailKey);
+		ChatParticipant gitParticipant = ChatParticipant.of(githubBot, room);
+		room.addParticipant(gitParticipant);
+	}
+
 	@Transactional(readOnly = true)
 	public String getInviteCode(Long roomId) {
-		ChatRoom room = findById(roomId);
+		ChatRoom room = getRoomById(roomId);
 
 		return room.getInviteCode();
 	}
@@ -99,6 +113,10 @@ public class ChatRoomService {
 		ChatParticipant chatParticipant = ChatParticipant.of(member, room);
 
 		room.addParticipant(chatParticipant);
+
+		eventPublisher.publishEvent(
+			new JoinChatRoomEvent(room.getId(), memberId, member.getNickname(),
+				LocalDateTime.now()));
 
 		return ChatRoomMapper.toInviteJoinResponse(room.getId(), room.getInviteCode(),
 			room.getName());
@@ -148,7 +166,7 @@ public class ChatRoomService {
 
 	// 채팅방의 참가자 목록 조회
 	@Transactional(readOnly = true)
-	public List<ParticipantResponse> getParticipants(Long roomId) {
+	public List<ChatParticipantResponse> getParticipants(Long roomId) {
 		ChatRoom chatRoom = chatRoomRepository.findById(roomId)
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 
@@ -157,15 +175,13 @@ public class ChatRoomService {
 		Member owner = chatRoom.getOwner();
 
 		return participants.stream()
-			.map(participant -> new ParticipantResponse(participant.getParticipant().getNickname(),
-				participant.getParticipant().getId().equals(owner.getId())))
-			.collect(Collectors.toList());
+			.map(ChatRoomMapper::toParticipantResponse).collect(Collectors.toList());
 	}
 
 	//임창인
 	@Transactional
 	public void leaveChatRoom(Long roomId, Long memberId) {
-		ChatRoom room = findById(roomId);
+		ChatRoom room = getRoomById(roomId);
 
 		if (room.getOwner().getId().equals(memberId)) {
 			throw new ChatRoomException(ChatRoomErrorCode.OWNER_CANNOT_LEAVE);
@@ -183,11 +199,6 @@ public class ChatRoomService {
 			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
 	}
 
-	private ChatRoom findById(Long roomId) {
-		return chatRoomRepository.findById(roomId)
-			.orElseThrow(() -> new ChatRoomException(ChatRoomErrorCode.CHATROOM_NOT_FOUND));
-	}
-
 	@Transactional(readOnly = true)
 	public ChatRoom getRoomById(Long roomId) {
 		return chatRoomRepository.findById(roomId)
@@ -198,12 +209,6 @@ public class ChatRoomService {
 	public ChatRoomNameResponse getChatRoomByInviteCode(String inviteCode) {
 		ChatRoom room = findByInviteCode(inviteCode);
 		return ChatRoomMapper.toListResponse(room);
-	}
-
-	@Transactional(readOnly = true)
-	public boolean checkMemberExistsInChatRoom(MemberDetails memberDetails, Long roomId) {
-		Long memberId = memberDetails.getId();
-		return chatRoomRepository.existsByRoomIdAndParticipantId(roomId, memberId);
 	}
 }
 

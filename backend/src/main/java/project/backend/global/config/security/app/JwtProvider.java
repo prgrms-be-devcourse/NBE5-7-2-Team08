@@ -8,7 +8,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.nimbusds.oauth2.sdk.token.TokenEncoding;
 import io.lettuce.core.RedisException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,7 +53,7 @@ import project.backend.global.exception.ex.TokenException;
 @RequiredArgsConstructor
 public class JwtProvider {
 
-	public static final Long TOKEN_VALIDATION_SECOND = 60 * 60L;
+	public static final Long TOKEN_VALIDATION_SECOND = 100000L;
 	public static final Long REFRESH_TOKEN_VALIDATION_SECOND = 7 * 24 * 60 * 60L;
 
 	private final TokenRedisRepository tokenRedisRepository;

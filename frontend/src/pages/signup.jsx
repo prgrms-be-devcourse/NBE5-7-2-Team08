@@ -20,7 +20,7 @@ function App() {
   };
 
   try {
-    const response = await fetch("https://52.78.93.133/signup", {
+    const response = await fetch("https://52.78.93.133//signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -79,7 +79,7 @@ function App() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="비밀번호를 입력해주세요"
               required
-              minLength="12"
+              minLength="4" //수정
             />
           </div>
 

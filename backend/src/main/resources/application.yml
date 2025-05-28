@@ -51,19 +51,21 @@ spring:
 file:
   images:
     profile:
-      path: images/profile/
+      path: /home/ubuntu/images/profile/
       default: default-profile.png
+      github: github-profile.png
     chat:
-      path: images/chat/
+      path: /home/ubuntu/images/chat/
 
+github:
+  email-key: github@github.com
+
+url:
+  front-url: https://d31jo47k92du0.cloudfront.net
+  s3-url : http://flying-truck-react.s3-website.ap-northeast-2.amazonaws.com
+  oauth-redirect: https://d31jo47k92du0.cloudfront.net/oauth/success
 
 jwt:
-  redirection:
-    base: https://d31jo47k92du0.cloudfront.net
-
   info:
     issuer: "대한민국26세 달성 배씨 배문성의 허가가 있는 토큰이올시다."
     secret: 36b2294c1079470409d860ac57402fc152524d134a75b7cb223d92644b63adba980d90dcefd0d53c02a5cbb43c2678d49128dae2299f652f5f71033fee640686
-
-server:
-  forward-headers-strategy: native

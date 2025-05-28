@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import project.backend.global.exception.errorcode.GitHubErrorCode;
 import project.backend.global.exception.ex.GitHubException;
+import reactor.core.publisher.Mono;
 
 @Component
 @RequiredArgsConstructor
@@ -30,24 +31,24 @@ public class GitHubClient {
 			.retrieve()
 			.onStatus(HttpStatusCode::is4xxClientError, error ->
 				error.bodyToMono(String.class)
-					.map(errorBody -> {
+					.flatMap(errorBody -> {
 						if (error.statusCode() == HttpStatus.UNAUTHORIZED) {
 							log.error(errorBody);
-							return new GitHubException(GitHubErrorCode.INVALID_TOKEN);
+							return Mono.error(new GitHubException(GitHubErrorCode.INVALID_TOKEN));
 						} else if (error.statusCode() == HttpStatus.NOT_FOUND) {
 							log.error(errorBody);
-							return new GitHubException(GitHubErrorCode.REPO_NOT_FOUND);
+							return Mono.error(new GitHubException(GitHubErrorCode.REPO_NOT_FOUND));
 						} else {
 							log.error("GitHubErrorCode.CLIENT_ERROR: {}", errorBody);
-							return new GitHubException(GitHubErrorCode.CLIENT_ERROR);
+							return Mono.error(new GitHubException(GitHubErrorCode.CLIENT_ERROR));
 						}
 					})
 			)
 			.onStatus(HttpStatusCode::is5xxServerError, error ->
 				error.bodyToMono(String.class)
-					.map(errorBody -> {
+					.flatMap(errorBody -> {
 						log.error("GitHubErrorCode.CLIENT_ERROR: {}", errorBody);
-						return new GitHubException(GitHubErrorCode.SERVER_ERROR);
+						return Mono.error(new GitHubException(GitHubErrorCode.SERVER_ERROR));
 					})
 			)
 			.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {

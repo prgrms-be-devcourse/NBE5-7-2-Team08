@@ -8,8 +8,8 @@ import MyPage from "./pages/profile"
 import EditProfilePage from "./pages/editprofile"
 import OAuthRedirectHandler from './components/common/OAuthRedirectHandler';
 import RedirectToBackend from './components/common/RedirectToBackend';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 
 function App() {

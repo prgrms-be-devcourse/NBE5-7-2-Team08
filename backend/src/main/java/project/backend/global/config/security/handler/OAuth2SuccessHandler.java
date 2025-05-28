@@ -5,9 +5,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -29,7 +36,8 @@ import project.backend.global.config.security.redis.dao.TokenRedisRepository;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-	private String redirectUrl = "https://d31jo47k92du0.cloudfront.net/oauth/success";
+	@Value("${url.oauth-redirect}")
+	private String redirectUrl;
 
 	private final JwtProvider jwtProvider;
 	private final OAuthSignUpService oAuthSignUpService;
@@ -70,6 +78,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 		log.info("OAuth 로그인 후 리다이렉트 URL = {}", redirectUrl);
 		response.setStatus(HttpServletResponse.SC_OK);
 		response.sendRedirect(redirectUrl);
+
 	}
 
 
