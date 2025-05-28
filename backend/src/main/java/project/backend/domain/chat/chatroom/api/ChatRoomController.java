@@ -124,10 +124,4 @@ public class ChatRoomController {
 		return chatRoomService.getChatRoomByInviteCode(inviteCode);
 	}
 
-	//배문성 배포버젼 v1
-	@GetMapping("/{roomId}/check/exists")
-	public boolean existsMember(@AuthenticationPrincipal MemberDetails memberDetails,
-		@PathVariable Long roomId) {
-		return chatRoomService.checkMemberExistsInChatRoom(memberDetails, roomId);
-	}
 }

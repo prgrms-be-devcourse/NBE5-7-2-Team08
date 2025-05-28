@@ -26,17 +26,5 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
 	Page<ChatRoom> findAllRoomsByOwnerId(Long ownerId, Pageable pageable);
 
-
-	@Query("""
-		SELECT CASE WHEN COUNT(cr) > 0 THEN true ELSE false END
-		FROM ChatRoom cr
-		JOIN cr.participants cp
-		WHERE cr.id = :roomId
-		AND cp.participant.id = :memberId
-		""")
-	boolean existsByRoomIdAndParticipantId(
-		@Param("roomId") Long roomId,
-		@Param("memberId") Long memberId
-	);
 }
 
