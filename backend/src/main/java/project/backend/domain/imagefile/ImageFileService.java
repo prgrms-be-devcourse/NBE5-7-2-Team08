@@ -1,6 +1,7 @@
 package project.backend.domain.imagefile;
 
 
+import com.amazonaws.services.s3.AmazonS3;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,11 +24,11 @@ public class ImageFileService {
 
 	private final ImageFileRepository imageFileRepository;
 
-	@Value("${file.images.profile.path}")
-	private String profilePath;
+	private final AmazonS3 amazonS3;
 
-	@Value("${file.images.chat.path}")
-	private String chatImagePath;
+	@Value("${cloud.aws.s3.bucket}")
+	private String bucket;
+
 
 	@Transactional
 	public ImageFile saveImageFile(MultipartFile file, ImageType type) {
