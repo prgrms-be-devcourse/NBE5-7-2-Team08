@@ -127,7 +127,7 @@ const SearchSidebar = ({
               
               <div style={{ display: 'flex' }}>
                 <img
-                  src={`https://52.78.93.133/images/profile/${msg.profileImageUrl}`}
+                  src={`https://d31jo47k92du0.cloudfront.net/images/profile/${msg.profileImageUrl}`}
                   alt="profile"
                   style={{
                     width: '40px',

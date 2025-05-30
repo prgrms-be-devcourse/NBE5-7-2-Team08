@@ -344,7 +344,7 @@ const MessageContent = ({msg, editMessageId, editContent, setEditContent, handle
         boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)'
       }}>
         <img
-          src={`https://52.78.93.133/images/chat/${msg.chatImageUrl}`}
+          src={`https://d31jo47k92du0.cloudfront.net/images/chat/${msg.chatImageUrl}`}
           alt="업로드된 이미지"
           style={{
             width: '100%',

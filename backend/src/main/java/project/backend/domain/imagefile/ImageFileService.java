@@ -1,6 +1,7 @@
 package project.backend.domain.imagefile;
 
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import project.backend.global.exception.ex.ImageFileException;
 import project.backend.global.exception.errorcode.ImageFileErrorCode;
+import software.amazon.awssdk.core.exception.SdkClientException;
 
 @Slf4j
 @Service
@@ -53,8 +55,7 @@ public class ImageFileService {
 			metadata.setContentLength(file.getSize());
 
 			// 업로드 실행
-			amazonS3.putObject(new PutObjectRequest(bucket, s3Key, file.getInputStream(), metadata)
-				.withCannedAcl(CannedAccessControlList.PublicRead));
+			amazonS3.putObject(new PutObjectRequest(bucket, s3Key, file.getInputStream(), metadata));
 
 			ImageFile imageFile = ImageFile.of(storeFileName, uploadFileName, type);
 			imageFileRepository.save(imageFile);
@@ -62,7 +63,7 @@ public class ImageFileService {
 			return imageFile;
 
 			// db에 메타데이터 저장
-		} catch (IOException e) {
+		} catch (IOException | SdkClientException | AmazonServiceException e) {
 			log.error("파일 업로드 실패",e);
 			throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
 		}
@@ -71,8 +72,8 @@ public class ImageFileService {
 
 	private String getS3Key(ImageType type, String storeFileName) {
 		return switch (type) {
-			case PROFILE_IMAGE -> "profile" + "/" + storeFileName;
-			case CHAT_IMAGE -> "chat" + "/" + storeFileName;
+			case PROFILE_IMAGE -> "images/profile/" + storeFileName;
+			case CHAT_IMAGE -> "images/chat/" + storeFileName;
 			default -> throw new ImageFileException(ImageFileErrorCode.INVALID_ROUTE);
 		};
 	}
