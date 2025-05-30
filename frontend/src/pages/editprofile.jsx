@@ -92,7 +92,7 @@ const EditProfilePage = () => {
             <div className={styles["profile-picture-section"]}>
               <div className={styles["profile-picture"]}>
                 <img
-                  src={selectedImage || `https://52.78.93.133/images/profile/${userDetails.profileImg}`}
+                  src={selectedImage || `https://d31jo47k92du0.cloudfront.net/images/profile/${userDetails.profileImg}`}
                   alt="Profile"
                   className={styles["profile-image"]}
                   onError={(e) => {

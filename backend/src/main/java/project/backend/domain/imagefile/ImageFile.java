@@ -34,19 +34,12 @@ public class ImageFile {
     @Enumerated(EnumType.STRING)
     private ImageType imageType;
 
-    public static ImageFile ofProfile(String storeFileName, String uploadFileName) {
+    public static ImageFile of(String storeFileName, String uploadFileName, ImageType imageType) {
         return ImageFile.builder()
                 .storeFileName(storeFileName)
                 .uploadFileName(uploadFileName)
-                .imageType(ImageType.PROFILE_IMAGE)
+                .imageType(imageType)
                 .build();
     }
 
-    public static ImageFile ofChat(String storeFileName, String uploadFileName) {
-        return ImageFile.builder()
-                .storeFileName(storeFileName)
-                .uploadFileName(uploadFileName)
-                .imageType(ImageType.CHAT_IMAGE)
-                .build();
-    }
 }

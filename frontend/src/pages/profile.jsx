@@ -80,7 +80,7 @@ const ProfilePage = () => {
                   <div className={styles["profile-image-in-page"]}>
                     <img
                       className={styles["profile-image"]}
-                      src={`https://52.78.93.133/images/profile/${userDetails.profileImg}`}
+                      src={`https://d31jo47k92du0.cloudfront.net/images/profile/${userDetails.profileImg}`}
                       alt="Profile"
                       onError={(e) => {
                         e.target.onerror = null;

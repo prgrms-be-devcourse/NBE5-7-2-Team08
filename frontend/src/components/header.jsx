@@ -63,7 +63,7 @@ export function Header() {
           ) : (
             <a href= {"/myprofile"}>
             <img 
-              src={`https://52.78.93.133/images/profile/${profileImage}`}
+              src={`https://d31jo47k92du0.cloudfront.net/images/profile/${profileImage}`}
               alt="User profile"
               className="profile-image"
             />

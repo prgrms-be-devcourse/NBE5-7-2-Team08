@@ -2,9 +2,10 @@ package project.backend.domain.imagefile;
 
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,14 +30,13 @@ public class ImageFileService {
 	@Value("${cloud.aws.s3.bucket}")
 	private String bucket;
 
-
 	@Transactional
 	public ImageFile saveImageFile(MultipartFile file, ImageType type) {
 
-		log.info("Saving profile image file");
+		log.info("Saving image file");
 		String uploadFileName = file.getOriginalFilename();
 
-		checkExtension(uploadFileName);
+		checkFileValidation(uploadFileName);
 		checkFileTypeIsImage(file.getContentType());
 
 		String extension = uploadFileName.substring(uploadFileName.lastIndexOf(".")).toLowerCase();
@@ -44,32 +44,38 @@ public class ImageFileService {
 		checkFileExtensionIsImage(extension);
 
 		String storeFileName = UUID.randomUUID() + extension;
-
-		Path savePath;
-		if (type.equals(ImageType.PROFILE_IMAGE)) {
-			savePath = Paths.get(profilePath, storeFileName);
-		} else if (type.equals(ImageType.CHAT_IMAGE)) {
-			savePath = Paths.get(chatImagePath, storeFileName);
-		} else {
-			throw new ImageFileException(ImageFileErrorCode.INVALID_ROUTE);
-		}
-
-		ImageFile imageFile = ImageFile.ofProfile(storeFileName, uploadFileName);
-		imageFileRepository.saveAndFlush(imageFile);
-		log.info("Saved Metadata of profile image file");
+		String s3Key = getS3Key(type, storeFileName);
 
 		try {
-			log.info("📁 저장 경로: {}", savePath.toAbsolutePath());
-			file.transferTo(savePath);
+			// 메타데이터 설정
+			ObjectMetadata metadata = new ObjectMetadata();
+			metadata.setContentType(file.getContentType());
+			metadata.setContentLength(file.getSize());
+
+			// 업로드 실행
+			amazonS3.putObject(new PutObjectRequest(bucket, s3Key, file.getInputStream(), metadata)
+				.withCannedAcl(CannedAccessControlList.PublicRead));
+
+			ImageFile imageFile = ImageFile.of(storeFileName, uploadFileName, type);
+			imageFileRepository.save(imageFile);
+
 			return imageFile;
 
+			// db에 메타데이터 저장
 		} catch (IOException e) {
-			imageFileRepository.delete(imageFile);
-			log.error("파일 저장 중 IOException 발생", e);
+			log.error("파일 업로드 실패",e);
 			throw new ImageFileException(ImageFileErrorCode.FILE_SAVE_FAILURE);
 		}
+
 	}
 
+	private String getS3Key(ImageType type, String storeFileName) {
+		return switch (type) {
+			case PROFILE_IMAGE -> "profile" + "/" + storeFileName;
+			case CHAT_IMAGE -> "chat" + "/" + storeFileName;
+			default -> throw new ImageFileException(ImageFileErrorCode.INVALID_ROUTE);
+		};
+	}
 
 	private void checkFileExtensionIsImage(String extension) {
 		List<String> imageExtensions = List.of(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp");
@@ -84,7 +90,7 @@ public class ImageFileService {
 		}
 	}
 
-	private void checkExtension(String fileName) {
+	private void checkFileValidation(String fileName) {
 		if (fileName == null || !fileName.contains(".")) {
 			throw new ImageFileException(ImageFileErrorCode.INVALID_IMAGE_TYPE);
 		}

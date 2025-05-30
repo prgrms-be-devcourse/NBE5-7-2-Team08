@@ -85,7 +85,7 @@ const RoomInfoModal = ({ room, sidebarRef, onClose, showToast }) => {
         }}>
           {participant.profileImageUrl && !imageError ? (
             <img
-              src={`https://52.78.93.133/images/profile/${participant.profileImageUrl}`}
+              src={`https://d31jo47k92du0.cloudfront.net/images/profile/${participant.profileImageUrl}`}
               alt={participant.nickname}
               style={{
                 width: '100%',
