@@ -1,6 +1,7 @@
 package project.backend.domain.chat.github;
 
 import jakarta.annotation.PostConstruct;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,14 +25,17 @@ public class GitHubBotInitializer {
 	@PostConstruct
 	public void init() {
 
-		Member gitHubBot = Member.builder()
-			.username(githubUsername)
-			.nickname(githubUsername)
-			.profileImage(githubProfile)
-			.build();
+		if(memberRepository.findByUsername(githubUsername).isEmpty()){
+			Member gitHubBot = Member.builder()
+				.username(githubUsername)
+				.nickname(githubUsername)
+				.profileImage(githubProfile)
+				.build();
 
-		memberRepository.save(gitHubBot);
-		memberRepository.flush();
+			memberRepository.save(gitHubBot);
+			memberRepository.flush();
+		}
+
 	}
 
 }
