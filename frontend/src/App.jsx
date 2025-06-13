@@ -9,6 +9,7 @@ import Signup from './pages/signup';
 import MyPage from './pages/profile';
 import EditProfilePage from './pages/editprofile';
 import ErrorPage from './pages/ErrorPage';
+import RedirectToBackend from './components/common/RedirectToBackend';
 
 import Layout from './Layout';
 
@@ -28,6 +29,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/error" element={<ErrorPage />} />
+        <Route path="/login/oauth2/code/github" element={<RedirectToBackend />} />
       </Routes>
     </BrowserRouter>
   );
