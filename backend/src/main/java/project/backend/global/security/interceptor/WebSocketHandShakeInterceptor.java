@@ -33,6 +33,8 @@ public class WebSocketHandShakeInterceptor implements HandshakeInterceptor {
 			Optional<Cookie> accessTokenCookie = CookieUtils.getCookie(httpServletRequest,
 				"accessToken");
 
+			log.info("Access token!!!!!: {}", accessTokenCookie.orElse(null));
+
 			if (accessTokenCookie.isPresent()) {
 				String token = accessTokenCookie.get().getValue();
 				Authentication authentication = jwtProvider.getAuthentication(token);
