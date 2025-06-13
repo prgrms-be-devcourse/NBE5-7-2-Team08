@@ -32,7 +32,7 @@ const useWebSocket = ({
         }
 
         const client = new Client({
-            webSocketFactory: () => new WebSocket(process.env.REACT_APP_WEB_SOCKET_UR),
+            webSocketFactory: () => new WebSocket(process.env.REACT_APP_WEB_SOCKET_URL),
             reconnectDelay: 1000,
             heartbeatIncoming: 15000,
             heartbeatOutgoing: 10000,
