@@ -354,6 +354,7 @@ public class ChatRoomService {
 
     @Async("unreadCountExecutor")
     public void incrementUnreadCount(Long roomId, Long senderId) {
+        log.info("비동기 스레드: {}", Thread.currentThread().getName());
         Set<String> members = redisTemplate.opsForSet().members("room:members:" + roomId);
 
         if (members == null || members.isEmpty()) {
