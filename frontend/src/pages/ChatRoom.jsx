@@ -11,9 +11,12 @@ import RoomDeletedModal from '../components/modals/RoomDeletedModal';
 import CodeReviewModal from '../components/modals/CodeReviewModal.jsx';
 import { useAlarm } from '../context/AlarmContext';
 import { useUser } from '../context/UserContext';
+import Toast from '../components/common/Toast';
 
 const PAGE_SIZE = 30;
 const INDEX_OFFSET = 100000;
+
+const preloadedCache = new Set();
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -28,6 +31,8 @@ const formatDate = (dateString) => {
 const preloadImages = (urls) => {
   urls.forEach(url => {
     if (!url) return;
+    if (preloadedCache.has(url)) return;
+    preloadedCache.add(url);
     const img = new Image();
     img.src = `${process.env.REACT_APP_PROFILE_IMAGE_URL}/${url}`;
   });
@@ -65,7 +70,9 @@ const VirtuosoMessageItem = React.memo(({
 
 const ChatRoom = () => {
   const { inviteCode } = useParams();
-  const { currentUser } = useUser()
+  const { currentUser } = useUser();
+  const { getAlarmStatus, updateAlarm, enterRoom, clearUnread } = useAlarm();
+
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState('');
   const [inputMode, setInputMode] = useState('TEXT');
@@ -81,6 +88,7 @@ const ChatRoom = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [inputHeight, setInputHeight] = useState(0);
+  const [toast, setToast] = useState({ open: false, message: '' });
 
   const virtuosoRef = useRef(null);
   const inputAreaRef = useRef(null);
@@ -119,16 +127,12 @@ const ChatRoom = () => {
 
   const isFullyLoaded = initState.isRoomValidated && initState.isMessagesLoaded && !!currentUser;
 
-  const { getAlarmStatus, updateAlarm } = useAlarm();
-
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
   useEffect(() => { roomIdRef.current = roomId; }, [roomId]);
 
   useEffect(() => {
-    if (currentUser?.profileImageUrl) {
-      preloadImages([currentUser.profileImageUrl])
-    }
-  }, [currentUser])
+    if (currentUser?.profileImageUrl) preloadImages([currentUser.profileImageUrl]);
+  }, [currentUser]);
 
   useEffect(() => {
     const el = inputAreaRef.current;
@@ -149,6 +153,13 @@ const ChatRoom = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (roomId) {
+      enterRoom(roomId)
+      clearUnread(roomId)
+    }
+  }, [roomId, enterRoom, clearUnread])
+
   const handleCodeClick = (message) => {
     setSelectedCodeMessage(message);
     setShowCodeModal(true);
@@ -168,7 +179,7 @@ const ChatRoom = () => {
       setInitState((prev) => ({ ...prev, hasError: true, errorMessage: '방 정보를 불러올 수 없습니다.' }));
       return null;
     }
-  }, [inviteCode]);
+  }, [inviteCode, updateAlarm]);
 
   const fetchMessages = useCallback(async (cursorValue = null, isLoadMore = false) => {
     if (!roomId) return;
@@ -199,9 +210,7 @@ const ChatRoom = () => {
         setMessages(sorted);
         if (sorted.length > 0) {
           const lastMsg = sorted[sorted.length - 1];
-          if (lastMsg.sequence != null) {
-            lastSequenceRef.current = lastMsg.sequence;
-          }
+          if (lastMsg.sequence != null) lastSequenceRef.current = lastMsg.sequence;
         }
         setInitState((prev) => ({ ...prev, isMessagesLoaded: true }));
       }
@@ -244,9 +253,7 @@ const ChatRoom = () => {
   };
 
   const handleProfileUpdate = useCallback((data) => {
-    if (data?.profileImageUrl) {
-      preloadImages([data.profileImageUrl]);
-    }
+    if (data?.profileImageUrl) preloadImages([data.profileImageUrl]);
     setMessages((prev) =>
       prev.map((msg) =>
         msg.senderId === data.userId
@@ -259,18 +266,11 @@ const ChatRoom = () => {
   const { stompClientRef } = useWebSocket({
     roomId: initState.isRoomValidated ? roomId : null,
     onMessageReceived: (received) => {
-      if (received?.profileImageUrl) {
-        preloadImages([received.profileImageUrl]);
-      }
-
+      if (received?.profileImageUrl) preloadImages([received.profileImageUrl]);
       if (received.sequence != null && lastSequenceRef.current != null) {
-        if (received.sequence - lastSequenceRef.current > 1) {
-          fetchMissingMessages();
-        }
+        if (received.sequence - lastSequenceRef.current > 1) fetchMissingMessages();
       }
-      if (received.sequence != null) {
-        lastSequenceRef.current = received.sequence;
-      }
+      if (received.sequence != null) lastSequenceRef.current = received.sequence;
 
       setMessages((prev) => {
         const updated = prev.some((m) => m.messageId === received.messageId)
@@ -280,18 +280,13 @@ const ChatRoom = () => {
       });
 
       const isMine = received.senderId === currentUserRef.current?.id;
-
       if (isMine) {
         setShowScrollButton(false);
         setNewMessageCount(0);
         isAtBottomRef.current = true;
-        setTimeout(() => {
-          virtuosoRef.current?.scrollToIndex({ index: 999999, behavior: 'auto' });
-        }, 30);
+        setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: 999999, behavior: 'auto' }), 30);
       } else if (isAtBottomRef.current) {
-        setTimeout(() => {
-          virtuosoRef.current?.scrollToIndex({ index: 999999, behavior: 'auto' });
-        }, 30);
+        setTimeout(() => virtuosoRef.current?.scrollToIndex({ index: 999999, behavior: 'auto' }), 30);
       } else {
         setNewMessageCount((prev) => prev + 1);
         setShowScrollButton(true);
@@ -299,6 +294,10 @@ const ChatRoom = () => {
     },
     onProfileUpdate: handleProfileUpdate,
     onRoomDeleted: (e) => setDeleteNotification(e.content),
+    onError: (message) => {
+      setToast({ open: true, message });
+      setTimeout(() => setToast({ open: false, message: '' }), 3000);
+    },
   });
 
   useEffect(() => {
@@ -616,6 +615,8 @@ const ChatRoom = () => {
           isOpen={!!deleteNotification} message={deleteNotification}
           onClose={() => setDeleteNotification(null)}
         />
+
+        <Toast open={toast.open} message={toast.message} />
       </div>
     </>
   );

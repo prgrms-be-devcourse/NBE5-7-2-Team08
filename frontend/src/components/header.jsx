@@ -70,10 +70,8 @@ export function HeaderWithNotifications() {
 
   const fetchUnreadCount = async () => {
     try {
-      console.log("📊 Fetching unread notification count...")
       const response = await axiosInstance.get("/notification/unread?page=0&size=1")
       setUnreadNotificationCount(response.data.totalElements)
-      console.log("📊 Unread count updated:", response.data.totalElements)
     } catch (err) {
       console.error("Error fetching unread count:", err)
     }
@@ -83,7 +81,6 @@ export function HeaderWithNotifications() {
 
   useEffect(() => {
     if (currentUser?.username) {
-      console.log("🔌 Initializing for user:", currentUser.username)
       fetchUnreadCount()
     }
   }, [currentUser?.username])
@@ -482,7 +479,7 @@ export function HeaderWithNotifications() {
         <div className={styles.container}>
           <div className={styles.leftSection}>
             <Link to="/" className={styles.logoLink}>
-              <img src="/images/devchat-logo.png" alt="DevChat Logo" className={styles.headerLogoImage} />
+              <img src="/images/devchat-logo.webp" alt="DevChat Logo" className={styles.headerLogoImage} />
             </Link>
             <div className={styles.divider} />
             <Link

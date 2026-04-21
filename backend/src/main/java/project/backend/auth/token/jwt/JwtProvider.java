@@ -38,7 +38,6 @@ public class JwtProvider {
     public static final Long REFRESH_TOKEN_VALIDATION_SECOND = 7 * 24 * 60 * 60L;
 
     private final TokenRedisRepository tokenRedisRepository;
-    private final MemberRepository memberRepository;
 
     @Value("${jwt.info.secret}")
     private String SECRET_KEY;
@@ -157,8 +156,11 @@ public class JwtProvider {
     public void replaceAccessToken(HttpServletResponse response,
         String token) {
         try {
-            TokenRedis tokenRedis = tokenRedisRepository.findByAccessToken(token)
-                .orElseThrow(() -> new CustomJwtException(TokenErrorCode.NOT_FOUND_TOKEN));
+            DecodedJWT decoded = JWT.decode(token);
+            Long memberId = Long.valueOf(decoded.getClaim("id").asString());
+
+            TokenRedis tokenRedis = tokenRedisRepository.findById(memberId)
+                    .orElseThrow(() -> new CustomJwtException(TokenErrorCode.NOT_FOUND_TOKEN));
 
             String refreshToken = tokenRedis.getRefreshToken();
 
@@ -189,6 +191,5 @@ public class JwtProvider {
             log.error(e.getMessage());
             throw new CustomJwtException(TokenErrorCode.UNKNOWN_ERROR);
         }
-
     }
 }

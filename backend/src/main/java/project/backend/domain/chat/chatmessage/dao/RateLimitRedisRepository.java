@@ -1,8 +1,11 @@
 package project.backend.domain.chat.chatmessage.dao;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,18 +14,31 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RateLimitRedisRepository {
 
-    private final StringRedisTemplate redisTemplate;
+    private static final String TOKEN_BUCKET_KEY = "token_bucket:%d";
+    private static final int COOLDOWN_SECONDS = 5;
 
-    private static final String USER_RATE_LIMIT_KEY = "rate:user:%d";
-    private static final String INCR_SCRIPT =
-            "local count = redis.call('INCR', KEYS[1]); " +
-                    "if count == 1 then redis.call('EXPIRE', KEYS[1], 1) end; " +
-                    "return count;";
+    private final RedisTemplate<String, String> redisTemplate;
+    private final DefaultRedisScript<Long> tokenBucketScript;
 
-    public Long increment(Long userId) {
-        return redisTemplate.execute(
-                new DefaultRedisScript<>(INCR_SCRIPT, Long.class),
-                List.of(String.format(USER_RATE_LIMIT_KEY, userId))
+    @PostConstruct
+    public void init() {
+        tokenBucketScript.setScriptSource(
+                new ResourceScriptSource(new ClassPathResource("scripts/token_bucket.lua"))
         );
+        tokenBucketScript.setResultType(Long.class);
+    }
+
+    public boolean tryConsume(Long userId, int cost, int refillRate, int capacity) {
+        long now = System.currentTimeMillis();
+        Long result = redisTemplate.execute(
+                tokenBucketScript,
+                List.of(String.format(TOKEN_BUCKET_KEY, userId)),
+                String.valueOf(now),
+                String.valueOf(refillRate),
+                String.valueOf(capacity),
+                String.valueOf(cost),
+                String.valueOf(COOLDOWN_SECONDS)
+        );
+        return Long.valueOf(1L).equals(result);
     }
 }

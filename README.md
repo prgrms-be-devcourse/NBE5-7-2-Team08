@@ -105,6 +105,4 @@ https://thedevchat.duckdns.org
 <br>
 
 ## 🌐시스템 구성도
-<img width="3946" height="3728" alt="image" src="https://github.com/user-attachments/assets/b056fbed-d1d7-4299-8a82-7830362e2a31" />
-
-
+<img width="3946" height="3728" alt="제목 없는 다이어그램" src="https://github.com/user-attachments/assets/b361ae26-72f4-479b-97a2-ac1f86ebcde2" />
