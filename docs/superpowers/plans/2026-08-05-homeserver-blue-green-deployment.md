@@ -176,7 +176,7 @@ git commit -m "feat: define blue-green backend slots"
 
 **인터페이스:**
 
-- 실행: `/srv/devchat/deploy.sh ghcr.io/lunarbae628/devchat-backend:dev-abcdef0`
+- 수동 실행: `COMPOSE_FILE=/srv/devchat/current/docker-compose.yml /srv/devchat/current/deploy.sh ghcr.io/lunarbae628/devchat-backend:dev-abcdef0`
 - 필수 상태: `/srv/devchat/.env`, `/srv/gateway/nginx/conf.d/devchat-upstream.conf`, `devchat_proxy_net`, `gateway-nginx`
 - 생성 상태: `/srv/devchat/deployment.images.yml`, `/srv/devchat/active_color`, `/srv/devchat/deploy.lock`
 - 테스트용 환경변수: `DEPLOY_DIR`, `GATEWAY_UPSTREAM_FILE`, `DOCKER_BIN`, `CURL_BIN`, `SLEEP_BIN`, `FLOCK_BIN`, `HEALTH_MAX_ATTEMPTS`, `HEALTH_INTERVAL_SECONDS`, `DRAIN_SECONDS`, `PUBLIC_HEALTH_URL`
@@ -534,7 +534,7 @@ echo "EOF" >> "$GITHUB_OUTPUT"
 
 - [ ] **4단계: native OpenSSH Deploy job 구현**
 
-`deploy`는 `needs: publish`와 서버 배포 전용 concurrency를 가진다. SSH 개인키와 known hosts는 secret을 환경변수로 전달해 파일 권한 `600`으로 저장한다. `/srv/devchat/.env` 존재 여부를 먼저 확인한 다음 두 인프라 파일만 SCP로 전송한다.
+`deploy`는 `needs: publish`와 서버 배포 전용 concurrency를 가진다. SSH 개인키와 known hosts는 secret을 환경변수로 전달해 파일 권한 `600`으로 저장한다. `/srv/devchat/.env` 존재 여부를 먼저 확인한 다음 두 인프라 파일을 SHA별 release 디렉터리로 함께 전송한다.
 
 GHCR 로그인은 토큰을 SSH 표준입력으로 전달한다.
 
@@ -544,11 +544,12 @@ printf '%s' "$GHCR_READ_TOKEN" | ssh -p "$HOME_SERVER_PORT" \
   "docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"
 ```
 
-그 다음 Publish output을 인자로 배포한다.
+그 다음 서버 잠금 안에서 release 디렉터리의 Compose와 스크립트에 Publish output을 전달하고, 성공한 release를 `/srv/devchat/current`로 전환한다.
 
 ```bash
-ssh -p "$HOME_SERVER_PORT" "$HOME_SERVER_USER@$HOME_SERVER_HOST" \
-  "/srv/devchat/deploy.sh '${{ needs.publish.outputs.image }}'"
+COMPOSE_FILE="$release_dir/docker-compose.yml" \
+  DEPLOY_LOCK_HELD=true \
+  "$release_dir/deploy.sh" '${{ needs.publish.outputs.image }}'
 ```
 
 - [ ] **5단계: YAML과 보안 계약 검증**

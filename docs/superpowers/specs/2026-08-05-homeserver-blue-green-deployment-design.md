@@ -144,6 +144,8 @@ upstream devchat_backend {
 
 스크립트는 이미지를 자동 prune하지 않는다. 이전 이미지를 보존하면 운영자가 복구할 수 있고 롤백에 필요한 이미지를 실수로 제거하지 않는다.
 
+첫 CI 배포가 성공한 뒤 수동 배포가 필요하면 `/srv/devchat/current/deploy.sh`를 사용하되, 같은 release의 Compose를 `COMPOSE_FILE=/srv/devchat/current/docker-compose.yml`로 지정한다. 스크립트가 자체 배포 잠금을 얻으므로 CI와 겹치면 즉시 실패한다.
+
 ## 레거시 배포 파일 정리
 
 저장소 루트의 기존 `docker-compose.yml`은 EC2형 단일 배포와 Prometheus 컨테이너를 함께 정의하던 경로이며, 홈서버 Blue/Green 구조에서는 `backend/infra/docker-compose.yml`로 대체한다. 함께 사용되던 루트 `prometheus.yml`도 현재 Gateway·DevChat 배포 범위에서 참조되지 않아 제거한다. 모니터링을 다시 도입할 때는 애플리케이션 배포와 분리된 홈서버 관측 스택으로 구성한다.
