@@ -17,9 +17,10 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${RDS_USERNAME}
-    password: ${RDS_PASSWORD}
-    url: jdbc:mysql://${RDS_ENDPOINT}:3306/FLYING_TRUCK_PROJECT
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
+
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -40,9 +41,8 @@ spring:
 
   data:
     redis:
-      sentinel:
-        master: mymaster
-        nodes: sentinel1:26379,sentinel2:26379,sentinel3:26379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
       timeout: 500ms
       connect-timeout: 500ms
       lettuce:
@@ -55,7 +55,7 @@ spring:
           github:
             client-id: ${OAUTH_GITHUB_CLIENT_ID}
             client-secret: ${OAUTH_GITHUB_SECRET}
-            redirect-uri: https://thedevchat.duckdns.org/api/login/oauth2/code/github
+            redirect-uri: ${OAUTH_GITHUB_REDIRECT_URI}
             scope:
               - repo
               - admin:repo_hook
@@ -73,7 +73,7 @@ spring:
         format_sql: false
 
 resilience4j:
-  circuit breaker:
+  circuitbreaker:
     instances:
       redis:
         failure-rate-threshold: 50
@@ -118,7 +118,7 @@ cloud:
     region:
       static: ap-northeast-2
     s3:
-      bucket: devchatimage
+      bucket: ${AWS_S3_BUCKET}
 
 jwt:
   redirection:
@@ -131,7 +131,7 @@ encrypt:
 
 logging:
   level:
-    org.springframework.security: DEBUG
+    org.springframework.security: INFO
 
 management:
   endpoints:

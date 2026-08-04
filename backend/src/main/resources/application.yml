@@ -3,10 +3,9 @@ spring:
     store-type: none
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: chat
-    password: 0218
-    url: jdbc:mysql://localhost:3306/devchat
+    username: ${DB_USERNAME:chat}
+    password: ${DB_PASSWORD:}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/devchat}
 
   flyway:
     enabled: false
@@ -31,8 +30,8 @@ spring:
       client:
         registration:
           github:
-            client-id: Ov23liGeyq42UqwWePKp
-            client-secret: 3dd1f3e58f3e9691b95dfb901f5f3d74412eabca
+            client-id: ${OAUTH_GITHUB_CLIENT_ID:}
+            client-secret: ${OAUTH_GITHUB_SECRET:}
             scope:
               - repo
               - admin:repo_hook
@@ -68,8 +67,8 @@ url:
 cloud:
   aws:
     credentials:
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_KEY}
+      access-key: ${AWS_ACCESS_KEY:}
+      secret-key: ${AWS_SECRET_KEY:}
     region:
       static: ap-northeast-2
     s3:
@@ -81,4 +80,4 @@ jwt:
 
   info:
     issuer: "대한민국26세 달성 배씨 배문성의 허가가 있는 토큰이올시다."
-    secret: 36b2294c1079470409d860ac57402fc152524d134a75b7cb223d92644b63adba980d90dcefd0d53c02a5cbb43c2678d49128dae2299f652f5f71033fee640686
+    secret: ${JWT_SECRET:local-development-only-jwt-secret-change-me}
