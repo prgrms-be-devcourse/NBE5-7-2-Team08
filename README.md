@@ -6,7 +6,7 @@
 실시간 채팅서비스를 깃허브와 연결하여 좀 더 쉬운 개발을 도울 수 있는 채팅서비스입니다.
 
 ## 서비스 주소
-https://thedevchat.duckdns.org
+https://devchat.o-r.kr/
 
 ## 💻개발 환경 및 기술 스택
 <div align=center>
