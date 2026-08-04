@@ -1,169 +1,166 @@
-name: CI/CD
+name: CI/CD — Backend
+
 on:
   push:
-    branches: [ "prod, dev" ]
+    branches: [dev]
   pull_request:
-    branches: [ "prod, dev" ]
-  workflow_dispatch:
+    branches: [dev]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  frontend:
+  verify:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Docker build & push
-        uses: docker/build-push-action@v5
-        with:
-          context: frontend
-          platforms: linux/amd64
-          push: true
-          tags: limkanghyun/dev-chat-frontend:latest
-          build-args: |
-            REACT_APP_BASE_API_URL=${{ secrets.REACT_APP_BASE_API_URL }}
-            REACT_APP_WEB_SOCKET_URL=${{ secrets.REACT_APP_WEB_SOCKET_URL }}
-            REACT_APP_PROFILE_IMAGE_URL=${{ secrets.REACT_APP_PROFILE_IMAGE_URL }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-  backend:
-    runs-on: ubuntu-latest
-    env:
-      RDS_USERNAME: ${{ secrets.RDS_USERNAME }}
-      RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
-      RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
-      OAUTH_GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
-      OAUTH_GITHUB_SECRET: ${{ secrets.OAUTH_GITHUB_SECRET }}
-      DOMAIN_URL: ${{ secrets.DOMAIN_URL }}
-      IMAGE_URL: ${{ secrets.IMAGE_URL }}
-      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
-      AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v4
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
+          java-version: "21"
           distribution: temurin
-          java-version: 21
-      - name: Gradle 캐시
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - run: chmod +x ./gradlew
-      - name: Test
-        run: ./gradlew test
-      - run: ./gradlew clean build -x test
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run backend tests
+        working-directory: backend
+        run: ./gradlew clean test --no-daemon
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Docker build & push
-        uses: docker/build-push-action@v5
+
+      - name: Verify deployment contracts
+        run: |
+          bash -n backend/infra/deploy.sh
+          bash backend/infra/tests/compose_contract_test.sh
+          bash backend/infra/tests/deploy_test.sh
+          bash backend/infra/tests/workflow_contract_test.sh
+
+      - name: Verify backend image build
+        uses: docker/build-push-action@v6
         with:
           context: backend
-          platforms: linux/amd64
+          file: backend/Dockerfile
+          push: false
+          tags: devchat-backend:verify
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  publish:
+    if: github.event_name == 'push'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.tags.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create image tags
+        id: tags
+        shell: bash
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          IMAGE="ghcr.io/lunarbae628/devchat-backend:dev-$SHORT_SHA"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          {
+            echo "tags<<EOF"
+            echo "ghcr.io/lunarbae628/devchat-backend:dev"
+            echo "$IMAGE"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile
           push: true
-          tags: limkanghyun/dev-chat-backend:latest
+          tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
+    if: github.event_name == 'push'
+    needs: publish
     runs-on: ubuntu-latest
-    needs: [frontend, backend]
-    if: github.ref == 'refs/heads/prod'
+    permissions:
+      contents: read
+    concurrency:
+      group: devchat-homeserver
+      cancel-in-progress: false
+    env:
+      HOME_SERVER_HOST: ${{ secrets.HOME_SERVER_HOST }}
+      HOME_SERVER_PORT: ${{ secrets.HOME_SERVER_PORT }}
+      HOME_SERVER_USER: ${{ secrets.HOME_SERVER_USER }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          aws-region: ap-northeast-2
-
-      - name: Zip deployment files
+      - name: Configure SSH
+        env:
+          HOME_SERVER_SSH_KEY: ${{ secrets.HOME_SERVER_SSH_KEY }}
+          HOME_SERVER_KNOWN_HOSTS: ${{ secrets.HOME_SERVER_KNOWN_HOSTS }}
         run: |
-          zip -r deploy.zip deployment scripts appspec.yml docker-compose.yml
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$HOME_SERVER_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$HOME_SERVER_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
 
-      - name: Upload to S3
+      - name: Check home server prerequisites
         run: |
-          aws s3 cp deploy.zip s3://devchat-codedeploy-bucket/deploy.zip
+          ssh -p "$HOME_SERVER_PORT" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            "$HOME_SERVER_USER@$HOME_SERVER_HOST" \
+            'test -d /srv/devchat &&
+             test -f /srv/devchat/.env &&
+             test -f /srv/gateway/nginx/conf.d/devchat-upstream.conf'
 
-      - name: Deploy backend via CodeDeploy
+      - name: Copy deployment files
         run: |
-          DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name devchat-backend \
-            --deployment-group-name devchat-deploy-group \
-            --s3-location bucket=devchat-codedeploy-bucket,key=deploy.zip,bundleType=zip \
-            --file-exists-behavior OVERWRITE \
-            --query 'deploymentId' --output text)
+          scp -P "$HOME_SERVER_PORT" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            backend/infra/docker-compose.yml \
+            backend/infra/deploy.sh \
+            "$HOME_SERVER_USER@$HOME_SERVER_HOST:/srv/devchat/"
 
-          echo "Deployment ID: $DEPLOYMENT_ID"
+      - name: Log in home server to GHCR
+        env:
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_READ_TOKEN" | \
+            ssh -p "$HOME_SERVER_PORT" \
+              -o BatchMode=yes \
+              -o IdentitiesOnly=yes \
+              "$HOME_SERVER_USER@$HOME_SERVER_HOST" \
+              "docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"
 
-          aws deploy wait deployment-successful \
-            --deployment-id $DEPLOYMENT_ID
-
-          echo "백엔드 배포 완료!"
-
-      - name: Deploy frontend to EC2
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            docker pull limkanghyun/dev-chat-frontend:latest
-            docker stop dev-chat-frontend || true
-            docker rm dev-chat-frontend || true
-            cd /home/ubuntu
-            docker-compose up -d dev-chat-frontend
-
-            echo "프론트엔드 헬스체크 중..."
-            for i in {1..30}; do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001)
-              if [ "$STATUS" == "200" ]; then
-                echo "프론트엔드 정상 기동!"
-                exit 0
-              fi
-              echo -n "."
-              sleep 2
-            done
-            echo "프론트엔드 헬스체크 실패!"
-            exit 1
-
-      - name: Notify Discord
-        if: always()
-        uses: sarisia/actions-status-discord@v1
-        with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          status: ${{ job.status }}
-          title: "DevChat 배포"
-          description: |
-            브랜치: ${{ github.ref_name }}
-            커밋: ${{ github.event.head_commit.message }}
-            배포자: ${{ github.actor }}
-          color: ${{ job.status == 'success' && '0x00ff00' || '0xff0000' }}
-          username: "DevChat Bot"
+      - name: Deploy immutable image
+        env:
+          DEPLOY_IMAGE: ${{ needs.publish.outputs.image }}
+        run: |
+          ssh -p "$HOME_SERVER_PORT" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            "$HOME_SERVER_USER@$HOME_SERVER_HOST" \
+            "chmod +x /srv/devchat/deploy.sh && /srv/devchat/deploy.sh '$DEPLOY_IMAGE'"

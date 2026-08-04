@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_DIR=$(cd "$(dirname "$0")/../../.." && pwd)
+WORKFLOW="$REPO_DIR/.github/workflows/ci-cd.yml"
+
+ruby - "$WORKFLOW" <<'RUBY'
+require "yaml"
+
+path = ARGV.fetch(0)
+text = File.read(path)
+config = YAML.load_file(path)
+jobs = config.fetch("jobs")
+
+%w[verify publish deploy].each do |job|
+  raise "job 누락: #{job}" unless jobs.key?(job)
+end
+
+raise "verify에 packages 쓰기 권한이 있으면 안 됨" if jobs.fetch("verify").fetch("permissions", {}).key?("packages")
+raise "publish에 packages: write 필요" unless jobs.fetch("publish").dig("permissions", "packages") == "write"
+raise "Docker context는 backend여야 함" unless text.scan(/^\s+context: backend$/).length == 2
+raise "Dockerfile 경로 오류" unless text.scan(/^\s+file: backend\/Dockerfile$/).length == 2
+raise "Docsa 배포 참조 금지" if text.include?("/srv/docsa")
+raise "레거시 EC2 secret 참조 금지" if text.include?("EC2_")
+raise "사용하지 않는 수동 입력 금지" if text.include?("workflow_dispatch")
+raise "불변 이미지 output 누락" unless text.include?("needs.publish.outputs.image")
+raise "홈서버 배포 스크립트 호출 누락" unless text.include?("/srv/devchat/deploy.sh")
+
+%w[
+  backend/infra/tests/compose_contract_test.sh
+  backend/infra/tests/deploy_test.sh
+  backend/infra/tests/workflow_contract_test.sh
+].each do |test_script|
+  raise "verify 실행 누락: #{test_script}" unless text.include?("bash #{test_script}")
+end
+
+%w[
+  HOME_SERVER_HOST
+  HOME_SERVER_PORT
+  HOME_SERVER_USER
+  HOME_SERVER_SSH_KEY
+  HOME_SERVER_KNOWN_HOSTS
+  GHCR_USERNAME
+  GHCR_READ_TOKEN
+].each do |secret|
+  raise "secret 참조 누락: #{secret}" unless text.include?("secrets.#{secret}")
+end
+
+puts "GitHub Actions 계약 통과"
+RUBY
