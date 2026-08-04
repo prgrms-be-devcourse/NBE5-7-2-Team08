@@ -58,8 +58,6 @@ CREATE TABLE `chat_message` (
                                 PRIMARY KEY (`message_id`),
                                 UNIQUE KEY `UKoe97nllv21drvrvg0s856q76n` (`chat_image_id`),
                                 KEY `FKynfbnbqot8mpd1tquoc2s1w5` (`member_id`),
-                                KEY `idx_chat_room_messageid_desc` (`room_id`, `message_id` DESC),
-                                KEY `idx_chat_message_send_at` (`created_at`),
                                 CONSTRAINT `FK9f6mwuygn32hodksh3xhtr0k2` FOREIGN KEY (`chat_image_id`) REFERENCES `image_file` (`image_id`),
                                 CONSTRAINT `FKfvbc4wvhk51y0qtnjrbminxfu` FOREIGN KEY (`room_id`) REFERENCES `chat_room` (`room_id`),
                                 CONSTRAINT `FKynfbnbqot8mpd1tquoc2s1w5` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
