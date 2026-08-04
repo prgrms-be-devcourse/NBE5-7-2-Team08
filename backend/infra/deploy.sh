@@ -25,6 +25,8 @@ HEALTH_MAX_ATTEMPTS=${HEALTH_MAX_ATTEMPTS:-30}
 HEALTH_INTERVAL_SECONDS=${HEALTH_INTERVAL_SECONDS:-5}
 DRAIN_SECONDS=${DRAIN_SECONDS:-30}
 DEPENDENCY_TIMEOUT_SECONDS=${DEPENDENCY_TIMEOUT_SECONDS:-180}
+STOP_MAX_ATTEMPTS=${STOP_MAX_ATTEMPTS:-3}
+STOP_RETRY_INTERVAL_SECONDS=${STOP_RETRY_INTERVAL_SECONDS:-5}
 DEFAULT_IMAGE=ghcr.io/lunarbae628/devchat-backend:dev
 STATE_BACKUP=""
 HAD_IMAGE_STATE=false
@@ -126,6 +128,8 @@ restore_file_atomically() {
 recover_interrupted_transaction() {
   local old_color
   local new_color
+  local old_running
+  local old_health
 
   [ -d "$TRANSACTION_DIR" ] || return 0
   [ -f "$TRANSACTION_DIR/old_color" ] || fail "중단된 배포의 old_color 상태가 없습니다"
@@ -142,6 +146,14 @@ recover_interrupted_transaction() {
     blue|green) ;;
     *) fail "중단된 배포의 new_color 값이 올바르지 않습니다: $new_color" ;;
   esac
+
+  if [ -n "$old_color" ]; then
+    old_running=$("$DOCKER_BIN" inspect --format '{{.State.Running}}' "devchat-app-$old_color" 2>/dev/null || true)
+    old_health=$("$DOCKER_BIN" inspect --format '{{.State.Health.Status}}' "devchat-app-$old_color" 2>/dev/null || true)
+    if [ "$old_running" != true ] || [ "$old_health" != healthy ]; then
+      fail "중단된 배포의 이전 $old_color 슬롯이 healthy 상태가 아니므로 현재 트래픽과 두 슬롯을 유지합니다"
+    fi
+  fi
 
   log "중단된 배포를 발견해 이전 upstream으로 복구합니다"
   restore_file_atomically "$TRANSACTION_DIR/upstream" "$GATEWAY_UPSTREAM_FILE"
@@ -324,8 +336,21 @@ rm -rf "$TRANSACTION_DIR"
 if [ -n "$OLD_SERVICE" ]; then
   log "기존 $ACTIVE_COLOR 슬롯의 연결을 ${DRAIN_SECONDS}초 동안 drain합니다"
   "$SLEEP_BIN" "$DRAIN_SECONDS"
-  if ! compose --profile "$ACTIVE_COLOR" stop "$OLD_SERVICE"; then
-    log "경고: 새 슬롯 전환은 성공했지만 기존 $ACTIVE_COLOR 슬롯 중지에 실패했습니다"
+  OLD_STOPPED=false
+  stop_attempt=1
+  while [ "$stop_attempt" -le "$STOP_MAX_ATTEMPTS" ]; do
+    if compose --profile "$ACTIVE_COLOR" stop "$OLD_SERVICE"; then
+      OLD_STOPPED=true
+      break
+    fi
+    if [ "$stop_attempt" -lt "$STOP_MAX_ATTEMPTS" ]; then
+      log "기존 $ACTIVE_COLOR 슬롯 중지 실패, 재시도합니다 ($stop_attempt/$STOP_MAX_ATTEMPTS)"
+      "$SLEEP_BIN" "$STOP_RETRY_INTERVAL_SECONDS"
+    fi
+    stop_attempt=$((stop_attempt + 1))
+  done
+  if [ "$OLD_STOPPED" != true ]; then
+    fail "새 $NEW_COLOR 슬롯 전환은 완료됐지만 기존 $ACTIVE_COLOR 슬롯을 중지하지 못했습니다"
   fi
 fi
 

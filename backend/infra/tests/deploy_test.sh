@@ -53,6 +53,8 @@ printf 'docker %s\n' "$*" >> "${COMMAND_LOG:?}"
 case "$*" in
   "network inspect devchat_proxy_net") exit 0 ;;
   "inspect --format {{.State.Running}} gateway-nginx") echo true; exit 0 ;;
+  "inspect --format {{.State.Running}} devchat-app-blue"|\
+  "inspect --format {{.State.Running}} devchat-app-green") echo true; exit 0 ;;
   "inspect --format {{.Config.Image}} devchat-app-blue")
     echo ghcr.io/lunarbae628/devchat-backend:dev-oldblue; exit 0 ;;
   "inspect --format {{.Config.Image}} devchat-app-green")
@@ -60,6 +62,9 @@ case "$*" in
   "inspect --format {{.State.Health.Status}} devchat-app-blue"|\
   "inspect --format {{.State.Health.Status}} devchat-app-green")
     if [ "${SCENARIO:?}" = "container_unhealthy" ]; then
+      echo unhealthy
+    elif [ "${SCENARIO:?}" = "old_unhealthy_recovery" ] && \
+      [ "$*" = "inspect --format {{.State.Health.Status}} devchat-app-blue" ]; then
       echo unhealthy
     else
       echo healthy
@@ -89,7 +94,13 @@ case "$*" in
     fi
     exit 0
     ;;
-  compose*) exit 0 ;;
+  compose*)
+    if [ "${SCENARIO:?}" = "old_slot_stop_failure" ] && \
+      printf '%s' "$*" | grep -Fq -- "stop devchat-app-blue"; then
+      exit 1
+    fi
+    exit 0
+    ;;
 esac
 
 echo "지원하지 않는 docker 호출: $*" >&2
@@ -240,6 +251,44 @@ test_interrupted_switch_is_recovered_before_deploy() {
   assert_contains "$fixture/commands.log" "docker exec gateway-nginx nginx -s reload"
 }
 
+test_interrupted_switch_keeps_current_traffic_when_old_is_unhealthy() {
+  local fixture
+  fixture=$(create_fixture old_unhealthy_recovery green)
+  mkdir "$fixture/devchat/deploy.transaction"
+  printf '%s\n' blue > "$fixture/devchat/deploy.transaction/old_color"
+  printf '%s\n' green > "$fixture/devchat/deploy.transaction/new_color"
+  printf 'upstream devchat_backend { server devchat-app-blue:8080; keepalive 32; }\n' \
+    > "$fixture/devchat/deploy.transaction/upstream"
+
+  if run_deploy "$fixture" old_unhealthy_recovery; then
+    fail "이전 슬롯이 비정상이면 중단 배포 복구를 진행하면 안 됨"
+  fi
+
+  [ "$(cat "$fixture/devchat/active_color")" = green ] || fail "현재 활성 green을 유지해야 함"
+  assert_contains "$fixture/gateway/devchat-upstream.conf" "server devchat-app-green:8080;"
+  [ -d "$fixture/devchat/deploy.transaction" ] || fail "수동 복구를 위해 transaction을 유지해야 함"
+  if grep -Fq -- "nginx -s reload" "$fixture/commands.log"; then
+    fail "비정상인 이전 슬롯으로 트래픽을 전환하면 안 됨"
+  fi
+  if grep -Fq -- "stop devchat-app-green" "$fixture/commands.log"; then
+    fail "현재 트래픽을 처리하는 green 슬롯을 중지하면 안 됨"
+  fi
+}
+
+test_old_slot_stop_failure_is_reported() {
+  local fixture
+  fixture=$(create_fixture old_slot_stop_failure blue)
+
+  if run_deploy "$fixture" old_slot_stop_failure; then
+    fail "이전 슬롯 정리 실패를 성공으로 보고하면 안 됨"
+  fi
+
+  [ "$(cat "$fixture/devchat/active_color")" = green ] || fail "새 활성 green은 유지해야 함"
+  assert_contains "$fixture/gateway/devchat-upstream.conf" "server devchat-app-green:8080;"
+  [ "$(grep -Fc 'stop devchat-app-blue' "$fixture/commands.log")" -eq 3 ] || \
+    fail "기존 blue 슬롯 중지를 3회 시도해야 함"
+}
+
 test_active_color_upstream_mismatch_stops_before_pull() {
   local fixture
   fixture=$(create_fixture success blue)
@@ -275,6 +324,8 @@ test_failed_rollback_keeps_both_slots_running rollback_nginx_test_failure
 test_failed_rollback_keeps_both_slots_running rollback_nginx_reload_failure
 test_second_deploy_switches_to_green_and_stops_blue
 test_interrupted_switch_is_recovered_before_deploy
+test_interrupted_switch_keeps_current_traffic_when_old_is_unhealthy
+test_old_slot_stop_failure_is_reported
 test_active_color_upstream_mismatch_stops_before_pull
 test_external_lock_holder_skips_internal_flock
 

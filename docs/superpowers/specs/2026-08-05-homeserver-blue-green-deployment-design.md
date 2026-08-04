@@ -104,10 +104,11 @@ upstream devchat_backend {
 이미지 발행에 성공한 `dev` push에서 다음을 수행한다.
 
 1. GitHub secret으로 SSH를 설정한다.
-2. `backend/infra/docker-compose.yml`과 `backend/infra/deploy.sh`를 SHA별 임시 파일명으로 `/srv/devchat`에 복사한다.
+2. `backend/infra/docker-compose.yml`과 `backend/infra/deploy.sh`를 SHA와 재실행 번호별 임시 release 디렉터리에 함께 복사한다.
 3. 토큰을 출력하지 않고 홈서버에서 GHCR에 로그인한다.
-4. 서버 배포 잠금을 얻은 뒤 임시 파일을 운영 파일로 교체하고, 불변 이미지 `dev-<7자리 SHA>`를 인자로 `/srv/devchat/deploy.sh`를 실행한다.
-5. 배포 또는 롤백을 완료하지 못하면 워크플로를 실패 처리한다.
+4. 서버 배포 잠금을 얻은 뒤 임시 디렉터리를 정식 release 디렉터리로 바꾸고, 그 release의 Compose 파일과 스크립트로 불변 이미지 `dev-<7자리 SHA>`를 배포한다.
+5. 배포가 완전히 성공한 경우에만 `/srv/devchat/current` 심볼릭 링크를 해당 release로 원자적으로 전환한다.
+6. 배포 또는 롤백을 완료하지 못하면 워크플로를 실패 처리한다.
 
 워크플로 concurrency는 `dev` 배포 대상을 기준으로 설정하며 실행 중인 배포를 취소하지 않는다. 서버 스크립트도 배타적 잠금을 사용하여 수동 배포와 CI 배포가 겹치지 않게 한다.
 
@@ -128,7 +129,7 @@ upstream devchat_backend {
 홈서버 배포 스크립트는 `set -Eeuo pipefail`과 배타적 파일 잠금을 사용한다. CI는 파일 설치와 배포 전체에 같은 잠금을 유지하고, 수동 실행 시에는 스크립트가 직접 잠금을 얻는다.
 
 1. 불변 이미지 인자, `/srv/devchat/.env`, Compose 파일, `devchat_proxy_net`, upstream 파일과 실행 중인 Gateway 컨테이너를 검증한다.
-2. 이전 실행이 남긴 `/srv/devchat/deploy.transaction`이 있으면 저장된 upstream과 활성 색상을 먼저 복구한다. 복구를 확인하지 못하면 두 슬롯을 유지한 채 중단한다.
+2. 이전 실행이 남긴 `/srv/devchat/deploy.transaction`이 있으면 복구 대상인 이전 슬롯의 실행·health 상태를 먼저 확인하고, 정상일 때만 저장된 upstream과 활성 색상을 복구한다. 이전 슬롯이 비정상이거나 복구를 확인하지 못하면 현재 트래픽과 두 슬롯, transaction을 유지한 채 중단한다.
 3. `/srv/devchat/active_color`와 Gateway upstream이 일치하는지 확인한다. 파일이 모두 비어 있으면 최초 배포로 판단하고 Blue를 선택한다.
 4. 비활성 슬롯을 선택하고 현재 upstream 내용과 슬롯 이미지 상태를 기록한다.
 5. 정확한 새 이미지를 pull한다.
@@ -137,11 +138,15 @@ upstream devchat_backend {
 8. 제한 시간 동안 비활성 컨테이너의 Docker health 상태가 `healthy`가 되기를 기다린다. 실패하면 비활성 슬롯을 중지하고 이전 이미지 할당을 복구하며, 활성 슬롯과 upstream은 변경하지 않는다.
 9. 전환 transaction을 기록한 뒤 새 upstream 파일을 생성하고 `nginx -t` 실행 후 Nginx를 reload한다. 둘 중 하나라도 실패하면 이전 upstream 파일을 복구하고 다시 검증·reload한 다음 비활성 슬롯을 중지한다. 복구 검증이 실패하면 트래픽이 어느 슬롯을 향하는지 단정할 수 없으므로 두 슬롯을 모두 유지한다.
 10. 공용 Gateway를 통해 `https://api.devchat.o-r.kr/actuator/health`를 호출한다. smoke check가 실패하면 같은 방식으로 이전 upstream을 복구한다.
-11. 새 활성 색상을 기록하고 transaction을 제거한 뒤, 일반 HTTP 요청이 마무리되도록 30초 기다리고 기존 슬롯을 graceful stop한다.
+11. 새 활성 색상을 기록하고 transaction을 제거한 뒤, 일반 HTTP 요청이 마무리되도록 30초 기다리고 기존 슬롯을 graceful stop한다. 중지에 실패하면 3회까지 재시도하고, 계속 실패하면 새 슬롯과 트래픽은 유지하되 CI를 실패 처리해 운영자에게 정리 실패를 알린다.
 
 최초 배포에는 복구할 이전 애플리케이션이 없다. 따라서 최초 배포가 실패하면 두 애플리케이션 슬롯을 모두 중지한 상태로 워크플로를 실패 처리하며, MySQL과 Redis는 계속 실행 중일 수 있다.
 
 스크립트는 이미지를 자동 prune하지 않는다. 이전 이미지를 보존하면 운영자가 복구할 수 있고 롤백에 필요한 이미지를 실수로 제거하지 않는다.
+
+## 레거시 배포 파일 정리
+
+저장소 루트의 기존 `docker-compose.yml`은 EC2형 단일 배포와 Prometheus 컨테이너를 함께 정의하던 경로이며, 홈서버 Blue/Green 구조에서는 `backend/infra/docker-compose.yml`로 대체한다. 함께 사용되던 루트 `prometheus.yml`도 현재 Gateway·DevChat 배포 범위에서 참조되지 않아 제거한다. 모니터링을 다시 도입할 때는 애플리케이션 배포와 분리된 홈서버 관측 스택으로 구성한다.
 
 ## WebSocket 동작
 
