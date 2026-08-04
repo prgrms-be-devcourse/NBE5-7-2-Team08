@@ -1,0 +1,129 @@
+name: devchat
+
+x-devchat-app: &devchat-app
+  restart: unless-stopped
+  stop_grace_period: 40s
+  mem_limit: 1536m
+  environment:
+    SPRING_PROFILES_ACTIVE: prod
+    JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx1g}
+    TZ: ${TZ:-Asia/Seoul}
+
+    DB_HOST: ${DB_HOST}
+    DB_PORT: ${DB_PORT}
+    DB_NAME: ${MYSQL_DATABASE}
+    DB_USERNAME: ${MYSQL_USER}
+    DB_PASSWORD: ${MYSQL_PASSWORD}
+
+    REDIS_HOST: ${REDIS_HOST}
+    REDIS_PORT: ${REDIS_PORT}
+
+    OAUTH_GITHUB_CLIENT_ID: ${OAUTH_GITHUB_CLIENT_ID}
+    OAUTH_GITHUB_SECRET: ${OAUTH_GITHUB_SECRET}
+    OAUTH_GITHUB_REDIRECT_URI: ${OAUTH_GITHUB_REDIRECT_URI}
+
+    DOMAIN_URL: ${DOMAIN_URL}
+    IMAGE_URL: ${IMAGE_URL}
+    WEBHOOK_URL: ${WEBHOOK_URL}
+
+    JWT_SECRET: ${JWT_SECRET}
+    ENCRYPT_SECRET: ${ENCRYPT_SECRET}
+
+    AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+    AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+    AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+  depends_on:
+    devchat-mysql:
+      condition: service_healthy
+    devchat-redis:
+      condition: service_healthy
+  networks:
+    - devchat_internal
+    - devchat_proxy_net
+  healthcheck:
+    test:
+      [
+        "CMD-SHELL",
+        "wget -qO- http://127.0.0.1:8080/actuator/health >/dev/null || exit 1"
+      ]
+    interval: 15s
+    timeout: 5s
+    retries: 10
+    start_period: 40s
+
+services:
+  devchat-mysql:
+    image: mysql:8.4
+    container_name: devchat-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: ${TZ:-Asia/Seoul}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - devchat_mysql_data:/var/lib/mysql
+    networks:
+      - devchat_internal
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  devchat-redis:
+    image: redis:7-alpine
+    container_name: devchat-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-256mb}
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - devchat_redis_data:/data
+    networks:
+      - devchat_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  devchat-app-blue:
+    <<: *devchat-app
+    image: ghcr.io/lunarbae628/devchat-backend:dev
+    container_name: devchat-app-blue
+    profiles: [blue]
+
+  devchat-app-green:
+    <<: *devchat-app
+    image: ghcr.io/lunarbae628/devchat-backend:dev
+    container_name: devchat-app-green
+    profiles: [green]
+
+volumes:
+  devchat_mysql_data:
+  devchat_redis_data:
+
+networks:
+  devchat_internal:
+    internal: true
+
+  devchat_proxy_net:
+    external: true
+    name: devchat_proxy_net
