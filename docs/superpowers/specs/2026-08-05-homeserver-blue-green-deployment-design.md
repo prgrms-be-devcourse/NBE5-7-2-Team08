@@ -105,12 +105,15 @@ upstream devchat_backend {
 
 1. GitHub secret으로 SSH를 설정한다.
 2. `backend/infra/docker-compose.yml`과 `backend/infra/deploy.sh`를 SHA와 재실행 번호별 임시 release 디렉터리에 함께 복사한다.
-3. 토큰을 출력하지 않고 홈서버에서 GHCR에 로그인한다.
+3. `packages: read` 권한을 가진 실행별 `GITHUB_TOKEN`과 `github.actor`를 사용해, 토큰을 출력하지 않고 홈서버에서 GHCR에 로그인한다.
 4. 서버 배포 잠금을 얻은 뒤 임시 디렉터리를 정식 release 디렉터리로 바꾸고, 그 release의 Compose 파일과 스크립트로 불변 이미지 `dev-<7자리 SHA>`를 배포한다.
 5. 배포가 완전히 성공한 경우에만 `/srv/devchat/current` 심볼릭 링크를 해당 release로 원자적으로 전환한다.
-6. 배포 또는 롤백을 완료하지 못하면 워크플로를 실패 처리한다.
+6. 성공·실패와 관계없이 홈서버에서 `docker logout ghcr.io`를 실행하여 Docker 설정에서 임시 토큰을 제거한다.
+7. 배포 또는 롤백을 완료하지 못하면 워크플로를 실패 처리한다.
 
 워크플로 concurrency는 `dev` 배포 대상을 기준으로 설정하며 실행 중인 배포를 취소하지 않는다. 서버 스크립트도 배타적 잠금을 사용하여 수동 배포와 CI 배포가 겹치지 않게 한다.
+
+배포 job에는 `contents: read`와 `packages: read`만 부여한다. 장기 Personal Access Token은 사용하지 않으며, `GHCR_USERNAME`과 `GHCR_READ_TOKEN` 저장소 secret도 만들지 않는다. 실행별 `GITHUB_TOKEN`은 해당 실행이 끝나면 만료되므로 홈서버의 장기 자격 증명으로 취급하지 않는다.
 
 필요한 GitHub secret은 다음과 같다.
 
@@ -119,8 +122,6 @@ upstream devchat_backend {
 - `HOME_SERVER_USER`
 - `HOME_SERVER_SSH_KEY`
 - `HOME_SERVER_KNOWN_HOSTS`
-- `GHCR_USERNAME`
-- 백엔드 패키지 읽기 권한을 가진 `GHCR_READ_TOKEN`
 
 사용하지 않는 수동 실행 입력값은 두지 않는다. `dev` push가 자동 배포를 시작한다. 이미지 태그를 입력받는 별도의 수동 롤백 워크플로는 이번 범위에 포함하지 않는다.
 
