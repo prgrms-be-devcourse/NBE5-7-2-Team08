@@ -82,9 +82,10 @@ upstream devchat_backend {
 `dev` 대상 Pull Request와 `dev` 브랜치 push에서 다음을 수행한다.
 
 1. 저장소를 checkout한다.
-2. Java 21과 Gradle 캐시를 설정한다.
-3. 백엔드 테스트 전체를 실행한다.
-4. `backend`를 build context로 사용하여 백엔드 Dockerfile을 빌드하되 이미지는 push하지 않는다.
+2. Java 21, Gradle 캐시, Node.js 20과 npm 캐시를 설정한다.
+3. 백엔드 테스트 전체와 프론트엔드 WebSocket 재연결 회귀 테스트를 실행한다.
+4. 프론트엔드 운영 빌드를 검증한다.
+5. `backend`를 build context로 사용하여 백엔드 Dockerfile을 빌드하되 이미지는 push하지 않는다.
 
 이 job에는 `contents: read` 권한만 부여한다.
 
@@ -103,9 +104,9 @@ upstream devchat_backend {
 이미지 발행에 성공한 `dev` push에서 다음을 수행한다.
 
 1. GitHub secret으로 SSH를 설정한다.
-2. `backend/infra/docker-compose.yml`과 `backend/infra/deploy.sh`만 `/srv/devchat`으로 복사한다.
+2. `backend/infra/docker-compose.yml`과 `backend/infra/deploy.sh`를 SHA별 임시 파일명으로 `/srv/devchat`에 복사한다.
 3. 토큰을 출력하지 않고 홈서버에서 GHCR에 로그인한다.
-4. 불변 이미지 `dev-<7자리 SHA>`를 인자로 `/srv/devchat/deploy.sh`를 실행한다.
+4. 서버 배포 잠금을 얻은 뒤 임시 파일을 운영 파일로 교체하고, 불변 이미지 `dev-<7자리 SHA>`를 인자로 `/srv/devchat/deploy.sh`를 실행한다.
 5. 배포 또는 롤백을 완료하지 못하면 워크플로를 실패 처리한다.
 
 워크플로 concurrency는 `dev` 배포 대상을 기준으로 설정하며 실행 중인 배포를 취소하지 않는다. 서버 스크립트도 배타적 잠금을 사용하여 수동 배포와 CI 배포가 겹치지 않게 한다.
@@ -124,18 +125,19 @@ upstream devchat_backend {
 
 ## 배포와 롤백 절차
 
-홈서버 배포 스크립트는 `set -Eeuo pipefail`과 배타적 파일 잠금을 사용한다.
+홈서버 배포 스크립트는 `set -Eeuo pipefail`과 배타적 파일 잠금을 사용한다. CI는 파일 설치와 배포 전체에 같은 잠금을 유지하고, 수동 실행 시에는 스크립트가 직접 잠금을 얻는다.
 
 1. 불변 이미지 인자, `/srv/devchat/.env`, Compose 파일, `devchat_proxy_net`, upstream 파일과 실행 중인 Gateway 컨테이너를 검증한다.
-2. `/srv/devchat/active_color`를 읽는다. 파일이 없으면 최초 배포로 판단하고 Blue를 선택한다.
-3. 비활성 슬롯을 선택하고 현재 upstream 내용과 슬롯 이미지 상태를 기록한다.
-4. 정확한 새 이미지를 pull한다.
-5. `deployment.images.yml`에서 비활성 슬롯의 이미지만 변경한다.
-6. MySQL과 Redis가 정상인지 확인한 후 비활성 애플리케이션 슬롯을 실행한다.
-7. 제한 시간 동안 비활성 컨테이너의 Docker health 상태가 `healthy`가 되기를 기다린다. 실패하면 비활성 슬롯을 중지하고 이전 이미지 할당을 복구하며, 활성 슬롯과 upstream은 변경하지 않는다.
-8. 새 upstream 파일을 생성하고 `nginx -t` 실행 후 Nginx를 reload한다. 둘 중 하나라도 실패하면 이전 upstream 파일을 복구하고 다시 검증·reload한 다음 비활성 슬롯을 중지한다. 활성 색상은 변경하지 않는다.
-9. 공용 Gateway를 통해 `https://api.devchat.o-r.kr/actuator/health`를 호출한다. smoke check가 실패하면 이전 upstream을 복구하고 reload한 뒤 비활성 슬롯을 중지하고 이전 이미지 할당을 복구한다.
-10. 새 활성 색상을 기록하고 일반 HTTP 요청이 마무리되도록 30초 기다린 후 기존 슬롯을 graceful stop한다.
+2. 이전 실행이 남긴 `/srv/devchat/deploy.transaction`이 있으면 저장된 upstream과 활성 색상을 먼저 복구한다. 복구를 확인하지 못하면 두 슬롯을 유지한 채 중단한다.
+3. `/srv/devchat/active_color`와 Gateway upstream이 일치하는지 확인한다. 파일이 모두 비어 있으면 최초 배포로 판단하고 Blue를 선택한다.
+4. 비활성 슬롯을 선택하고 현재 upstream 내용과 슬롯 이미지 상태를 기록한다.
+5. 정확한 새 이미지를 pull한다.
+6. `deployment.images.yml`에서 비활성 슬롯의 이미지만 변경한다.
+7. MySQL과 Redis를 재생성하지 않고 정상 상태만 확인한 후 비활성 애플리케이션 슬롯을 실행한다.
+8. 제한 시간 동안 비활성 컨테이너의 Docker health 상태가 `healthy`가 되기를 기다린다. 실패하면 비활성 슬롯을 중지하고 이전 이미지 할당을 복구하며, 활성 슬롯과 upstream은 변경하지 않는다.
+9. 전환 transaction을 기록한 뒤 새 upstream 파일을 생성하고 `nginx -t` 실행 후 Nginx를 reload한다. 둘 중 하나라도 실패하면 이전 upstream 파일을 복구하고 다시 검증·reload한 다음 비활성 슬롯을 중지한다. 복구 검증이 실패하면 트래픽이 어느 슬롯을 향하는지 단정할 수 없으므로 두 슬롯을 모두 유지한다.
+10. 공용 Gateway를 통해 `https://api.devchat.o-r.kr/actuator/health`를 호출한다. smoke check가 실패하면 같은 방식으로 이전 upstream을 복구한다.
+11. 새 활성 색상을 기록하고 transaction을 제거한 뒤, 일반 HTTP 요청이 마무리되도록 30초 기다리고 기존 슬롯을 graceful stop한다.
 
 최초 배포에는 복구할 이전 애플리케이션이 없다. 따라서 최초 배포가 실패하면 두 애플리케이션 슬롯을 모두 중지한 상태로 워크플로를 실패 처리하며, MySQL과 Redis는 계속 실행 중일 수 있다.
 

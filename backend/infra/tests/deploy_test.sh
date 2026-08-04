@@ -67,13 +67,28 @@ case "$*" in
     exit 0
     ;;
   "exec gateway-nginx nginx -t")
-    if [ "${SCENARIO:?}" = "nginx_test_failure" ]; then
+    NGINX_TEST_COUNT=$(grep -Fc 'docker exec gateway-nginx nginx -t' "${COMMAND_LOG:?}")
+    if [ "${SCENARIO:?}" = "nginx_test_failure" ] && [ "$NGINX_TEST_COUNT" -eq 1 ]; then
+      exit 1
+    fi
+    if [ "${SCENARIO:?}" = "rollback_nginx_test_failure" ] && [ "$NGINX_TEST_COUNT" -ge 2 ]; then
       exit 1
     fi
     exit 0
     ;;
-  "exec gateway-nginx nginx -s reload") exit 0 ;;
-  pull*) exit 0 ;;
+  "exec gateway-nginx nginx -s reload")
+    NGINX_RELOAD_COUNT=$(grep -Fc 'docker exec gateway-nginx nginx -s reload' "${COMMAND_LOG:?}")
+    if [ "${SCENARIO:?}" = "rollback_nginx_reload_failure" ] && [ "$NGINX_RELOAD_COUNT" -ge 2 ]; then
+      exit 1
+    fi
+    exit 0
+    ;;
+  pull*)
+    if [ "${SCENARIO:?}" = "pull_failure" ]; then
+      exit 1
+    fi
+    exit 0
+    ;;
   compose*) exit 0 ;;
 esac
 
@@ -84,7 +99,10 @@ STUB
   cat > "$fixture/bin/curl" <<'STUB'
 #!/usr/bin/env bash
 printf 'curl %s\n' "$*" >> "${COMMAND_LOG:?}"
-[ "${SCENARIO:?}" != "public_health_failure" ]
+case "${SCENARIO:?}" in
+  public_health_failure|rollback_nginx_test_failure|rollback_nginx_reload_failure) exit 1 ;;
+  *) exit 0 ;;
+esac
 STUB
 
   cat > "$fixture/bin/sleep" <<'STUB'
@@ -94,7 +112,8 @@ STUB
 
   cat > "$fixture/bin/flock" <<'STUB'
 #!/usr/bin/env bash
-exit 0
+printf 'flock %s\n' "$*" >> "${COMMAND_LOG:?}"
+[ "${SCENARIO:?}" != "lock_failure" ]
 STUB
 
   chmod +x "$fixture/bin/docker" "$fixture/bin/curl" "$fixture/bin/sleep" "$fixture/bin/flock"
@@ -113,6 +132,7 @@ run_deploy() {
   CURL_BIN="$fixture/bin/curl" \
   SLEEP_BIN="$fixture/bin/sleep" \
   FLOCK_BIN="$fixture/bin/flock" \
+  DEPLOY_LOCK_HELD="${DEPLOY_LOCK_HELD_OVERRIDE:-false}" \
   HEALTH_MAX_ATTEMPTS=2 \
   HEALTH_INTERVAL_SECONDS=0 \
   DRAIN_SECONDS=0 \
@@ -129,6 +149,7 @@ test_first_deploy_success() {
   [ "$(cat "$fixture/devchat/active_color")" = blue ] || fail "최초 활성 색상은 blue여야 함"
   assert_contains "$fixture/gateway/devchat-upstream.conf" "server devchat-app-blue:8080;"
   assert_contains "$fixture/commands.log" "docker pull ghcr.io/lunarbae628/devchat-backend:dev-abcdef0"
+  assert_contains "$fixture/commands.log" "up -d --no-recreate --wait"
   assert_contains "$fixture/commands.log" "docker exec gateway-nginx nginx -s reload"
   assert_contains "$fixture/commands.log" "curl --fail"
 }
@@ -174,6 +195,21 @@ test_public_health_failure_rolls_back() {
     fail "전환과 롤백 reload가 각각 필요함"
 }
 
+test_failed_rollback_keeps_both_slots_running() {
+  local scenario=$1
+  local fixture
+  fixture=$(create_fixture "$scenario" blue)
+
+  if run_deploy "$fixture" "$scenario"; then
+    fail "Nginx 복구 실패 배포는 실패해야 함: $scenario"
+  fi
+
+  [ "$(cat "$fixture/devchat/active_color")" = blue ] || fail "기존 활성 색상은 변경하지 않아야 함"
+  if grep -Fq -- "stop devchat-app-green" "$fixture/commands.log"; then
+    fail "트래픽 복구가 확인되지 않으면 green 슬롯을 중지하면 안 됨: $scenario"
+  fi
+}
+
 test_second_deploy_switches_to_green_and_stops_blue() {
   local fixture
   fixture=$(create_fixture success blue)
@@ -185,10 +221,61 @@ test_second_deploy_switches_to_green_and_stops_blue() {
   assert_contains "$fixture/commands.log" "stop devchat-app-blue"
 }
 
+test_interrupted_switch_is_recovered_before_deploy() {
+  local fixture
+  fixture=$(create_fixture pull_failure green)
+  mkdir "$fixture/devchat/deploy.transaction"
+  printf '%s\n' blue > "$fixture/devchat/deploy.transaction/old_color"
+  printf '%s\n' green > "$fixture/devchat/deploy.transaction/new_color"
+  printf 'upstream devchat_backend { server devchat-app-blue:8080; keepalive 32; }\n' \
+    > "$fixture/devchat/deploy.transaction/upstream"
+
+  if run_deploy "$fixture" pull_failure; then
+    fail "이미지 pull 실패 배포는 실패해야 함"
+  fi
+
+  [ "$(cat "$fixture/devchat/active_color")" = blue ] || fail "중단된 전환은 blue로 복구해야 함"
+  assert_contains "$fixture/gateway/devchat-upstream.conf" "server devchat-app-blue:8080;"
+  assert_not_exists "$fixture/devchat/deploy.transaction"
+  assert_contains "$fixture/commands.log" "docker exec gateway-nginx nginx -s reload"
+}
+
+test_active_color_upstream_mismatch_stops_before_pull() {
+  local fixture
+  fixture=$(create_fixture success blue)
+  printf 'upstream devchat_backend { server devchat-app-green:8080; keepalive 32; }\n' \
+    > "$fixture/gateway/devchat-upstream.conf"
+
+  if run_deploy "$fixture" success; then
+    fail "활성 색상과 upstream 불일치 상태에서는 배포를 시작하면 안 됨"
+  fi
+
+  if grep -Fq -- "docker pull" "$fixture/commands.log"; then
+    fail "상태 불일치 검증 전에 이미지를 pull하면 안 됨"
+  fi
+}
+
+test_external_lock_holder_skips_internal_flock() {
+  local fixture
+  fixture=$(create_fixture lock_failure)
+
+  DEPLOY_LOCK_HELD_OVERRIDE=true run_deploy "$fixture" lock_failure || \
+    fail "외부 lock 보유 상태에서는 내부 flock 없이 배포해야 함"
+
+  if grep -Fq -- "flock " "$fixture/commands.log"; then
+    fail "외부 lock 보유 상태에서 flock을 다시 획득하면 안 됨"
+  fi
+}
+
 test_first_deploy_success
 test_unhealthy_container_keeps_current_upstream
 test_nginx_validation_failure_rolls_back
 test_public_health_failure_rolls_back
+test_failed_rollback_keeps_both_slots_running rollback_nginx_test_failure
+test_failed_rollback_keeps_both_slots_running rollback_nginx_reload_failure
 test_second_deploy_switches_to_green_and_stops_blue
+test_interrupted_switch_is_recovered_before_deploy
+test_active_color_upstream_mismatch_stops_before_pull
+test_external_lock_holder_skips_internal_flock
 
 echo "배포 스크립트 테스트 통과"

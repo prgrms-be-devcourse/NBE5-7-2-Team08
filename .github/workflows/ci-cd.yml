@@ -27,9 +27,23 @@ jobs:
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
       - name: Run backend tests
         working-directory: backend
         run: ./gradlew clean test --no-daemon
+
+      - name: Verify frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          CI=true npm test -- --watchAll=false --runInBand WebSocketContext.test.js
+          npm run build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -140,8 +154,12 @@ jobs:
             -o BatchMode=yes \
             -o IdentitiesOnly=yes \
             backend/infra/docker-compose.yml \
+            "$HOME_SERVER_USER@$HOME_SERVER_HOST:/srv/devchat/docker-compose.yml.incoming-$GITHUB_SHA"
+          scp -P "$HOME_SERVER_PORT" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
             backend/infra/deploy.sh \
-            "$HOME_SERVER_USER@$HOME_SERVER_HOST:/srv/devchat/"
+            "$HOME_SERVER_USER@$HOME_SERVER_HOST:/srv/devchat/deploy.sh.incoming-$GITHUB_SHA"
 
       - name: Log in home server to GHCR
         env:
@@ -163,4 +181,14 @@ jobs:
             -o BatchMode=yes \
             -o IdentitiesOnly=yes \
             "$HOME_SERVER_USER@$HOME_SERVER_HOST" \
-            "chmod +x /srv/devchat/deploy.sh && /srv/devchat/deploy.sh '$DEPLOY_IMAGE'"
+            bash -s -- "$GITHUB_SHA" "$DEPLOY_IMAGE" <<'REMOTE'
+          set -Eeuo pipefail
+          release_id=$1
+          image=$2
+          exec 9>/srv/devchat/deploy.lock
+          flock -w 600 9
+          mv "/srv/devchat/docker-compose.yml.incoming-$release_id" /srv/devchat/docker-compose.yml
+          mv "/srv/devchat/deploy.sh.incoming-$release_id" /srv/devchat/deploy.sh
+          chmod +x /srv/devchat/deploy.sh
+          DEPLOY_LOCK_HELD=true /srv/devchat/deploy.sh "$image"
+          REMOTE

@@ -25,6 +25,13 @@ raise "레거시 EC2 secret 참조 금지" if text.include?("EC2_")
 raise "사용하지 않는 수동 입력 금지" if text.include?("workflow_dispatch")
 raise "불변 이미지 output 누락" unless text.include?("needs.publish.outputs.image")
 raise "홈서버 배포 스크립트 호출 누락" unless text.include?("/srv/devchat/deploy.sh")
+raise "SHA별 임시 배포 파일 누락" unless text.include?(".incoming-$GITHUB_SHA")
+raise "배포 파일 설치 lock 누락" unless text.include?("flock -w 600 9")
+raise "외부 lock 전달 누락" unless text.include?("DEPLOY_LOCK_HELD=true")
+raise "Node.js 설정 누락" unless text.include?("actions/setup-node@v4")
+raise "프런트 의존성 설치 누락" unless text.include?("npm ci")
+raise "WebSocket 재연결 테스트 누락" unless text.include?("WebSocketContext.test.js")
+raise "프런트 빌드 검증 누락" unless text.include?("npm run build")
 
 %w[
   backend/infra/tests/compose_contract_test.sh
