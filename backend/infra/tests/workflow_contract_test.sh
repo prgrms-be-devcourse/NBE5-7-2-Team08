@@ -36,7 +36,7 @@ raise "현재 release 전환 누락" unless text.include?("/srv/devchat/current"
 raise "Node.js 설정 누락" unless text.include?("actions/setup-node@v4")
 raise "프런트 의존성 설치 누락" unless text.include?("npm ci")
 raise "WebSocket 재연결 테스트 누락" unless text.include?("WebSocketContext.test.js")
-raise "프런트 빌드 검증 누락" unless text.include?("npm run build")
+raise "프런트 빌드는 Cloudflare에 위임해야 함" if text.include?("npm run build")
 raise "github.actor 사용 누락" unless text.include?("github.actor")
 raise "github.token 사용 누락" unless text.include?("github.token")
 raise "장기 GHCR username secret 사용 금지" if text.include?("secrets.GHCR_USERNAME")

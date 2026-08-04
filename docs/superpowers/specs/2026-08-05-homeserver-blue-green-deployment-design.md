@@ -84,8 +84,9 @@ upstream devchat_backend {
 1. 저장소를 checkout한다.
 2. Java 21, Gradle 캐시, Node.js 20과 npm 캐시를 설정한다.
 3. 백엔드 테스트 전체와 프론트엔드 WebSocket 재연결 회귀 테스트를 실행한다.
-4. 프론트엔드 운영 빌드를 검증한다.
-5. `backend`를 build context로 사용하여 백엔드 Dockerfile을 빌드하되 이미지는 push하지 않는다.
+4. `backend`를 build context로 사용하여 백엔드 Dockerfile을 빌드하되 이미지는 push하지 않는다.
+
+프론트엔드 운영 빌드와 배포는 Cloudflare가 담당하므로 이 백엔드 배포 workflow에서는 중복 실행하지 않는다.
 
 이 job에는 `contents: read` 권한만 부여한다.
 

@@ -38,12 +38,11 @@ jobs:
         working-directory: backend
         run: ./gradlew clean test --no-daemon
 
-      - name: Verify frontend
+      - name: Verify WebSocket reconnect
         working-directory: frontend
         run: |
           npm ci
           CI=true npm test -- --watchAll=false --runInBand WebSocketContext.test.js
-          npm run build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
