@@ -23,6 +23,8 @@ FLOCK_BIN=${FLOCK_BIN:-flock}
 DEPLOY_LOCK_HELD=${DEPLOY_LOCK_HELD:-false}
 HEALTH_MAX_ATTEMPTS=${HEALTH_MAX_ATTEMPTS:-30}
 HEALTH_INTERVAL_SECONDS=${HEALTH_INTERVAL_SECONDS:-5}
+PUBLIC_HEALTH_MAX_ATTEMPTS=${PUBLIC_HEALTH_MAX_ATTEMPTS:-10}
+PUBLIC_HEALTH_RETRY_INTERVAL_SECONDS=${PUBLIC_HEALTH_RETRY_INTERVAL_SECONDS:-1}
 DRAIN_SECONDS=${DRAIN_SECONDS:-30}
 DEPENDENCY_TIMEOUT_SECONDS=${DEPENDENCY_TIMEOUT_SECONDS:-180}
 STOP_MAX_ATTEMPTS=${STOP_MAX_ATTEMPTS:-3}
@@ -322,7 +324,20 @@ if ! "$DOCKER_BIN" exec gateway-nginx nginx -s reload; then
   fail "새 Gateway upstream reload에 실패했습니다"
 fi
 
-if ! "$CURL_BIN" --fail --silent --show-error --max-time 10 --output /dev/null "$PUBLIC_HEALTH_URL"; then
+PUBLIC_HEALTHY=false
+attempt=1
+while [ "$attempt" -le "$PUBLIC_HEALTH_MAX_ATTEMPTS" ]; do
+  if "$CURL_BIN" --fail --silent --show-error --max-time 10 --output /dev/null "$PUBLIC_HEALTH_URL"; then
+    PUBLIC_HEALTHY=true
+    break
+  fi
+  if [ "$attempt" -lt "$PUBLIC_HEALTH_MAX_ATTEMPTS" ]; then
+    "$SLEEP_BIN" "$PUBLIC_HEALTH_RETRY_INTERVAL_SECONDS"
+  fi
+  attempt=$((attempt + 1))
+done
+
+if [ "$PUBLIC_HEALTHY" != true ]; then
   if ! restore_upstream; then
     fail "이전 upstream 복구를 확인할 수 없어 두 슬롯을 실행 상태로 유지합니다"
   fi

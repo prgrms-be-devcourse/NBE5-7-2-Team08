@@ -111,6 +111,10 @@ STUB
 #!/usr/bin/env bash
 printf 'curl %s\n' "$*" >> "${COMMAND_LOG:?}"
 case "${SCENARIO:?}" in
+  public_health_reload_race)
+    CURL_COUNT=$(grep -Fc 'curl ' "${COMMAND_LOG:?}")
+    [ "$CURL_COUNT" -gt 1 ]
+    ;;
   public_health_failure|rollback_nginx_test_failure|rollback_nginx_reload_failure) exit 1 ;;
   *) exit 0 ;;
 esac
@@ -146,6 +150,8 @@ run_deploy() {
   DEPLOY_LOCK_HELD="${DEPLOY_LOCK_HELD_OVERRIDE:-false}" \
   HEALTH_MAX_ATTEMPTS=2 \
   HEALTH_INTERVAL_SECONDS=0 \
+  PUBLIC_HEALTH_MAX_ATTEMPTS=3 \
+  PUBLIC_HEALTH_RETRY_INTERVAL_SECONDS=1 \
   DRAIN_SECONDS=0 \
   PUBLIC_HEALTH_URL=https://api.devchat.o-r.kr/actuator/health \
   bash "$INFRA_DIR/deploy.sh" ghcr.io/lunarbae628/devchat-backend:dev-abcdef0
@@ -204,6 +210,19 @@ test_public_health_failure_rolls_back() {
   assert_contains "$fixture/commands.log" "stop devchat-app-green"
   [ "$(grep -Fc 'docker exec gateway-nginx nginx -s reload' "$fixture/commands.log")" -eq 2 ] || \
     fail "전환과 롤백 reload가 각각 필요함"
+}
+
+test_public_health_retries_after_nginx_reload() {
+  local fixture
+  fixture=$(create_fixture public_health_reload_race)
+
+  run_deploy "$fixture" public_health_reload_race || \
+    fail "Nginx reload 직후 첫 health 실패는 재시도해야 함"
+
+  [ "$(grep -Fc 'curl --fail' "$fixture/commands.log")" -eq 2 ] || \
+    fail "공용 health를 성공할 때까지 재시도해야 함"
+  assert_contains "$fixture/commands.log" "sleep 1"
+  [ "$(cat "$fixture/devchat/active_color")" = blue ] || fail "재시도 성공 후 blue가 활성화되어야 함"
 }
 
 test_failed_rollback_keeps_both_slots_running() {
@@ -320,6 +339,7 @@ test_first_deploy_success
 test_unhealthy_container_keeps_current_upstream
 test_nginx_validation_failure_rolls_back
 test_public_health_failure_rolls_back
+test_public_health_retries_after_nginx_reload
 test_failed_rollback_keeps_both_slots_running rollback_nginx_test_failure
 test_failed_rollback_keeps_both_slots_running rollback_nginx_reload_failure
 test_second_deploy_switches_to_green_and_stops_blue
