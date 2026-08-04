@@ -18,6 +18,8 @@ end
 
 raise "verify에 packages 쓰기 권한이 있으면 안 됨" if jobs.fetch("verify").fetch("permissions", {}).key?("packages")
 raise "publish에 packages: write 필요" unless jobs.fetch("publish").dig("permissions", "packages") == "write"
+deploy = jobs.fetch("deploy")
+raise "deploy에 packages: read 필요" unless deploy.dig("permissions", "packages") == "read"
 raise "Docker context는 backend여야 함" unless text.scan(/^\s+context: backend$/).length == 2
 raise "Dockerfile 경로 오류" unless text.scan(/^\s+file: backend\/Dockerfile$/).length == 2
 raise "Docsa 배포 참조 금지" if text.include?("/srv/docsa")
@@ -35,6 +37,12 @@ raise "Node.js 설정 누락" unless text.include?("actions/setup-node@v4")
 raise "프런트 의존성 설치 누락" unless text.include?("npm ci")
 raise "WebSocket 재연결 테스트 누락" unless text.include?("WebSocketContext.test.js")
 raise "프런트 빌드 검증 누락" unless text.include?("npm run build")
+raise "github.actor 사용 누락" unless text.include?("github.actor")
+raise "github.token 사용 누락" unless text.include?("github.token")
+raise "장기 GHCR username secret 사용 금지" if text.include?("secrets.GHCR_USERNAME")
+raise "장기 GHCR token secret 사용 금지" if text.include?("secrets.GHCR_READ_TOKEN")
+raise "GHCR 로그아웃 누락" unless text.include?("docker logout ghcr.io")
+raise "GHCR 로그아웃은 항상 실행해야 함" unless text.include?("if: always()")
 
 %w[
   backend/infra/tests/compose_contract_test.sh
@@ -50,8 +58,6 @@ end
   HOME_SERVER_USER
   HOME_SERVER_SSH_KEY
   HOME_SERVER_KNOWN_HOSTS
-  GHCR_USERNAME
-  GHCR_READ_TOKEN
 ].each do |secret|
   raise "secret 참조 누락: #{secret}" unless text.include?("secrets.#{secret}")
 end

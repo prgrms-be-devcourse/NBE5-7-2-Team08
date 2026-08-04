@@ -477,7 +477,8 @@ git commit -m "fix: keep websocket automatic reconnect enabled"
 - `verify`: PR와 push에서 테스트 및 Docker build
 - `publish`: `dev` push에서 두 GHCR 태그 push, `image` output 제공
 - `deploy`: Publish의 불변 `image` output을 홈서버 스크립트에 전달
-- GitHub secrets: `HOME_SERVER_HOST`, `HOME_SERVER_PORT`, `HOME_SERVER_USER`, `HOME_SERVER_SSH_KEY`, `HOME_SERVER_KNOWN_HOSTS`, `GHCR_USERNAME`, `GHCR_READ_TOKEN`
+- GitHub secrets: `HOME_SERVER_HOST`, `HOME_SERVER_PORT`, `HOME_SERVER_USER`, `HOME_SERVER_SSH_KEY`, `HOME_SERVER_KNOWN_HOSTS`
+- GHCR 인증: Deploy job의 `packages: read`, `github.actor`, 실행별 `github.token`
 
 - [ ] **1단계: 현재 워크플로 정적 계약 실패 확인**
 
@@ -536,12 +537,12 @@ echo "EOF" >> "$GITHUB_OUTPUT"
 
 `deploy`는 `needs: publish`와 서버 배포 전용 concurrency를 가진다. SSH 개인키와 known hosts는 secret을 환경변수로 전달해 파일 권한 `600`으로 저장한다. `/srv/devchat/.env` 존재 여부를 먼저 확인한 다음 두 인프라 파일을 SHA별 release 디렉터리로 함께 전송한다.
 
-GHCR 로그인은 토큰을 SSH 표준입력으로 전달한다.
+GHCR 로그인은 별도 장기 PAT가 아닌 실행별 `github.token`을 SSH 표준입력으로 전달하고, 배포 결과와 관계없이 마지막에 로그아웃한다.
 
 ```bash
-printf '%s' "$GHCR_READ_TOKEN" | ssh -p "$HOME_SERVER_PORT" \
+printf '%s' "${{ github.token }}" | ssh -p "$HOME_SERVER_PORT" \
   "$HOME_SERVER_USER@$HOME_SERVER_HOST" \
-  "docker login ghcr.io --username '$GHCR_USERNAME' --password-stdin"
+  "docker login ghcr.io --username '${{ github.actor }}' --password-stdin"
 ```
 
 그 다음 서버 잠금 안에서 release 디렉터리의 Compose와 스크립트에 Publish output을 전달하고, 성공한 release를 `/srv/devchat/current`로 전환한다.

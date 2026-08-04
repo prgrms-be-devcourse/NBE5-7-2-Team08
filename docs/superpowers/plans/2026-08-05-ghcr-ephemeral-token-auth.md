@@ -33,7 +33,7 @@
 - 권한: Deploy job `contents: read`, `packages: read`
 - 출력: 홈서버의 일시적인 `ghcr.io` 로그인과 항상 실행되는 로그아웃
 
-- [ ] **1단계: 장기 PAT 사용을 금지하는 실패 계약 작성**
+- [x] **1단계: 장기 PAT 사용을 금지하는 실패 계약 작성**
 
 `backend/infra/tests/workflow_contract_test.sh`의 Deploy job 검증에 다음 계약을 추가하고, 기존 `GHCR_USERNAME`, `GHCR_READ_TOKEN` secret 필수 검증은 제거한다.
 
@@ -48,7 +48,7 @@ raise "GHCR 로그아웃 누락" unless text.include?("docker logout ghcr.io")
 raise "GHCR 로그아웃은 항상 실행해야 함" unless text.include?("if: always()")
 ```
 
-- [ ] **2단계: 계약이 현재 워크플로에서 올바르게 실패하는지 확인**
+- [x] **2단계: 계약이 현재 워크플로에서 올바르게 실패하는지 확인**
 
 실행:
 
@@ -58,7 +58,7 @@ bash backend/infra/tests/workflow_contract_test.sh
 
 예상 결과: `deploy에 packages: read 필요` 오류로 실패한다.
 
-- [ ] **3단계: Deploy job을 최소 수정**
+- [x] **3단계: Deploy job을 최소 수정**
 
 `.github/workflows/ci-cd.yml`에서 Deploy job 권한과 로그인 환경변수를 다음처럼 변경한다.
 
@@ -87,11 +87,11 @@ Deploy 단계 다음에 로그아웃 단계를 추가한다.
       'docker logout ghcr.io >/dev/null 2>&1 || true'
 ```
 
-- [ ] **4단계: 기존 구현 계획의 secret 목록 갱신**
+- [x] **4단계: 기존 구현 계획의 secret 목록 갱신**
 
 `docs/superpowers/plans/2026-08-05-homeserver-blue-green-deployment.md`에서 `GHCR_USERNAME`, `GHCR_READ_TOKEN`을 필요한 저장소 secret 목록에서 제거하고, Deploy job이 `github.actor`, `github.token`을 사용한다는 설명으로 교체한다.
 
-- [ ] **5단계: 계약과 YAML 검증**
+- [x] **5단계: 계약과 YAML 검증**
 
 실행:
 
@@ -103,7 +103,7 @@ git diff --check
 
 예상 결과: 모든 명령이 성공한다.
 
-- [ ] **6단계: 한글 커밋 생성**
+- [x] **6단계: 한글 커밋 생성**
 
 ```bash
 git add .github/workflows/ci-cd.yml \

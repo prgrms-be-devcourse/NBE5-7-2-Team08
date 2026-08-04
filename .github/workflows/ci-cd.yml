@@ -117,6 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: read
     concurrency:
       group: devchat-homeserver
       cancel-in-progress: false
@@ -165,8 +166,8 @@ jobs:
 
       - name: Log in home server to GHCR
         env:
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_READ_TOKEN: ${{ github.token }}
         run: |
           printf '%s' "$GHCR_READ_TOKEN" | \
             ssh -p "$HOME_SERVER_PORT" \
@@ -202,3 +203,12 @@ jobs:
           ln -s "$release_dir" "$current_link"
           mv -Tf "$current_link" /srv/devchat/current
           REMOTE
+
+      - name: Log out home server from GHCR
+        if: always()
+        run: |
+          ssh -p "$HOME_SERVER_PORT" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            "$HOME_SERVER_USER@$HOME_SERVER_HOST" \
+            'docker logout ghcr.io >/dev/null 2>&1 || true'
