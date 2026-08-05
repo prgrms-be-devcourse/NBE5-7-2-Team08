@@ -8,22 +8,6 @@
 ## 서비스 주소
 https://devchat.o-r.kr/
 
-## 🚀 배포 및 운영
-
-`dev` 브랜치 push를 기준으로 GitHub Actions가 백엔드를 검증하고 GHCR에 커밋 SHA 이미지 태그를 게시합니다. 홈서버의 배포 스크립트는 비활성 Blue/Green 슬롯을 시작한 뒤 컨테이너 health와 공개 health를 순서대로 확인합니다. 검증에 실패하면 기존 슬롯으로 자동 복구하며, 성공하면 이전 슬롯을 종료해 활성 애플리케이션 컨테이너 하나만 유지합니다.
-
-프런트엔드는 Cloudflare Pages가 독립적으로 배포합니다. 외부 API와 WebSocket 요청은 공용 `home-gateway`를 거쳐 현재 활성 백엔드 슬롯으로 전달됩니다.
-
-### 모니터링
-
-- Prometheus가 Gateway의 Docker 내부 고정 주소를 통해 현재 활성 슬롯의 Micrometer 메트릭을 수집합니다.
-- Grafana는 DevChat 전용 Prometheus와 Loki를 datasource로 사용합니다.
-- Promtail은 Docker Compose project가 `devchat`인 컨테이너 로그만 Loki에 전달합니다.
-- Prometheus 데이터는 15일, Loki 로그는 7일 보존합니다.
-- 외부 `/actuator/prometheus`는 차단하고 `/actuator/health`만 배포 검증에 사용합니다.
-
-모니터링 장애는 애플리케이션 시작 조건에 포함하지 않으므로 채팅 서비스 요청 처리와 분리됩니다.
-
 ## 💻개발 환경 및 기술 스택
 <div align=center>
     <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
@@ -116,7 +100,7 @@ https://devchat.o-r.kr/
 <br>
 
 ## 🧾API 명세
-> 👉 **[Swagger UI 바로가기](https://thedevchat.duckdns.org/api/swagger-ui/index.html#/)**
+> 👉 **[Swagger UI 바로가기](https://api.devchat.o-r.kr/swagger-ui/index.html)**
 
 <br>
 
@@ -140,3 +124,19 @@ flowchart LR
     Prometheus --> Grafana[DevChat Grafana]
     Loki --> Grafana
 ```
+
+### 배포 및 운영
+
+`dev` 브랜치 push를 기준으로 GitHub Actions가 백엔드를 검증하고 GHCR에 커밋 SHA 이미지 태그를 게시합니다. 홈서버의 배포 스크립트는 비활성 Blue/Green 슬롯을 시작한 뒤 컨테이너 health와 공개 health를 순서대로 확인합니다. 검증에 실패하면 기존 슬롯으로 자동 복구하며, 성공하면 이전 슬롯을 종료해 활성 애플리케이션 컨테이너 하나만 유지합니다.
+
+프런트엔드는 Cloudflare Pages가 독립적으로 배포합니다. 외부 API와 WebSocket 요청은 공용 `home-gateway`를 거쳐 현재 활성 백엔드 슬롯으로 전달됩니다.
+
+#### 모니터링
+
+- Prometheus가 Gateway의 Docker 내부 고정 주소를 통해 현재 활성 슬롯의 Micrometer 메트릭을 수집합니다.
+- Grafana는 DevChat 전용 Prometheus와 Loki를 datasource로 사용합니다.
+- Promtail은 Docker Compose project가 `devchat`인 컨테이너 로그만 Loki에 전달합니다.
+- Prometheus 데이터는 15일, Loki 로그는 7일 보존합니다.
+- 외부 `/actuator/prometheus`는 차단하고 `/actuator/health`만 배포 검증에 사용합니다.
+
+모니터링 장애는 애플리케이션 시작 조건에 포함하지 않으므로 채팅 서비스 요청 처리와 분리됩니다.
