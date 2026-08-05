@@ -1,0 +1,14 @@
+apiVersion: 1
+
+datasources:
+  - name: DevChat Prometheus
+    type: prometheus
+    access: proxy
+    url: http://devchat-prometheus:9090
+    isDefault: true
+  - name: DevChat Loki
+    type: loki
+    access: proxy
+    url: http://devchat-loki:3100
+    jsonData:
+      maxLines: 5000
