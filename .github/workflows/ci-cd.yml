@@ -52,6 +52,7 @@ jobs:
           bash -n backend/infra/deploy.sh
           bash backend/infra/tests/compose_contract_test.sh
           bash backend/infra/tests/deploy_test.sh
+          bash backend/infra/tests/monitoring_contract_test.sh
           bash backend/infra/tests/workflow_contract_test.sh
 
       - name: Verify backend image build
@@ -156,11 +157,15 @@ jobs:
             -o IdentitiesOnly=yes \
             "$HOME_SERVER_USER@$HOME_SERVER_HOST" \
             "mkdir -p /srv/devchat/releases/$release_id.incoming"
-          scp -P "$HOME_SERVER_PORT" \
+          scp -r -P "$HOME_SERVER_PORT" \
             -o BatchMode=yes \
             -o IdentitiesOnly=yes \
             backend/infra/docker-compose.yml \
             backend/infra/deploy.sh \
+            backend/infra/prometheus \
+            backend/infra/grafana \
+            backend/infra/loki \
+            backend/infra/promtail \
             "$HOME_SERVER_USER@$HOME_SERVER_HOST:/srv/devchat/releases/$release_id.incoming/"
 
       - name: Log in home server to GHCR
@@ -193,6 +198,10 @@ jobs:
           flock -w 600 9
           test -f "$incoming_dir/docker-compose.yml"
           test -f "$incoming_dir/deploy.sh"
+          test -f "$incoming_dir/prometheus/prometheus.yml"
+          test -f "$incoming_dir/grafana/provisioning/datasources/datasources.yml"
+          test -f "$incoming_dir/loki/config.yml"
+          test -f "$incoming_dir/promtail/config.yml"
           mv "$incoming_dir" "$release_dir"
           chmod +x "$release_dir/deploy.sh"
           COMPOSE_FILE="$release_dir/docker-compose.yml" \

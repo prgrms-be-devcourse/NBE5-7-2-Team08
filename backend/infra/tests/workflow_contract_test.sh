@@ -33,6 +33,11 @@ raise "배포 파일 설치 lock 누락" unless text.include?("flock -w 600 9")
 raise "외부 lock 전달 누락" unless text.include?("DEPLOY_LOCK_HELD=true")
 raise "release별 Compose 지정 누락" unless text.include?('COMPOSE_FILE="$release_dir/docker-compose.yml"')
 raise "현재 release 전환 누락" unless text.include?("/srv/devchat/current")
+raise "모니터링 설정 재귀 복사 누락" unless text.include?("scp -r -P")
+%w[prometheus grafana loki promtail].each do |directory|
+  raise "모니터링 설정 복사 누락: #{directory}" unless text.include?("backend/infra/#{directory}")
+  raise "release 설정 검증 누락: #{directory}" unless text.include?("$incoming_dir/#{directory}")
+end
 raise "Node.js 설정 누락" unless text.include?("actions/setup-node@v4")
 raise "프런트 의존성 설치 누락" unless text.include?("npm ci")
 raise "WebSocket 재연결 테스트 누락" unless text.include?("WebSocketContext.test.js")
@@ -47,6 +52,7 @@ raise "GHCR 로그아웃은 항상 실행해야 함" unless text.include?("if: a
 %w[
   backend/infra/tests/compose_contract_test.sh
   backend/infra/tests/deploy_test.sh
+  backend/infra/tests/monitoring_contract_test.sh
   backend/infra/tests/workflow_contract_test.sh
 ].each do |test_script|
   raise "verify 실행 누락: #{test_script}" unless text.include?("bash #{test_script}")
