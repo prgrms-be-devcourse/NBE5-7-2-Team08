@@ -8,3 +8,6 @@
 .env
 .env.*
 !.env.example
+
+# Local documentation
+/docs/local/

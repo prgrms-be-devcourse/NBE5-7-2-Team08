@@ -30,7 +30,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			"/token/refresh",
 			"/actuator/health",
 			"/actuator/prometheus",
-			"/ws"
+			"/ws",
+			"/swagger-ui",
+			"/"
 	);
 
 	@Override
@@ -70,7 +72,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	private boolean isWhitelisted(String requestURI) {
-		return requestURI.startsWith("/github/") || WHITE_LIST.contains(requestURI);
+		return requestURI.startsWith("/github/")
+				|| requestURI.startsWith("/swagger-ui/")
+				|| requestURI.equals("/v3/api-docs")
+				|| requestURI.startsWith("/v3/api-docs/")
+				|| WHITE_LIST.contains(requestURI);
 	}
 
 	private void sendUnauthorized(HttpServletResponse response, String message) throws IOException {
