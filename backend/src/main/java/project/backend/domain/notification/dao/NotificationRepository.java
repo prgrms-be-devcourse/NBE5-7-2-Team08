@@ -4,6 +4,7 @@ import io.lettuce.core.dynamic.annotation.Param;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import project.backend.domain.member.entity.Member;
@@ -17,6 +18,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 			FROM Notification n
 			WHERE n.receiver.id = :receiverId
 		""")
+	@EntityGraph(attributePaths = {"receiver", "sender"})
 	Page<Notification> getNotifications(@Param("receiverId") Long receiverId,
 		Pageable pageable);
 
@@ -26,6 +28,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 			WHERE n.receiver.id = :receiverId
 			AND n.isRead = false
 		""")
+	@EntityGraph(attributePaths = {"receiver", "sender"})
 	Page<Notification> getNotReadNotification(@Param("receiverId") Long receiverId,
 		Pageable pageable);
 
