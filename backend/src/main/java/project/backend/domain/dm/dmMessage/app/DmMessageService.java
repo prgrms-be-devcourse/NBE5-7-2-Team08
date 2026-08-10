@@ -1,7 +1,12 @@
 package project.backend.domain.dm.dmMessage.app;
 
 import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
@@ -65,6 +70,15 @@ public class DmMessageService {
 
         memberService.checkAuthentication(auth);
 
-        return dmMessageRepository.findMessagesByRoomId(roomId, pageable);
+        Page<Long> messageIds = dmMessageRepository.findMessageIdsByRoomId(roomId, pageable);
+        if (messageIds.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, messageIds.getTotalElements());
+        }
+
+        Map<Long, DmMessage> messagesById = dmMessageRepository.findAllWithSenderByIdIn(
+                messageIds.getContent()).stream()
+            .collect(Collectors.toMap(DmMessage::getId, Function.identity()));
+
+        return messageIds.map(messageId -> DmMessageResponse.from(messagesById.get(messageId)));
     }
 }

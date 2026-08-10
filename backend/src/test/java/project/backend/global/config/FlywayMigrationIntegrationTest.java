@@ -26,6 +26,6 @@ class FlywayMigrationIntegrationTest {
             .locations("classpath:db/migration")
             .load();
 
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(4);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(5);
     }
 }
