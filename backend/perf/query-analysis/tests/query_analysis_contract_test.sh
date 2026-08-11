@@ -24,6 +24,7 @@ assert service["environment"]["MYSQL_DATABASE"] == "devchat_query_analysis"
 assert service["volumes"]
 assert service["ports"][0]["target"] == 3306
 assert service["ports"][0]["published"] == "3307"
+assert service["ports"][0]["host_ip"] == "127.0.0.1"
 ' <<<"$config"
 
 echo "query-analysis Compose contract passed"
@@ -64,6 +65,16 @@ DEEP_CURSOR_ID=5 \
 EXPECTED_FIRST_IDS=$fixture_ids \
 EXPECTED_DEEP_IDS=$fixture_ids \
 k6 inspect --include-system-env-vars "$ROOT/scripts/measure_dm_api.js" >/dev/null
+
+MODE=after \
+BASE_URL=http://127.0.0.1:1 \
+AUTH_COOKIE=accessToken=contract-test \
+ROOM_ID=1 \
+DEEP_CURSOR_SENT_AT=2026-01-01T00:00:00 \
+DEEP_CURSOR_ID=5 \
+EXPECTED_FIRST_IDS=$fixture_ids \
+EXPECTED_DEEP_IDS=$fixture_ids \
+k6 run --quiet "$ROOT/tests/dm_api_contract_test.js" >/dev/null
 test -f "$ROOT/scripts/measure_write_cost.sh"
 test -f "$ROOT/README.md"
 test -f "$ROOT/results/summary.md"

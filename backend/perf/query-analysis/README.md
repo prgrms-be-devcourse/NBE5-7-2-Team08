@@ -20,7 +20,7 @@ cp .env.example .env
 ./scripts/measure_write_cost.sh high
 ```
 
-`reset.sh`는 Compose 설정의 컨테이너 이름을 확인하고, 이미 실행 중인 경우에는 연결된 DB 이름도 확인한 뒤에만 전용 볼륨을 초기화한다. 측정용 MySQL은 `MYSQL_HOST_PORT`로 호스트 포트를 열며 기본값은 `3307`이다. `seed.sh`, `verify.sh`, `analyze.sh`는 `small`, `medium`, `high`를 받는다. 인덱스를 임시 제거하는 스크립트는 종료 중 오류가 발생해도 trap으로 복구한다.
+`reset.sh`는 Compose 설정의 컨테이너 이름을 확인하고, 이미 실행 중인 경우에는 연결된 DB 이름도 확인한 뒤에만 전용 볼륨을 초기화한다. 측정용 MySQL은 `127.0.0.1`에만 `MYSQL_HOST_PORT`를 열며 기본값은 `3307`이다. `seed.sh`, `verify.sh`, `analyze.sh`는 `small`, `medium`, `high`를 받는다. 인덱스를 임시 제거하는 스크립트는 종료 중 오류가 발생해도 trap으로 복구한다.
 
 ## 실행 흐름
 
@@ -147,6 +147,77 @@ k6로 인증, Controller, JPA 조회, DTO 변환, JSON 직렬화를 포함한 DM
 
 백엔드는 한 번에 하나만 `devchat_query_analysis`에 연결하고 `ddl-auto=none`으로 기동한다. A는 `git archive 2af8f64`로 임시 디렉터리에 추출해 현재 checkout이나 worktree를 바꾸지 않고 빌드한다. A 측정에서는 V5 이전 스키마를 재현하도록 두 V5 인덱스를 제거하고, C 측정 전에 원래 정의로 복구한다. 데이터, 포트, JWT 사용자, JVM, 페이지 크기는 같게 유지한다.
 
+#### A→C 재현 절차
+
+다음 명령은 `backend/perf/query-analysis`에서 실행한다. Docker 대상과 DB 이름은 기존 스크립트와 같은 전용 환경으로 고정한다.
+
+```bash
+./scripts/reset.sh
+./scripts/seed.sh high
+
+qa_mysql=(docker exec devchat-query-analysis-mysql mysql \
+  -uquery_analysis -pquery_analysis_local_only \
+  -Ddevchat_query_analysis --batch --raw --skip-column-names)
+
+FIRST_IDS=$("${qa_mysql[@]}" -e "
+  SELECT GROUP_CONCAT(id ORDER BY sent_at DESC, id DESC)
+  FROM (SELECT id, sent_at FROM dm_message WHERE room_id = 1
+        ORDER BY sent_at DESC, id DESC LIMIT 20) first_page;")
+DEEP_IDS=$("${qa_mysql[@]}" -e "
+  SELECT GROUP_CONCAT(id ORDER BY sent_at DESC, id DESC)
+  FROM (SELECT id, sent_at FROM dm_message WHERE room_id = 1
+        ORDER BY sent_at DESC, id DESC LIMIT 20 OFFSET 90000) deep_page;")
+read -r CURSOR_SENT_AT CURSOR_ID <<< "$("${qa_mysql[@]}" -e "
+  SELECT DATE_FORMAT(sent_at, '%Y-%m-%dT%H:%i:%s'), id
+  FROM dm_message WHERE room_id = 1
+  ORDER BY sent_at DESC, id DESC LIMIT 1 OFFSET 89999;")"
+```
+
+측정용 JWT는 기본 로컬 secret과 High seed의 member 1 정보로 메모리에만 만든다. 명령은 토큰을 출력하거나 파일에 저장하지 않는다.
+
+```bash
+jwt_secret=local-development-only-jwt-secret-change-me
+jwt_header=$(printf '%s' '{"alg":"HS256","typ":"JWT"}' \
+  | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+jwt_now=$(date +%s)
+jwt_exp=$((jwt_now + 3600))
+jwt_payload=$(printf \
+  '{"iat":%s,"exp":%s,"username":"target","id":"1","nickname":"target","profileImg":"default.png"}' \
+  "$jwt_now" "$jwt_exp" | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+jwt_unsigned="$jwt_header.$jwt_payload"
+jwt_signature=$(printf '%s' "$jwt_unsigned" \
+  | openssl dgst -sha256 -hmac "$jwt_secret" -binary \
+  | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+ACCESS_TOKEN="$jwt_unsigned.$jwt_signature"
+```
+
+A는 현재 checkout을 바꾸지 않고 임시 디렉터리에서 빌드한다. V5 이전 스키마 상태를 만든 뒤 같은 터미널에서 서버를 백그라운드로 기동한다.
+
+```bash
+A_DIR=$(mktemp -d /tmp/devchat-api-before.XXXXXX)
+git -C ../../.. archive 2af8f64 | tar -x -C "$A_DIR"
+(cd "$A_DIR/backend" && ./gradlew bootJar)
+
+"${qa_mysql[@]}" -e "
+  ALTER TABLE dm_message DROP INDEX idx_dm_message_room_sent_at_id_desc;
+  ALTER TABLE notification DROP INDEX idx_notification_receiver_is_read;"
+
+DB_URL='jdbc:mysql://127.0.0.1:3307/devchat_query_analysis?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul' \
+DB_USERNAME=query_analysis DB_PASSWORD=query_analysis_local_only \
+SPRING_JPA_HIBERNATE_DDL_AUTO=none \
+SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=false \
+ENCRYPT_SECRET=local-query-analysis-encryption-key \
+OAUTH_GITHUB_CLIENT_ID=query-analysis-dummy \
+OAUTH_GITHUB_SECRET=query-analysis-dummy \
+java -jar "$A_DIR/backend/build/libs/backend-0.0.1-SNAPSHOT.jar" \
+  --server.port=18080 --spring.task.scheduling.enabled=false \
+  > /tmp/devchat-api-a.log 2>&1 &
+API_PID=$!
+until curl --silent --fail http://127.0.0.1:18080/actuator/health >/dev/null; do sleep 1; done
+```
+
+A 측정은 동일 조건에서 두 번 실행한다. 완료 후 A를 종료하고 V5 인덱스를 복구한다.
+
 ```bash
 MODE=before \
 BASE_URL=http://127.0.0.1:18080 \
@@ -155,6 +226,35 @@ ROOM_ID=1 \
 EXPECTED_FIRST_IDS="$FIRST_IDS" \
 EXPECTED_DEEP_IDS="$DEEP_IDS" \
 k6 run --summary-export results/high-api-a-run-1.json scripts/measure_dm_api.js
+MODE=before \
+BASE_URL=http://127.0.0.1:18080 \
+AUTH_COOKIE="accessToken=$ACCESS_TOKEN" \
+ROOM_ID=1 \
+EXPECTED_FIRST_IDS="$FIRST_IDS" \
+EXPECTED_DEEP_IDS="$DEEP_IDS" \
+k6 run --summary-export results/high-api-a-run-2.json scripts/measure_dm_api.js
+kill "$API_PID"
+wait "$API_PID" 2>/dev/null || true
+
+"${qa_mysql[@]}" -e "
+  ALTER TABLE dm_message
+    ADD INDEX idx_dm_message_room_sent_at_id_desc (room_id, sent_at DESC, id DESC);
+  ALTER TABLE notification
+    ADD INDEX idx_notification_receiver_is_read (receiver_member_id, is_read);"
+
+(cd ../.. && ./gradlew bootJar)
+DB_URL='jdbc:mysql://127.0.0.1:3307/devchat_query_analysis?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul' \
+DB_USERNAME=query_analysis DB_PASSWORD=query_analysis_local_only \
+SPRING_JPA_HIBERNATE_DDL_AUTO=none \
+SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=false \
+ENCRYPT_SECRET=local-query-analysis-encryption-key \
+OAUTH_GITHUB_CLIENT_ID=query-analysis-dummy \
+OAUTH_GITHUB_SECRET=query-analysis-dummy \
+java -jar ../../build/libs/backend-0.0.1-SNAPSHOT.jar \
+  --server.port=18080 --spring.task.scheduling.enabled=false \
+  > /tmp/devchat-api-c.log 2>&1 &
+API_PID=$!
+until curl --silent --fail http://127.0.0.1:18080/actuator/health >/dev/null; do sleep 1; done
 
 MODE=after \
 BASE_URL=http://127.0.0.1:18080 \
@@ -165,7 +265,26 @@ DEEP_CURSOR_ID="$CURSOR_ID" \
 EXPECTED_FIRST_IDS="$FIRST_IDS" \
 EXPECTED_DEEP_IDS="$DEEP_IDS" \
 k6 run --summary-export results/high-api-c-run-1.json scripts/measure_dm_api.js
+MODE=after \
+BASE_URL=http://127.0.0.1:18080 \
+AUTH_COOKIE="accessToken=$ACCESS_TOKEN" \
+ROOM_ID=1 \
+DEEP_CURSOR_SENT_AT="$CURSOR_SENT_AT" \
+DEEP_CURSOR_ID="$CURSOR_ID" \
+EXPECTED_FIRST_IDS="$FIRST_IDS" \
+EXPECTED_DEEP_IDS="$DEEP_IDS" \
+k6 run --summary-export results/high-api-c-run-2.json scripts/measure_dm_api.js
+
+kill "$API_PID"
+wait "$API_PID" 2>/dev/null || true
+./scripts/verify.sh high
+case "$A_DIR" in
+  /tmp/devchat-api-before.*) rm -rf -- "$A_DIR" ;;
+  *) printf '임시 디렉터리 경로를 확인하세요: %s\n' "$A_DIR" >&2 ;;
+esac
 ```
+
+A와 C의 k6 명령은 각각 `run-1`, `run-2`로 두 번 실행한다. 중간에 실패하거나 인터럽트했다면 서버를 종료한 뒤 두 V5 인덱스가 존재하는지 `./scripts/verify.sh high`로 확인하고, 누락 시 위 `ADD INDEX` 문으로 복구한다.
 
 - A의 첫 페이지는 `page=0&size=20`, 깊은 페이지는 `page=4500&size=20`, 즉 `OFFSET 90000`이다.
 - C의 첫 페이지는 `size=20`, 깊은 페이지는 OFFSET 90000 바로 앞 행의 `(sentAt, messageId)`를 전달한다.

@@ -106,9 +106,18 @@ function validResponse(response, scenario) {
   }
 
   return payload.hasNext === true
-    && payload.nextCursor !== null
-    && typeof payload.nextCursor.sentAt === 'string'
-    && Number.isInteger(Number(payload.nextCursor.messageId));
+    && cursorMatchesLastMessage(payload);
+}
+
+export function cursorMatchesLastMessage(payload) {
+  if (!payload || !Array.isArray(payload.content) || payload.content.length === 0
+    || payload.nextCursor === null || payload.nextCursor === undefined) {
+    return false;
+  }
+
+  const lastMessage = payload.content[payload.content.length - 1];
+  return payload.nextCursor.sentAt === lastMessage.sendAt
+    && Number(payload.nextCursor.messageId) === Number(lastMessage.messageId);
 }
 
 function sameIdSet(actual, expected) {
