@@ -26,13 +26,33 @@ FROM notification n
 WHERE n.receiver_member_id = 1
   AND n.is_read = FALSE;
 
-SELECT '## dm-history-select' AS plan_label;
+SELECT '## dm-history-offset-0' AS plan_label;
 EXPLAIN ANALYZE
 SELECT m.id
 FROM dm_message m
 WHERE m.room_id = 1
 ORDER BY m.sent_at DESC, m.id DESC
 LIMIT 20 OFFSET 0;
+
+SELECT '## dm-history-offset-deep' AS plan_label;
+EXPLAIN ANALYZE
+SELECT m.id
+FROM dm_message m
+WHERE m.room_id = 1
+ORDER BY m.sent_at DESC, m.id DESC
+LIMIT 20 OFFSET __DM_DEEP_OFFSET__;
+
+SELECT '## dm-history-deep-cursor' AS plan_label;
+EXPLAIN ANALYZE
+SELECT m.id
+FROM dm_message m
+WHERE m.room_id = 1
+  AND (
+    m.sent_at < '__DM_CURSOR_SENT_AT__'
+    OR (m.sent_at = '__DM_CURSOR_SENT_AT__' AND m.id < __DM_CURSOR_ID__)
+  )
+ORDER BY m.sent_at DESC, m.id DESC
+LIMIT 20;
 
 SELECT '## dm-history-fetch-senders' AS plan_label;
 EXPLAIN ANALYZE
