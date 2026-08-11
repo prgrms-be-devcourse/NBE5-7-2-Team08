@@ -71,6 +71,9 @@ public class DmMessageService {
         Long cursorId, int size, Authentication auth) {
 
         memberService.checkAuthentication(auth);
+        if (size < 1 || size > 100) {
+            throw new DmException(DmErrorCode.INVALID_HISTORY_SIZE);
+        }
         if ((cursorSentAt == null) != (cursorId == null)) {
             throw new DmException(DmErrorCode.INVALID_HISTORY_CURSOR);
         }

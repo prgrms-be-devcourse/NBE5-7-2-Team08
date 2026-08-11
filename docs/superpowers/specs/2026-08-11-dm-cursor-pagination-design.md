@@ -61,7 +61,7 @@ GET /dm/history/{roomId}?size=20
 GET /dm/history/{roomId}?cursorSentAt=2026-08-11T00:00:00&cursorId=1234&size=20
 ```
 
-- `size` 기본값은 20이다.
+- `size` 기본값은 20이며 1 이상 100 이하여야 한다.
 - `cursorSentAt`과 `cursorId`는 둘 다 없거나 둘 다 있어야 한다.
 - 둘 중 하나만 전달되면 잘못된 요청으로 처리한다.
 - 커서에 메시지 ID만 사용하지 않는다. 현재 정렬 계약이 `sentAt DESC, id DESC`이므로 두 값을 함께 사용해야 한다.

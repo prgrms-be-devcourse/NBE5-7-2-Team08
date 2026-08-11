@@ -11,6 +11,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import project.backend.domain.dm.dmMessage.DmMessageType;
@@ -21,6 +23,7 @@ import project.backend.domain.dm.dmRoom.app.DmRoomService;
 import project.backend.domain.dm.dmRoom.entity.DmRoom;
 import project.backend.domain.member.app.MemberService;
 import project.backend.domain.member.entity.Member;
+import project.backend.global.exception.errorcode.DmErrorCode;
 import project.backend.global.exception.ex.DmException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
@@ -89,6 +92,23 @@ class DmMessageServiceTest {
             1L, LocalDateTime.of(2026, 1, 1, 0, 2), null, 20,
             mock(org.springframework.security.core.Authentication.class)))
             .isInstanceOf(DmException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1, 101, Integer.MAX_VALUE})
+    @DisplayName("DM 이력 size가 1에서 100 사이가 아니면 요청을 거부한다")
+    void getDmMessages_withInvalidSize_rejectsRequest(int size) {
+        DmMessageService service = new DmMessageService(
+            dmRoomService, dmMessageRepository, memberService, messagingTemplate);
+        when(memberService.checkAuthentication(any()))
+            .thenReturn(mock(project.backend.auth.dto.MemberDetails.class));
+
+        assertThatThrownBy(() -> service.getDmMessages(
+            1L, null, null, size,
+            mock(org.springframework.security.core.Authentication.class)))
+            .isInstanceOfSatisfying(DmException.class,
+                exception -> assertThat(exception.getErrorCode())
+                    .isEqualTo(DmErrorCode.INVALID_HISTORY_SIZE));
     }
 
     private DmMessage message(Long id, String content, LocalDateTime sentAt) {
