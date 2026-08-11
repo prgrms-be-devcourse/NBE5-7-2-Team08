@@ -20,8 +20,8 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
   const [isResizing, setIsResizing] = useState(false)
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 })
 
-  // 페이지네이션 관련 상태
-  const [currentPage, setCurrentPage] = useState(0)
+  // 커서 페이지네이션 관련 상태
+  const [nextCursor, setNextCursor] = useState(null)
   const [hasMore, setHasMore] = useState(true)
   const [isFetching, setIsFetching] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -136,8 +136,8 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
         // id: received.messageId || `temp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         content: received.content,
         sender: received.senderNickName,
-        timestamp: received.createdAt || new Date().toISOString(),
-        isOwn: received.senderNickName === currentUser?.nickname,
+        timestamp: received.sendAt || new Date().toISOString(),
+        isOwn: received.senderId === currentUser?.id,
         type: received.type,
         messageId: received.messageId,
       }
@@ -148,7 +148,7 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
         return [...prev, newMessageData]
       })
     },
-    [currentUser?.nickname],
+    [currentUser?.id],
   )
 
   // 📡 전달 시 고정된 콜백 전달
@@ -161,34 +161,31 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
 
   // 더 많은 메시지 가져오기
   const fetchMoreMessages = useCallback(async () => {
-    // Guard: Do not fetch if already fetching, no more messages, no room ID, not initialized, or if currentPage is 0 (initial load handled elsewhere)
-    if (isFetching || !hasMore || !chatRoomId || !isInitialized) {
-      if (currentPage === 0 && isInitialized) {
-        console.log("🚫 fetchMoreMessages: Attempted to fetch page 0, but it should be handled by initial load.")
-      }
-      return
-    }
+    if (isFetching || !hasMore || !nextCursor || !chatRoomId || !isInitialized) return
 
-    console.log(`📥 Fetching page ${currentPage}`)
+    console.log("📥 Fetching messages before cursor:", nextCursor)
     setIsFetching(true)
 
     try {
       const response = await axiosInstance.get(`/dm/history/${chatRoomId}`, {
-        params: { page: currentPage, size: 20 },
+        params: {
+          cursorSentAt: nextCursor.sentAt,
+          cursorId: nextCursor.messageId,
+          size: 20,
+        },
       })
 
       const fetchedMessages = response.data.content.map((msg) => ({
         id: msg.messageId, // Use messageId as the unique key
         content: msg.content,
         sender: msg.senderNickName,
-        timestamp: msg.createdAt,
-        isOwn: msg.senderNickName === currentUser?.nickname,
+        timestamp: msg.sendAt,
+        isOwn: msg.senderId === currentUser?.id,
         messageId: msg.messageId,
       }))
 
-      if (fetchedMessages.length === 0 || fetchedMessages.length < 20) {
-        setHasMore(false)
-      }
+      setHasMore(response.data.hasNext)
+      setNextCursor(response.data.nextCursor)
 
       if (fetchedMessages.length > 0) {
         setMessages((prevMessages) => {
@@ -197,18 +194,17 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
           const uniqueNewMessages = fetchedMessages.filter((m) => !existingMessageIds.has(m.messageId))
           // Fetched messages are older, so prepend them, ensuring chronological order
           const sortedUniqueNewMessages = uniqueNewMessages.sort(
-            (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+            (a, b) => new Date(a.timestamp) - new Date(b.timestamp) || a.messageId - b.messageId,
           )
           return [...sortedUniqueNewMessages, ...prevMessages]
         })
-        setCurrentPage((prev) => prev + 1)
       }
     } catch (error) {
       console.error("Error fetching more messages:", error)
     } finally {
       setIsFetching(false)
     }
-  }, [chatRoomId, currentPage, isFetching, hasMore, currentUser?.nickname, isInitialized])
+  }, [chatRoomId, nextCursor, isFetching, hasMore, currentUser?.id, isInitialized])
 
   // 스크롤 이벤트 핸들러 (무한 스크롤)
   const handleScroll = useCallback(() => {
@@ -295,7 +291,7 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
 
     // 상태 초기화
     // setMessages([])
-    // setCurrentPage(0) // Page 0 will be fetched by initializeChat
+    // setNextCursor(null)
     // setHasMore(true)
     // setIsFetching(false)
     // setIsInitialized(false)
@@ -312,28 +308,30 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
         console.log("✅ Chat room ID:", newRoomId)
         setChatRoomId(newRoomId)
 
-        // 2. Load Initial Messages (Page 0)
+        // 2. Load Initial Messages
         console.log("📥 Loading initial messages for room:", newRoomId)
         const messagesResponse = await axiosInstance.get(`/dm/history/${newRoomId}`, {
-          params: { page: 0, size: 20 },
+          params: { size: 20 },
         })
 
         const initialMessagesData = messagesResponse.data.content.map((msg) => ({
           id: msg.messageId,
           content: msg.content,
           sender: msg.senderNickName,
-          timestamp: msg.createdAt,
-          isOwn: msg.senderNickName === currentUser.nickname,
+          timestamp: msg.sendAt,
+          isOwn: msg.senderId === currentUser.id,
           messageId: msg.messageId,
         }))
 
         console.log("✅ Loaded initial messages:", initialMessagesData.length)
 
-        const sortedMessages = initialMessagesData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+        const sortedMessages = initialMessagesData.sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp) || a.messageId - b.messageId,
+        )
 
         setMessages(sortedMessages)
-        setCurrentPage(1) // Next page to fetch will be page 1
-        setHasMore(initialMessagesData.length === 20)
+        setNextCursor(messagesResponse.data.nextCursor)
+        setHasMore(messagesResponse.data.hasNext)
         setIsInitialized(true)
       } catch (err) {
         console.error("Error initializing chat:", err)
@@ -359,7 +357,7 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
       // If the effect is re-running due to other dep changes, the `if (initializationRef.current)` check
       // at the top should prevent re-initialization.
     }
-  }, [isOpen, friend?.username, currentUser?.username, currentUser?.nickname]) // Keep dependencies
+  }, [isOpen, friend?.username, currentUser?.username, currentUser?.id]) // Keep dependencies
 
   // Add a separate effect to reset initializationRef when the modal is closed.
   // useEffect(() => {
@@ -373,7 +371,7 @@ export function ChatModal({ isOpen, onClose, friend, currentUser, initialPositio
     if (!isOpen) {
       // Reset all chat-specific state to initial values
       setMessages([])
-      setCurrentPage(0)
+      setNextCursor(null)
       setHasMore(true)
       setIsFetching(false)
       setIsInitialized(false)
