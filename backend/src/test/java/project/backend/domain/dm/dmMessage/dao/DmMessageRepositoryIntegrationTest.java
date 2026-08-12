@@ -3,18 +3,20 @@ package project.backend.domain.dm.dmMessage.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.LongStream;
 import org.hibernate.Hibernate;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
@@ -51,11 +53,13 @@ class DmMessageRepositoryIntegrationTest {
         registry.add("spring.datasource.password", mysql::getPassword);
         registry.add("spring.data.redis.host", redis::getHost);
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+        registry.add("spring.jpa.properties.hibernate.generate_statistics", () -> true);
     }
 
     @Autowired DmMessageRepository dmMessageRepository;
     @Autowired JdbcTemplate jdbcTemplate;
     @Autowired EntityManager entityManager;
+    @Autowired EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     void setUp() {
@@ -74,23 +78,20 @@ class DmMessageRepositoryIntegrationTest {
     }
 
     @Test
-    @DisplayName("DM ID Page는 sentAt과 id 역순으로 조회하고 전체 개수를 유지한다")
-    void findMessageIdsByRoomId_ordersDeterministicallyAndKeepsTotalCount() {
-        Page<Long> result = dmMessageRepository.findMessageIdsByRoomId(
-            3001L, PageRequest.of(0, 20));
+    @DisplayName("동일한 sentAt의 복합 커서 경계에는 최신 메시지가 삽입돼도 중복과 누락이 없다")
+    void findMessageIdsByCursor_hasNoDuplicatesOrGapsAfterNewMessageIsInserted() {
+        List<Long> firstWithLookahead = dmMessageRepository.findLatestMessageIdsByRoomId(
+            3001L, PageRequest.of(0, 21));
+        List<Long> first = firstWithLookahead.subList(0, 20);
+        LocalDateTime cursorSentAt = jdbcTemplate.queryForObject(
+            "SELECT sent_at FROM dm_message WHERE id = ?", LocalDateTime.class, first.getLast());
 
-        assertThat(result.getTotalElements()).isEqualTo(30);
-        assertThat(result.getContent()).containsExactlyElementsOf(
-            LongStream.iterate(3030, value -> value - 1).limit(20).boxed().toList());
-    }
+        jdbcTemplate.update(
+            "INSERT INTO dm_message (id, content, sent_at, type, room_id, sender_id) VALUES (?, ?, ?, 'TEXT', 3001, 3002)",
+            4000L, "new-message", Timestamp.valueOf(LocalDateTime.of(2026, 1, 1, 0, 1)));
 
-    @Test
-    @DisplayName("DM ID Page 경계에는 메시지 중복과 누락이 없다")
-    void findMessageIdsByRoomId_hasNoDuplicatesOrGapsAcrossPages() {
-        List<Long> first = dmMessageRepository.findMessageIdsByRoomId(
-            3001L, PageRequest.of(0, 20)).getContent();
-        List<Long> second = dmMessageRepository.findMessageIdsByRoomId(
-            3001L, PageRequest.of(1, 20)).getContent();
+        List<Long> second = dmMessageRepository.findMessageIdsBeforeCursor(
+            3001L, cursorSentAt, first.getLast(), PageRequest.of(0, 21));
 
         assertThat(first).doesNotContainAnyElementsOf(second);
         assertThat(first).containsExactlyElementsOf(
@@ -100,13 +101,18 @@ class DmMessageRepositoryIntegrationTest {
     }
 
     @Test
-    @DisplayName("선택된 DM 조회는 sender를 함께 로딩한다")
-    void findAllWithSenderByIdIn_fetchesSender() {
+    @DisplayName("DM 이력 한 페이지는 count 없이 ID와 sender 두 쿼리로 조회한다")
+    void findHistoryPage_executesOnlyIdAndSenderQueries() {
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.clear();
+        List<Long> messageIds = dmMessageRepository.findLatestMessageIdsByRoomId(
+            3001L, PageRequest.of(0, 20));
         List<DmMessage> messages = dmMessageRepository.findAllWithSenderByIdIn(
-            List.of(3030L, 3029L));
+            messageIds);
 
         assertThat(messages).extracting(DmMessage::getId)
-            .containsExactlyInAnyOrder(3030L, 3029L);
+            .containsExactlyInAnyOrderElementsOf(messageIds);
         assertThat(messages).allMatch(message -> Hibernate.isInitialized(message.getSender()));
+        assertThat(statistics.getQueryExecutionCount()).isEqualTo(2);
     }
 }

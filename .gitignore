@@ -15,3 +15,4 @@
 # Query-plan analysis runtime output
 /backend/perf/query-analysis/.env
 /backend/perf/query-analysis/results/*.txt
+/backend/perf/query-analysis/results/*.json

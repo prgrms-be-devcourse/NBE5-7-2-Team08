@@ -2,10 +2,9 @@ package project.backend.domain.dm.dmMessage.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -13,9 +12,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import project.backend.domain.dm.dmMessage.app.DmMessageService;
 import project.backend.domain.dm.dmMessage.dto.DmMessageRequest;
+import project.backend.domain.dm.dmMessage.dto.DmMessageHistoryResponse;
 import project.backend.domain.dm.dmMessage.dto.DmMessageResponse;
 
 @Tag(name = "Direct Message", description = "DM API")
@@ -35,10 +36,12 @@ public class DmMessageController {
 
 	@Operation(summary = "DM 채팅 내역 조회")
 	@GetMapping("/history/{roomId}")
-	public Page<DmMessageResponse> getDmMessages(@PathVariable Long roomId,
+	public DmMessageHistoryResponse getDmMessages(@PathVariable Long roomId,
 		Authentication auth,
-		Pageable pageable
+		@RequestParam(required = false) LocalDateTime cursorSentAt,
+		@RequestParam(required = false) Long cursorId,
+		@RequestParam(defaultValue = "20") int size
 	) {
-		return dmMessageService.getDmMessages(roomId, pageable, auth);
+		return dmMessageService.getDmMessages(roomId, cursorSentAt, cursorId, size, auth);
 	}
 }

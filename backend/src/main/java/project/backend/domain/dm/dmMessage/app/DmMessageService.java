@@ -1,13 +1,12 @@
 package project.backend.domain.dm.dmMessage.app;
 
 import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -17,11 +16,14 @@ import project.backend.domain.member.app.MemberService;
 import project.backend.domain.dm.dmRoom.app.DmRoomService;
 import project.backend.domain.dm.dmMessage.dao.DmMessageRepository;
 import project.backend.domain.dm.dmMessage.dto.DmMessageRequest;
+import project.backend.domain.dm.dmMessage.dto.DmMessageHistoryResponse;
 import project.backend.domain.dm.dmMessage.dto.DmMessageResponse;
 import project.backend.domain.dm.dmMessage.entity.DmMessage;
 import project.backend.domain.dm.dmRoom.entity.DmRoom;
 import project.backend.domain.member.entity.Member;
 import project.backend.domain.notification.dto.NotificationDto;
+import project.backend.global.exception.errorcode.DmErrorCode;
+import project.backend.global.exception.ex.DmException;
 
 @Service
 @RequiredArgsConstructor
@@ -65,20 +67,40 @@ public class DmMessageService {
     }
 
     @Transactional(readOnly = true)
-    public Page<DmMessageResponse> getDmMessages(Long roomId, Pageable pageable,
-        Authentication auth) {
+    public DmMessageHistoryResponse getDmMessages(Long roomId, LocalDateTime cursorSentAt,
+        Long cursorId, int size, Authentication auth) {
 
         memberService.checkAuthentication(auth);
-
-        Page<Long> messageIds = dmMessageRepository.findMessageIdsByRoomId(roomId, pageable);
-        if (messageIds.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, messageIds.getTotalElements());
+        if (size < 1 || size > 100) {
+            throw new DmException(DmErrorCode.INVALID_HISTORY_SIZE);
+        }
+        if ((cursorSentAt == null) != (cursorId == null)) {
+            throw new DmException(DmErrorCode.INVALID_HISTORY_CURSOR);
         }
 
+        PageRequest pageRequest = PageRequest.of(0, size + 1);
+        List<Long> messageIds = cursorSentAt == null
+            ? dmMessageRepository.findLatestMessageIdsByRoomId(roomId, pageRequest)
+            : dmMessageRepository.findMessageIdsBeforeCursor(
+                roomId, cursorSentAt, cursorId, pageRequest);
+        if (messageIds.isEmpty()) {
+            return new DmMessageHistoryResponse(List.of(), null, false);
+        }
+
+        boolean hasNext = messageIds.size() > size;
+        List<Long> currentMessageIds = hasNext ? messageIds.subList(0, size) : messageIds;
         Map<Long, DmMessage> messagesById = dmMessageRepository.findAllWithSenderByIdIn(
-                messageIds.getContent()).stream()
+                currentMessageIds).stream()
             .collect(Collectors.toMap(DmMessage::getId, Function.identity()));
 
-        return messageIds.map(messageId -> DmMessageResponse.from(messagesById.get(messageId)));
+        List<DmMessageResponse> content = currentMessageIds.stream()
+            .map(messageId -> DmMessageResponse.from(messagesById.get(messageId)))
+            .toList();
+        DmMessageHistoryResponse.Cursor nextCursor = hasNext
+            ? new DmMessageHistoryResponse.Cursor(
+                content.getLast().sendAt(), content.getLast().messageId())
+            : null;
+
+        return new DmMessageHistoryResponse(content, nextCursor, hasNext);
     }
 }
