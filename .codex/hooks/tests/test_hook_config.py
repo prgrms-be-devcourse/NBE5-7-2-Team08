@@ -16,7 +16,15 @@ class HookConfigTest(unittest.TestCase):
 
         self.assertEqual(
             set(config["hooks"]),
-            {"UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop"},
+            {
+                "UserPromptSubmit",
+                "SubagentStart",
+                "SubagentStop",
+                "PermissionRequest",
+                "PreToolUse",
+                "PostToolUse",
+                "Stop",
+            },
         )
 
     def test_tool_hooks_only_match_shell_and_file_edits(self):
@@ -28,6 +36,10 @@ class HookConfigTest(unittest.TestCase):
         )
         self.assertEqual(
             config["hooks"]["PostToolUse"][0]["matcher"],
+            "^(Bash|apply_patch|Edit|Write)$",
+        )
+        self.assertEqual(
+            config["hooks"]["PermissionRequest"][0]["matcher"],
             "^(Bash|apply_patch|Edit|Write)$",
         )
 

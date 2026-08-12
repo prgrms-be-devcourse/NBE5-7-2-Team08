@@ -5,9 +5,12 @@
 ## 현행 구현 보강사항
 
 - `UserPromptSubmit`은 마스킹된 요청 미리보기, 원문 길이와 SHA-256만 기록한다.
-- `PreToolUse`는 Bash와 파일 수정 도구의 마스킹된 입력을 기록한다.
-- `PostToolUse`는 성공 여부, 결과 길이와 SHA-256만 기록하고 본문을 저장하지 않는다.
-- `Stop`은 시작·종료 Git 상태와 검증 명령을 Markdown으로 요약하고 유효한 JSON 응답을 반환한다.
+- `SubagentStart`와 `SubagentStop`은 에이전트 ID·역할, 시작·종료 경계, 마스킹된 transcript 경로와 결과 미리보기를 기록한다. transcript 본문은 복사하지 않는다.
+- `PermissionRequest`는 도구 입력과 승인 요청 사유를 기록하지만 `allow`나 `deny`를 반환하지 않는다.
+- `PreToolUse`는 Bash와 파일 수정 도구의 마스킹된 입력, 길이·SHA-256과 마스킹된 대상 경로를 기록한다. 경로는 한 건당 500자, 한 호출당 100건으로 제한하고 제한 여부와 전체 개수를 함께 남긴다. 종료 요약도 서로 다른 경로를 최대 100건만 표시한다.
+- `PostToolUse`는 성공 여부, exit code, 결과 길이·SHA-256을 기록한다. 실패했을 때만 마스킹된 응답 미리보기를 추가한다.
+- `Stop`은 시작·종료 Git 상태, 서브에이전트, 승인 요청, 대상 파일과 검증 명령을 Markdown으로 요약하고 유효한 JSON 응답을 반환한다.
+- `Stop`은 transcript의 마지막 유효 `token_count`에서 숫자만 추출해 누적·최근 응답 토큰을 JSONL과 Markdown에 기록한다. 절감률은 계산하지 않는다.
 - Python 표준 라이브러리만 사용하며 `additionalContext`를 반환하지 않아 Hook 자체가 모델 입력 토큰을 추가하지 않는다.
 - 세션 ID는 길이가 제한된 안전 prefix와 원문 digest로 파일명을 만들어 경로 이탈과 이름 충돌을 막는다.
 - 로그 디렉터리와 JSONL은 owner-only 권한으로 생성한다.
@@ -44,6 +47,7 @@ DevChat에는 Superpowers로 작성한 설계 및 구현 계획이 있지만, AI
 - 외부 로그 수집 및 분석 서비스
 - LLM을 호출하는 로그 요약
 - 동일한 프롬프트에서 동일한 코드 결과를 재현한다는 주장
+- 토큰 A/B 비교와 절감률 계산
 
 ## Superpowers 역할 매핑
 
@@ -63,14 +67,21 @@ DevChat에는 Superpowers로 작성한 설계 및 구현 계획이 있지만, AI
 
 프로젝트 루트의 `.codex/hooks.json`에서 다음 이벤트를 사용한다.
 
+모든 이벤트는 세션·턴 ID, 모델과 권한 모드를 공통 메타데이터로 기록한다.
+
 | 이벤트 | 기록 내용 |
 | --- | --- |
 | `UserPromptSubmit` | 마스킹된 요청 미리보기, 원문 길이, 원문 SHA-256 |
-| `PreToolUse` | 도구 이름, 도구 호출 ID, 마스킹된 입력 요약 |
-| `PostToolUse` | 도구 이름, 도구 호출 ID, 성공 여부, 결과 크기 및 SHA-256 |
-| `Stop` | 기준 commit, 시작 및 종료 Git 상태, 검증 명령을 Markdown으로 요약 |
+| `SubagentStart` | 에이전트 ID, 역할과 permission mode |
+| `SubagentStop` | 에이전트 ID·역할, 마스킹된 transcript 경로, 마스킹된 결과 미리보기·길이·SHA-256 |
+| `PermissionRequest` | 도구 이름, 마스킹된 입력, 요청 사유, 입력 길이·SHA-256 |
+| `PreToolUse` | 도구 이름·호출 ID, 마스킹된 입력, 입력 길이·SHA-256과 마스킹·개수 제한된 대상 경로 |
+| `PostToolUse` | 도구 이름·호출 ID, 성공 여부, exit code, 결과 크기·SHA-256과 실패 응답 미리보기 |
+| `Stop` | 기준 commit, 시작·종료 Git 상태, 역할·승인·대상 파일·검증 명령·토큰 사용량을 Markdown으로 요약 |
 
-`PreToolUse`와 `PostToolUse`는 `Bash|apply_patch|Edit|Write`만 대상으로 한다. Hook은 모델에 `additionalContext`를 반환하지 않는다. 로컬 파일 기록만 수행해 Hook 자체가 모델 컨텍스트를 늘리지 않게 한다.
+`Stop` 요약에는 마지막 `TokenUsageSnapshot`의 누적·최근 응답 입력 토큰, 캐시 입력 토큰, 출력 토큰, 추론 출력 토큰과 총 토큰도 포함한다. 이 수치는 Codex가 제공한 값을 그대로 정규화한 것이며 추정치나 절감률이 아니다.
+
+`PermissionRequest`, `PreToolUse`와 `PostToolUse`는 `Bash|apply_patch|Edit|Write`만 대상으로 한다. `PermissionRequest`는 승인 요청 직전의 이벤트라 실제 승인 여부를 알 수 없다. Hook은 모델에 `additionalContext`나 `systemMessage`를 반환하지 않는다. 로컬 파일 기록만 수행해 Hook 자체가 모델 컨텍스트를 늘리지 않게 한다.
 
 ## 파일 구조
 
@@ -82,10 +93,12 @@ DevChat에는 Superpowers로 작성한 설계 및 구현 계획이 있지만, AI
     log_ai_event.py
     redact_ai_log.py
     summarize_ai_log.py
+    token_usage.py
     tests/
       test_redact_ai_log.py
       test_log_ai_event.py
       test_summarize_ai_log.py
+      test_token_usage.py
 ai/
   README.md
   ai-assisted-development-workflow.md
@@ -113,10 +126,12 @@ Hook 입력은 디스크에 쓰기 전에 마스킹한다.
 - `Authorization`, Cookie 및 세션 값
 - 데이터베이스 연결 문자열
 - 이메일 주소
+
+도구가 추출한 대상 경로와 서브에이전트 transcript 경로에도 같은 마스킹을 적용한다. 대상 경로는 한 건당 500자, 한 도구 호출당 100건까지만 저장하며 원래 경로 개수와 제한 여부를 함께 기록한다. 종료 요약은 호출 간 경로를 합친 뒤 서로 다른 경로 100건까지만 표시하고, 세션·호출 제한이 적용됐음을 따로 밝힌다.
 - PEM 개인키 본문
 - `.env` 값 형태
 
-요청 원문은 저장하지 않는다. 마스킹된 미리보기와 원문 SHA-256 및 길이만 저장한다. 도구 결과도 본문 대신 성공 여부, 길이, SHA-256만 저장한다. 정규식 마스킹은 완전한 보안 경계가 아니므로 `ai/logs/*.jsonl`은 항상 Git에서 제외한다.
+요청 원문은 저장하지 않는다. 마스킹된 미리보기와 원문 SHA-256 및 길이만 저장한다. 서브에이전트 결과는 마스킹 후 300자, 실패한 도구 응답은 500자로 제한한다. transcript는 로컬 경로만 기록하고 본문은 복사하지 않는다. 성공한 도구 결과도 본문 대신 성공 여부, 길이와 SHA-256만 저장한다. 정규식 마스킹은 완전한 보안 경계가 아니므로 `ai/logs/*.jsonl`은 항상 Git에서 제외한다.
 
 ## 요약 문서
 
@@ -126,9 +141,13 @@ Hook 입력은 디스크에 쓰기 전에 마스킹한다.
 - 기준 commit과 브랜치
 - 시작 시점의 미커밋 파일
 - 종료 시점의 변경 파일
+- 도구가 대상으로 기록한 파일
+- 서브에이전트 역할과 시작·종료 상태
+- 승인 요청과 실제 승인 결과를 확인할 수 없다는 안내
 - 실행한 검증 명령과 성공 여부
-- 실패한 도구 호출
+- 실패한 도구 호출, exit code와 마스킹된 오류 미리보기
 - 사람이 작성해야 하는 채택 및 기각 판단과 남은 리스크 입력란
+- Codex가 제공한 누적·최근 응답 토큰 사용량
 
 요약 파일은 `ai/summaries/<date>-<branch>-<turn_id>.md`에 생성한다. Hook은 AI로 의미를 추론하지 않고 기록된 사실만 기계적으로 정리한다.
 
@@ -148,11 +167,16 @@ Hook 입력은 디스크에 쓰기 전에 마스킹한다.
 - 요약 테스트는 기존 미커밋 파일과 종료 시점 변경 파일을 구분하는지 확인한다.
 - Hook 스모크 테스트는 샘플 JSON을 stdin으로 전달해 JSONL과 Markdown이 생성되는지 확인한다.
 - 실제 Codex 작업에서는 `/hooks` 신뢰 후 Bash와 `apply_patch` 이벤트가 기록되는지 확인한다.
+- 토큰 테스트는 rollout과 App Server 이벤트를 같은 필드로 정규화하고, 잘못된 transcript에서는 숫자를 만들지 않는지 확인한다.
+
+### 토큰 기록 한계
+
+일반 Hook 입력에는 토큰 사용량 필드가 없다. 현재 구현은 `Stop` 입력의 `transcript_path`를 이용해 Codex rollout의 마지막 `token_count`를 뒤에서부터 찾는다. transcript 본문이나 경로는 저장하지 않으며 숫자 필드만 복사한다. transcript 포맷은 안정된 인터페이스가 아니므로 포맷 변경·읽기 실패·필드 누락 시 Hook을 실패시키지 않고 토큰 정보를 생략한다. 별도 App Server 클라이언트가 `thread/tokenUsage/updated` 알림을 전달하는 경우에도 같은 파서가 처리할 수 있다.
 
 ## 완료 조건
 
 - DevChat에 AI 작업 규칙과 역할별 절차가 문서화된다.
-- 네 종류의 Hook 이벤트가 로컬에서 실행된다.
+- 일곱 종류의 Hook 이벤트가 로컬에서 실행된다.
 - 원본 로그가 Git에서 제외된다.
 - 민감정보 마스킹 테스트가 통과한다.
 - 시작 commit, 기존 미커밋 파일, 변경 파일, 검증 명령을 연결한 요약이 생성된다.

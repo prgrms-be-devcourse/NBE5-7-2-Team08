@@ -67,6 +67,38 @@ class HookEntrypointsTest(unittest.TestCase):
 
     def test_configured_commands_record_and_summarize_without_raw_secrets(self):
         session_id = "entrypoint-session"
+        transcript_path = self.repo / "rollout.jsonl"
+        transcript_path.write_text(
+            json.dumps(
+                {
+                    "type": "event_msg",
+                    "payload": {
+                        "type": "token_count",
+                        "info": {
+                            "total_token_usage": {
+                                "input_tokens": 1200,
+                                "cached_input_tokens": 900,
+                                "cache_write_input_tokens": 10,
+                                "output_tokens": 200,
+                                "reasoning_output_tokens": 50,
+                                "total_tokens": 1400,
+                            },
+                            "last_token_usage": {
+                                "input_tokens": 300,
+                                "cached_input_tokens": 240,
+                                "cache_write_input_tokens": 0,
+                                "output_tokens": 40,
+                                "reasoning_output_tokens": 10,
+                                "total_tokens": 340,
+                            },
+                            "model_context_window": 258400,
+                        },
+                    },
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         common = {
             "session_id": session_id,
             "turn_id": "turn-1",
@@ -108,6 +140,7 @@ class HookEntrypointsTest(unittest.TestCase):
                 "hook_event_name": "Stop",
                 "stop_hook_active": False,
                 "last_assistant_message": "done",
+                "transcript_path": str(transcript_path),
             },
         )
 
@@ -122,9 +155,13 @@ class HookEntrypointsTest(unittest.TestCase):
         self.assertNotIn("top secret phrase", log_text)
         self.assertNotIn("private response body", log_text)
         self.assertIn('password=\\"[REDACTED]\\"', log_text)
+        self.assertIn('"event":"TokenUsageSnapshot"', log_text)
+        self.assertNotIn(str(transcript_path), log_text)
         summaries = list((self.repo / "ai" / "summaries").glob("*.md"))
         self.assertEqual(len(summaries), 1)
-        self.assertIn("python3 -m unittest", summaries[0].read_text(encoding="utf-8"))
+        summary_text = summaries[0].read_text(encoding="utf-8")
+        self.assertIn("python3 -m unittest", summary_text)
+        self.assertIn("누적: 총 1,400", summary_text)
 
     def test_concurrent_appends_produce_one_baseline_and_valid_jsonl(self):
         session_id = "concurrent-session"
@@ -181,6 +218,77 @@ class HookEntrypointsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, "")
         self.assertNotIn("not-json-secret", result.stderr)
+
+    def test_subagent_stop_records_event_and_returns_valid_json(self):
+        session_id = "subagent-session"
+        result = subprocess.run(
+            f'/usr/bin/python3 "{HOOK_DIR / "log_ai_event.py"}"',
+            cwd=self.repo,
+            shell=True,
+            input=json.dumps(
+                {
+                    "session_id": session_id,
+                    "turn_id": "turn-1",
+                    "cwd": str(self.repo),
+                    "hook_event_name": "SubagentStop",
+                    "agent_id": "agent-1",
+                    "agent_type": "reviewer",
+                    "agent_transcript_path": "/private/tmp/agent-1.jsonl",
+                    "stop_hook_active": False,
+                    "last_assistant_message": "review complete",
+                }
+            ),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=self.env,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(json.loads(result.stdout), {"continue": True})
+        log_path = self.repo / "ai" / "logs" / safe_session_filename(session_id)
+        self.assertIn('"event":"SubagentStop"', log_path.read_text(encoding="utf-8"))
+
+    def test_logging_only_lifecycle_hooks_return_empty_stdout(self):
+        payloads = (
+            {
+                "hook_event_name": "SubagentStart",
+                "agent_id": "agent-1",
+                "agent_type": "reviewer",
+            },
+            {
+                "hook_event_name": "PermissionRequest",
+                "tool_name": "Bash",
+                "tool_input": {
+                    "command": "git push origin feat/hooks",
+                    "description": "원격 저장소 변경 승인",
+                },
+            },
+        )
+
+        for payload in payloads:
+            with self.subTest(event=payload["hook_event_name"]):
+                payload.update(
+                    {
+                        "session_id": "lifecycle-session",
+                        "turn_id": "turn-1",
+                        "cwd": str(self.repo),
+                    }
+                )
+                result = subprocess.run(
+                    f'/usr/bin/python3 "{HOOK_DIR / "log_ai_event.py"}"',
+                    cwd=self.repo,
+                    shell=True,
+                    input=json.dumps(payload),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    env=self.env,
+                )
+
+                self.assertEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(result.stderr, "")
 
 
 if __name__ == "__main__":

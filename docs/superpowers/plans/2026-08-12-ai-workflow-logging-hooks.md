@@ -7,7 +7,7 @@ Codex Logging Hook, 테스트, 저장소 작업 규칙과 PR 판단 기록은 �
 - [x] 민감정보 마스킹과 안정적인 SHA-256 유틸리티
 - [x] Git 기준점과 세션별 JSONL append
 - [x] 검증 명령 분류와 사실 기반 Markdown 요약
-- [x] `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop` 설정 계약
+- [x] `UserPromptSubmit`, `SubagentStart`, `SubagentStop`, `PermissionRequest`, `PreToolUse`, `PostToolUse`, `Stop` 설정 계약
 - [x] `AGENTS.md`, AI 워크플로우와 PR 판단 기록
 - [x] 하위 디렉터리 실행, 마스킹, 응답 본문 미저장과 Git ignore 검증
 - [ ] 사용자가 원래 `devchat` 경로의 `/hooks`에서 정의를 신뢰한 뒤 실제 Codex 턴 한 건을 운영 검증
@@ -26,7 +26,7 @@ python3 -m unittest discover -s .codex/hooks/tests -p 'test_*.py' -v
 
 **Goal:** DevChat에 Superpowers 기반 AI 작업 절차와 Codex Logging Hook을 적용해 작업 요청, 도구 실행, Git 기준점, 검증 명령을 로컬에서 추적하고 사람이 검토할 수 있는 요약을 생성한다.
 
-**Architecture:** `.codex/hooks.json`은 `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`을 Python 표준 라이브러리 스크립트에 연결한다. Hook은 모델 컨텍스트를 추가하지 않고 마스킹된 메타데이터만 JSONL에 기록하며, `Stop`에서 Git 기준점과 검증 명령을 Markdown으로 기계적으로 요약한다.
+**Architecture:** `.codex/hooks.json`은 사용자 요청, 서브에이전트 시작·종료, 승인 요청, 도구 실행과 작업 종료 이벤트를 Python 표준 라이브러리 스크립트에 연결한다. Hook은 모델 컨텍스트를 추가하지 않고 마스킹된 메타데이터만 JSONL에 기록하며, `Stop`에서 Git 기준점, 역할, 승인 요청, 대상 파일과 검증 명령을 Markdown으로 기계적으로 요약한다.
 
 **Tech Stack:** Codex Hooks, Python 3 표준 라이브러리, `unittest`, Git, JSONL, Markdown
 
