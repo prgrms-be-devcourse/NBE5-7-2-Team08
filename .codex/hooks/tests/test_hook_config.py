@@ -27,13 +27,24 @@ class HookConfigTest(unittest.TestCase):
             },
         )
 
-    def test_tool_hooks_only_match_shell_and_file_edits(self):
+    def test_tool_hooks_keep_logging_and_register_separate_guard_handler(self):
         config = load_config()
 
         self.assertEqual(
             config["hooks"]["PreToolUse"][0]["matcher"],
             "^(Bash|apply_patch|Edit|Write)$",
         )
+        self.assertEqual(
+            config["hooks"]["PreToolUse"][1]["matcher"],
+            "^(Bash|apply_patch|Edit|Write)$",
+        )
+        commands = [
+            handler["command"]
+            for group in config["hooks"]["PreToolUse"]
+            for handler in group["hooks"]
+        ]
+        self.assertTrue(any("log_ai_event.py" in command for command in commands))
+        self.assertTrue(any("guard_pre_tool_use.py" in command for command in commands))
         self.assertEqual(
             config["hooks"]["PostToolUse"][0]["matcher"],
             "^(Bash|apply_patch|Edit|Write)$",
