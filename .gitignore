@@ -19,3 +19,6 @@
 
 # Local AI workflow logs
 /ai/logs/*.jsonl
+
+# Local humanize-korean artifacts
+/_workspace/
