@@ -16,3 +16,9 @@
 /backend/perf/query-analysis/.env
 /backend/perf/query-analysis/results/*.txt
 /backend/perf/query-analysis/results/*.json
+
+# Local AI workflow logs
+/ai/logs/*.jsonl
+
+# Local humanize-korean artifacts
+/_workspace/
