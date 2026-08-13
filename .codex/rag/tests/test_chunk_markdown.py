@@ -34,6 +34,15 @@ class ChunkMarkdownTest(unittest.TestCase):
         )
         self.assertEqual([chunk.content for chunk in chunks], ["# 제목\n\n첫 문단", "## 세부\n둘째 문단"])
 
+    def test_chunk_markdown_splits_a_single_long_paragraph_within_the_limit(self) -> None:
+        document = CorpusDocument(path="guide.md", status="active")
+        (self.repo / document.path).write_text("# 제목\n\n" + "가" * 30 + "\n", encoding="utf-8")
+
+        chunks = chunk_markdown(document, repo_root=self.repo, max_chars=12)
+
+        self.assertTrue(chunks)
+        self.assertTrue(all(len(chunk.content) <= 12 for chunk in chunks))
+
 
 if __name__ == "__main__":
     unittest.main()

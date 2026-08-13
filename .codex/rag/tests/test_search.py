@@ -64,6 +64,29 @@ class SearchTest(unittest.TestCase):
         self.assertIn("guide.md:10-15", context)
         self.assertIn("가" * 500 + "\n" + "나" * 500, context)
 
+    def test_context_merges_source_adjacent_chunks_separated_by_another_rank(self) -> None:
+        context = format_context(
+            [
+                result("guide.md", 10, 12, "first"),
+                result("other.md", 1, 3, "other"),
+                result("guide.md", 13, 15, "second"),
+            ]
+        )
+
+        self.assertIn("guide.md:10-15", context)
+        self.assertNotIn("guide.md:13-15", context)
+        self.assertIn("first\nsecond", context)
+
+    def test_context_does_not_merge_distinct_chunks_from_the_same_source_line(self) -> None:
+        context = format_context(
+            [
+                result("guide.md", 10, 10, "first half"),
+                result("guide.md", 10, 10, "second half"),
+            ]
+        )
+
+        self.assertEqual(context.count("guide.md:10-10"), 2)
+
     def test_context_does_not_merge_a_later_result_with_an_earlier_line_range(self) -> None:
         context = format_context(
             [

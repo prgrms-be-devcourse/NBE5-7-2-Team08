@@ -15,6 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repo-root", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--index", type=Path, required=True)
+    parser.add_argument("--model")
     return parser.parse_args()
 
 
@@ -29,7 +30,7 @@ def main() -> int:
 
     manifest_path = (repo_root / args.manifest).resolve() if not args.manifest.is_absolute() else args.manifest
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    model_name = manifest.get("embedding_model") if isinstance(manifest, dict) else None
+    model_name = args.model or (manifest.get("embedding_model") if isinstance(manifest, dict) else None)
     if not isinstance(model_name, str) or not model_name:
         raise ValueError("manifest embedding_model is required")
 
@@ -42,7 +43,7 @@ def main() -> int:
     index_path.parent.mkdir(parents=True, exist_ok=True)
     connection = open_index(index_path)
     try:
-        embedder = SentenceTransformerEmbedder(model_name)
+        embedder = SentenceTransformerEmbedder(model_name, allow_download=True)
         with connection:
             sync_chunks(connection, chunks, model_name)
             store_embeddings(

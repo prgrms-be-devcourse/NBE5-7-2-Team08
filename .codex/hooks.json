@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$(git rev-parse --show-toplevel)/.codex/rag/.venv/bin/python\" \"$(git rev-parse --show-toplevel)/.codex/rag/user_prompt_rag.py\"",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/rag/run_user_prompt_rag.py\"",
             "timeout": 30
           }
         ]

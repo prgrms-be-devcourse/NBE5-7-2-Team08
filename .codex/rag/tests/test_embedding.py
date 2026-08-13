@@ -26,6 +26,24 @@ class FakeSentenceTransformer:
 
 
 class EmbeddingTest(unittest.TestCase):
+    def test_index_build_model_load_allows_initial_download(self) -> None:
+        calls = []
+
+        class FakeConstructor:
+            def __init__(self, *args, **kwargs) -> None:
+                calls.append((args, kwargs))
+
+        with patch.dict(os.environ, {}, clear=True), patch.dict(
+            sys.modules, {"sentence_transformers": types.SimpleNamespace(SentenceTransformer=FakeConstructor)}
+        ):
+            SentenceTransformerEmbedder("intfloat/multilingual-e5-small", allow_download=True)
+
+        self.assertNotIn("HF_HUB_OFFLINE", os.environ)
+        self.assertEqual(
+            calls,
+            [(("intfloat/multilingual-e5-small",), {"device": "cpu", "local_files_only": False})],
+        )
+
     def test_runtime_model_loads_from_the_local_cache_only(self) -> None:
         calls = []
 

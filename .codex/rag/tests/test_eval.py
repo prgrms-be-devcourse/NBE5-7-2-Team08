@@ -2,6 +2,7 @@ import importlib.util
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 
@@ -28,6 +29,28 @@ class EvaluationCliTest(unittest.TestCase):
             )
 
         self.assertIs(search_dense.call_args.args[4], embedder)
+
+    def test_measures_each_actual_hook_request_including_process_startup(self) -> None:
+        repo_root = Path("/repo")
+        with patch.object(
+            rag_eval.subprocess,
+            "run",
+            return_value=SimpleNamespace(returncode=0, stdout="", stderr=""),
+        ) as run, patch.object(rag_eval.time, "perf_counter", side_effect=[1.0, 1.012]):
+            metrics = rag_eval.measure_hook_request_latencies(
+                repo_root,
+                [{"query": "JWT 정책", "expected_paths": []}],
+                Path("/python"),
+            )
+
+        self.assertAlmostEqual(metrics["hook_p50_ms"], 12.0)
+        self.assertAlmostEqual(metrics["hook_p95_ms"], 12.0)
+        self.assertEqual(
+            run.call_args.args[0],
+            ["/python", "/repo/.codex/rag/run_user_prompt_rag.py"],
+        )
+        self.assertEqual(run.call_args.kwargs["input"], '{"prompt": "@rag JWT 정책", "cwd": "/repo"}')
+        self.assertEqual(run.call_args.kwargs["cwd"], repo_root)
 
 
 if __name__ == "__main__":

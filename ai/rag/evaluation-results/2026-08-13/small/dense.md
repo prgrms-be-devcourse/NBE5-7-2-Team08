@@ -7,9 +7,9 @@
 
 | metric | value |
 | --- | ---: |
-| recall_at_3 | 0.8333 |
-| mrr | 0.6389 |
+| recall_at_3 | 0.6667 |
+| mrr | 0.5000 |
 | no_result_precision | 1.0000 |
 | citation_completeness | 1.0000 |
-| p50_ms | 11.3621 |
-| p95_ms | 12.2359 |
+| p50_ms | 477.3005 |
+| p95_ms | 531.6214 |

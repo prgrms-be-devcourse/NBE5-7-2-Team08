@@ -103,22 +103,35 @@ def _dense_candidates(
 def _merge_adjacent(results: Sequence[SearchResult]) -> List[SearchResult]:
     merged: List[SearchResult] = []
     for result in results:
-        if (
-            merged
-            and result.path == merged[-1].path
-            and merged[-1].start_line <= result.start_line <= merged[-1].end_line + 1
-        ):
-            previous = merged[-1]
-            merged[-1] = SearchResult(
+        candidate = result
+        insert_at = None
+        index = 0
+        while index < len(merged):
+            previous = merged[index]
+            if previous.path != candidate.path or not (
+                previous.end_line + 1 == candidate.start_line
+                or candidate.end_line + 1 == previous.start_line
+            ):
+                index += 1
+                continue
+            if candidate.start_line < previous.start_line:
+                earlier, later = candidate, previous
+            else:
+                earlier, later = previous, candidate
+            candidate = SearchResult(
                 path=previous.path,
                 heading=previous.heading,
-                start_line=previous.start_line,
-                end_line=max(previous.end_line, result.end_line),
-                content=previous.content + "\n" + result.content,
+                start_line=earlier.start_line,
+                end_line=max(previous.end_line, candidate.end_line),
+                content=earlier.content + "\n" + later.content,
                 rrf_score=previous.rrf_score,
             )
+            insert_at = index if insert_at is None else min(insert_at, index)
+            del merged[index]
+        if insert_at is None:
+            merged.append(candidate)
         else:
-            merged.append(result)
+            merged.insert(insert_at, candidate)
     return merged
 
 

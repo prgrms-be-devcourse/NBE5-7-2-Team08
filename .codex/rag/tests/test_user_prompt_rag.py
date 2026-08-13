@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -37,6 +38,22 @@ class EmptySearch:
 
 
 class UserPromptRagTest(unittest.TestCase):
+    def test_optional_runtime_wrapper_succeeds_without_a_virtual_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = Path(temporary_directory)
+            subprocess.run(["git", "init"], cwd=repo, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            result = subprocess.run(
+                [sys.executable, str(RAG_DIR / "run_user_prompt_rag.py")],
+                cwd=repo,
+                input=json.dumps({"prompt": "일반 질문", "cwd": str(repo)}),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            )
+
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
+
     def test_entrypoint_plain_prompt_has_no_stdout(self) -> None:
         result = subprocess.run(
             [sys.executable, str(RAG_DIR / "user_prompt_rag.py")],
@@ -50,14 +67,18 @@ class UserPromptRagTest(unittest.TestCase):
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
 
     def test_entrypoint_unavailable_runtime_has_no_stdout(self) -> None:
-        result = subprocess.run(
-            [sys.executable, str(RAG_DIR / "user_prompt_rag.py")],
-            input=json.dumps({"prompt": "@rag JWT", "cwd": str(RAG_DIR.parents[1])}),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
-        )
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo = Path(temporary_directory)
+            subprocess.run(["git", "init"], cwd=repo, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            result = subprocess.run(
+                [sys.executable, str(RAG_DIR / "user_prompt_rag.py")],
+                cwd=repo,
+                input=json.dumps({"prompt": "@rag JWT", "cwd": str(repo)}),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            )
 
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
 

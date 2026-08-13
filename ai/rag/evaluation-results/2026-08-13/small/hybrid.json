@@ -6,11 +6,13 @@
   "question_count": 9,
   "platform": "macOS-26.5.1-arm64-arm-64bit",
   "metrics": {
-    "recall_at_3": 0.8333333333333334,
-    "mrr": 0.7222222222222223,
+    "recall_at_3": 0.6666666666666666,
+    "mrr": 0.5,
     "no_result_precision": 1.0,
     "citation_completeness": 1.0,
-    "p50_ms": 11.684832999999895,
-    "p95_ms": 12.689874999999962
+    "p50_ms": 448.6900409999999,
+    "p95_ms": 491.6460420000002,
+    "hook_p50_ms": 2778.644959000001,
+    "hook_p95_ms": 2803.3015
   }
 }

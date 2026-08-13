@@ -3,6 +3,7 @@
 import argparse
 import json
 import platform
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -26,6 +27,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--dense-min-score", type=float, required=True)
+    parser.add_argument(
+        "--hook-python",
+        type=Path,
+        default=REPO_ROOT / ".codex" / "rag" / ".venv" / "bin" / "python",
+    )
+    parser.add_argument("--measure-hook-latency", action="store_true")
     return parser.parse_args()
 
 
@@ -55,7 +62,6 @@ def evaluate(
     model_name: str,
     dense_min_score: float,
 ) -> Dict[str, float]:
-    embedder = SentenceTransformerEmbedder(model_name) if mode in ("dense", "hybrid") else None
     latencies_ms: List[float] = []
 
     def search(query: str) -> List[SearchResult]:
@@ -63,6 +69,7 @@ def evaluate(
         try:
             if mode == "sparse":
                 return [_as_result(item) for item in search_sparse(connection, query, limit=3)]
+            embedder = SentenceTransformerEmbedder(model_name)
             if mode == "dense":
                 return search_dense(connection, query, model_name, dense_min_score, embedder)
             return search_index(connection, query, model_name, dense_min_score, embedder)
@@ -73,6 +80,36 @@ def evaluate(
     metrics["p50_ms"] = _percentile(latencies_ms, 0.50)
     metrics["p95_ms"] = _percentile(latencies_ms, 0.95)
     return metrics
+
+
+def measure_hook_request_latencies(
+    repo_root: Path,
+    questions: Sequence[Dict[str, object]],
+    hook_python: Path,
+) -> Dict[str, float]:
+    """Measure the configured one-shot Hook lifecycle for every evaluation query."""
+    latencies_ms: List[float] = []
+    command = [str(hook_python), str(repo_root / ".codex" / "rag" / "run_user_prompt_rag.py")]
+    for question in questions:
+        query = question.get("query")
+        if not isinstance(query, str):
+            continue
+        payload = json.dumps({"prompt": "@rag " + query, "cwd": str(repo_root)}, ensure_ascii=False)
+        started = time.perf_counter()
+        subprocess.run(
+            command,
+            cwd=repo_root,
+            input=payload,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        latencies_ms.append((time.perf_counter() - started) * 1000)
+    return {
+        "hook_p50_ms": _percentile(latencies_ms, 0.50),
+        "hook_p95_ms": _percentile(latencies_ms, 0.95),
+    }
 
 
 def main() -> int:
@@ -90,6 +127,8 @@ def main() -> int:
             args.model,
             args.dense_min_score,
         )
+        if args.measure_hook_latency:
+            metrics.update(measure_hook_request_latencies(REPO_ROOT, questions, args.hook_python))
     finally:
         connection.close()
 

@@ -13,7 +13,7 @@ python3 -m venv .codex/rag/.venv
   --index ai/rag/index/devchat-context.sqlite3
 ```
 
-최초 index 생성은 `intfloat/multilingual-e5-small`을 로컬 cache에 내려받는다. 이후 RAG는 로컬 CPU와 SQLite index만 사용하며 OpenAI Embeddings API나 모델 다운로드를 호출하지 않는다. 문서를 바꾸거나 `corpus.json`을 수정한 뒤에는 index를 다시 생성한다.
+최초 index 생성은 `intfloat/multilingual-e5-small`을 로컬 cache에 내려받을 수 있다. 이후 Hook runtime은 local cache 전용으로 모델을 로드하며 OpenAI Embeddings API나 모델 다운로드를 호출하지 않는다. `.venv` 또는 index가 없으면 Hook은 컨텍스트 없이 성공 종료한다. 문서를 바꾸거나 `corpus.json`을 수정한 뒤에는 index를 다시 생성한다.
 
 ## 사용
 
@@ -32,10 +32,11 @@ python3 -m venv .codex/rag/.venv
   --questions ai/rag/eval-questions.json \
   --output-dir ai/rag/evaluation-results/local \
   --model intfloat/multilingual-e5-small \
-  --dense-min-score 0.88
+  --dense-min-score 0.88 \
+  --measure-hook-latency
 ```
 
-기록된 소규모 평가에서 E5-base는 회수율 개선 없이 E5-small보다 검색 지연시간이 약 두 배여서 small을 선택했다. 질문 세트·문서 구성이 바뀌면 다시 비교해야 한다.
+평가 결과의 `p50_ms`·`p95_ms`는 매 질의 모델 로딩을 포함한 검색 시간이다. `hook_p50_ms`·`hook_p95_ms`는 별도 Python 프로세스로 실제 Hook 래퍼를 매 요청 실행한 시간이며 30초 Hook timeout 검증에는 이 값을 사용한다. 질문 세트·문서 구성이 바뀌면 최종 corpus로 index와 평가를 다시 생성한다.
 
 `ai/rag/corpus.json`의 `active` 문서만 검색한다. 원본 AI 로그, Git 제외 파일, 비밀 파일과 `draft`·`superseded` 문서는 색인하지 않는다. `docs/superpowers/plans/`와 `docs/local/`도 현재 실행 근거가 아니므로 색인하지 않는다.
 

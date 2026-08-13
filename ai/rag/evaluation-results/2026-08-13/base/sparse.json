@@ -2,7 +2,7 @@
   "mode": "sparse",
   "model": "intfloat/multilingual-e5-base",
   "dense_min_score": 0.88,
-  "index": "ai/rag/index/devchat-base-eval.sqlite3",
+  "index": "ai/rag/index/devchat-context.sqlite3",
   "question_count": 9,
   "platform": "macOS-26.5.1-arm64-arm-64bit",
   "metrics": {
@@ -10,7 +10,7 @@
     "mrr": 0.3333333333333333,
     "no_result_precision": 1.0,
     "citation_completeness": 1.0,
-    "p50_ms": 0.03220800000000232,
-    "p95_ms": 0.3387919999999975
+    "p50_ms": 0.03299999999999831,
+    "p95_ms": 0.0798329999999979
   }
 }

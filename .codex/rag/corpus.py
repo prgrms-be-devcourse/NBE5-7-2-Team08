@@ -34,11 +34,19 @@ def _active_document(repo_root: Path, item: Any) -> Optional[CorpusDocument]:
     path = Path(value)
     if path.is_absolute() or ".." in path.parts or path.suffix != ".md":
         return None
-    if path.parts[:2] == ("ai", "logs"):
+    if path.parts[:2] in (("ai", "logs"), ("docs", "local")) or path.parts[:3] == (
+        "docs",
+        "superpowers",
+        "plans",
+    ):
+        return None
+
+    candidate = repo_root / path
+    if candidate.is_symlink():
         return None
 
     try:
-        resolved = (repo_root / path).resolve()
+        resolved = candidate.resolve()
         resolved.relative_to(repo_root.resolve())
     except ValueError:
         return None

@@ -40,9 +40,9 @@
 - RRF 자체는 항상 순위를 만들므로 lexical 근거와 corpus 평가로 보정한 cosine threshold를 결합 전에 적용해 no-result를 판정한다.
 - 동일 문서의 인접 chunk는 합치고 중복 인용을 제거한다.
 
-임베딩 모델은 같은 9개 질문 세트에서 `intfloat/multilingual-e5-small`과 `intfloat/multilingual-e5-base`를 비교했다. `base`가 검색 품질을 개선하지 못하고 지연시간이 약 두 배여서 `small`을 선택했다. `dense_min_score`는 세 no-result 사례를 모두 통과한 0.88이다. `BGE-M3`는 FTS5와 기능이 겹치고 작은 문서 corpus에는 운영 복잡도가 커서 초기 범위에서 제외한다.
+임베딩 모델은 같은 9개 질문 세트에서 `intfloat/multilingual-e5-small`과 `intfloat/multilingual-e5-base`를 비교했다. `base`가 검색 품질을 개선하지 못해 `small`을 선택했다. 최신 지연시간 판단은 최종 corpus에서 별도 프로세스로 실제 Hook 수명주기를 측정한 기록을 사용한다. `dense_min_score`는 세 no-result 사례를 모두 통과한 0.88이다. `BGE-M3`는 FTS5와 기능이 겹치고 작은 문서 corpus에는 운영 복잡도가 커서 초기 범위에서 제외한다.
 
-모델은 로컬 CPU에서 실행하며 최초 다운로드 이후 OpenAI 임베딩 API 토큰을 사용하지 않는다. `@rag` 요청마다 Hook이 Python 검색 프로세스를 시작하고 모델을 메모리에 로드한 뒤 검색을 마치면 종료한다. 검색 본문이 `additionalContext`로 들어갈 때만 Codex 입력 토큰이 증가한다.
+모델은 로컬 CPU에서 실행하며 최초 index 생성만 다운로드를 허용하고 이후 OpenAI 임베딩 API 토큰을 사용하지 않는다. `@rag` 요청마다 경량 Hook 래퍼가 `.venv`를 확인한 뒤 Python 검색 프로세스를 시작하고, runtime 모델은 local cache에서만 로드한 뒤 검색을 마치면 종료한다. `.venv` 또는 index가 없으면 컨텍스트 없이 성공 종료한다. 검색 본문이 `additionalContext`로 들어갈 때만 Codex 입력 토큰이 증가한다.
 
 ### 출력과 평가
 

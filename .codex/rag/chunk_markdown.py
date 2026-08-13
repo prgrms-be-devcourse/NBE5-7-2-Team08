@@ -53,6 +53,22 @@ def _make_chunk(document: CorpusDocument, heading: str, lines: Sequence[str], st
     )
 
 
+def _split_oversized_chunk(chunk: Chunk, max_chars: int) -> List[Chunk]:
+    if len(chunk.content) <= max_chars:
+        return [chunk]
+    return [
+        Chunk(
+            path=chunk.path,
+            heading=chunk.heading,
+            start_line=chunk.start_line,
+            end_line=chunk.end_line,
+            content=chunk.content[index : index + max_chars],
+            content_sha256=_content_hash(chunk.content[index : index + max_chars]),
+        )
+        for index in range(0, len(chunk.content), max_chars)
+    ]
+
+
 def _split_section(
     document: CorpusDocument,
     heading: str,
@@ -80,7 +96,12 @@ def _split_section(
 
     if chunk_start < end:
         chunks.append(_make_chunk(document, heading, lines, chunk_start, _trimmed_end(lines, chunk_start, end)))
-    return [chunk for chunk in chunks if chunk.content]
+    return [
+        split
+        for chunk in chunks
+        if chunk.content
+        for split in _split_oversized_chunk(chunk, max_chars)
+    ]
 
 
 def chunk_markdown(document: CorpusDocument, repo_root: Path, max_chars: int = 1000) -> List[Chunk]:

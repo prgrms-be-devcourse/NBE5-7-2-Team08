@@ -14,14 +14,17 @@ class Embedder(Protocol):
 
 
 class SentenceTransformerEmbedder:
-    def __init__(self, model_name: str) -> None:
-        os.environ["HF_HUB_OFFLINE"] = "1"
+    def __init__(self, model_name: str, allow_download: bool = False) -> None:
+        if allow_download:
+            os.environ.pop("HF_HUB_OFFLINE", None)
+        else:
+            os.environ["HF_HUB_OFFLINE"] = "1"
         warnings.filterwarnings("ignore", message=r"urllib3 v2 only supports OpenSSL.*")
         try:
             from sentence_transformers import SentenceTransformer
         except ImportError as error:
             raise RuntimeError("sentence-transformers is unavailable") from error
-        self._model = SentenceTransformer(model_name, device="cpu", local_files_only=True)
+        self._model = SentenceTransformer(model_name, device="cpu", local_files_only=not allow_download)
 
     @classmethod
     def from_model(cls, model: Any) -> "SentenceTransformerEmbedder":

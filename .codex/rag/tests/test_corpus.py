@@ -60,6 +60,33 @@ class CorpusTest(unittest.TestCase):
 
         self.assertEqual([document.path for document in documents], ["AGENTS.md"])
 
+    def test_load_active_documents_rejects_excluded_directories_and_tracked_symlinks(self) -> None:
+        (self.repo / "docs" / "superpowers" / "plans").mkdir(parents=True)
+        (self.repo / "docs" / "local").mkdir(parents=True)
+        (self.repo / "docs" / "superpowers" / "plans" / "plan.md").write_text("# Plan\n", encoding="utf-8")
+        (self.repo / "docs" / "local" / "notes.md").write_text("# Notes\n", encoding="utf-8")
+        (self.repo / "untracked.md").write_text("# Untracked\n", encoding="utf-8")
+        (self.repo / "linked.md").symlink_to(self.repo / "untracked.md")
+        run_git(self.repo, "add", "docs", "linked.md")
+        run_git(self.repo, "commit", "-m", "add documents")
+        self.manifest.write_text(
+            json.dumps(
+                {
+                    "documents": [
+                        {"path": "AGENTS.md", "status": "active"},
+                        {"path": "docs/superpowers/plans/plan.md", "status": "active"},
+                        {"path": "docs/local/notes.md", "status": "active"},
+                        {"path": "linked.md", "status": "active"},
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        documents = load_active_documents(self.repo, self.manifest)
+
+        self.assertEqual([document.path for document in documents], ["AGENTS.md"])
+
 
 if __name__ == "__main__":
     unittest.main()
