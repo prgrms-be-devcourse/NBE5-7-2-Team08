@@ -20,5 +20,10 @@
 # Local AI workflow logs
 /ai/logs/*.jsonl
 
+# Local RAG index
+/ai/rag/index/*.sqlite3
+/.codex/rag/__pycache__/
+/.codex/rag/.venv/
+
 # Local humanize-korean artifacts
 /_workspace/

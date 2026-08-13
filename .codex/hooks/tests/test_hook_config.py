@@ -54,6 +54,18 @@ class HookConfigTest(unittest.TestCase):
             "^(Bash|apply_patch|Edit|Write)$",
         )
 
+    def test_user_prompt_submit_keeps_logging_and_adds_rag_handler(self):
+        groups = load_config()["hooks"]["UserPromptSubmit"]
+        commands = [
+            handler["command"]
+            for group in groups
+            for handler in group["hooks"]
+        ]
+
+        self.assertTrue(any("log_ai_event.py" in command for command in commands))
+        self.assertTrue(any(".codex/rag/.venv/bin/python" in command for command in commands))
+        self.assertTrue(any("user_prompt_rag.py" in command for command in commands))
+
     def test_does_not_add_model_context(self):
         serialized = json.dumps(load_config())
 
