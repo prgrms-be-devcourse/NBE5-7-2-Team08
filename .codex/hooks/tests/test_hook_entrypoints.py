@@ -65,40 +65,8 @@ class HookEntrypointsTest(unittest.TestCase):
             env=self.env,
         )
 
-    def test_configured_commands_record_and_summarize_without_raw_secrets(self):
+    def test_configured_logging_commands_record_without_markdown_summary(self):
         session_id = "entrypoint-session"
-        transcript_path = self.repo / "rollout.jsonl"
-        transcript_path.write_text(
-            json.dumps(
-                {
-                    "type": "event_msg",
-                    "payload": {
-                        "type": "token_count",
-                        "info": {
-                            "total_token_usage": {
-                                "input_tokens": 1200,
-                                "cached_input_tokens": 900,
-                                "cache_write_input_tokens": 10,
-                                "output_tokens": 200,
-                                "reasoning_output_tokens": 50,
-                                "total_tokens": 1400,
-                            },
-                            "last_token_usage": {
-                                "input_tokens": 300,
-                                "cached_input_tokens": 240,
-                                "cache_write_input_tokens": 0,
-                                "output_tokens": 40,
-                                "reasoning_output_tokens": 10,
-                                "total_tokens": 340,
-                            },
-                            "model_context_window": 258400,
-                        },
-                    },
-                }
-            )
-            + "\n",
-            encoding="utf-8",
-        )
         common = {
             "session_id": session_id,
             "turn_id": "turn-1",
@@ -133,35 +101,18 @@ class HookEntrypointsTest(unittest.TestCase):
                 "tool_response": {"exit_code": 0, "output": "private response body"},
             },
         )
-        stop = self.invoke(
-            "Stop",
-            {
-                **common,
-                "hook_event_name": "Stop",
-                "stop_hook_active": False,
-                "last_assistant_message": "done",
-                "transcript_path": str(transcript_path),
-            },
-        )
-
-        self.assertEqual([prompt.returncode, pre.returncode, post.returncode, stop.returncode], [0, 0, 0, 0])
+        self.assertEqual([prompt.returncode, pre.returncode, post.returncode], [0, 0, 0])
         self.assertEqual(prompt.stdout, "")
         self.assertEqual(pre.stdout, "")
         self.assertEqual(post.stdout, "")
-        self.assertEqual(json.loads(stop.stdout), {"continue": True})
 
         log_path = self.repo / "ai" / "logs" / safe_session_filename(session_id)
         log_text = log_path.read_text(encoding="utf-8")
         self.assertNotIn("top secret phrase", log_text)
         self.assertNotIn("private response body", log_text)
         self.assertIn('password=\\"[REDACTED]\\"', log_text)
-        self.assertIn('"event":"TokenUsageSnapshot"', log_text)
-        self.assertNotIn(str(transcript_path), log_text)
         summaries = list((self.repo / "ai" / "summaries").glob("*.md"))
-        self.assertEqual(len(summaries), 1)
-        summary_text = summaries[0].read_text(encoding="utf-8")
-        self.assertIn("python3 -m unittest", summary_text)
-        self.assertIn("누적: 총 1,400", summary_text)
+        self.assertEqual(summaries, [])
 
     def test_concurrent_appends_produce_one_baseline_and_valid_jsonl(self):
         session_id = "concurrent-session"

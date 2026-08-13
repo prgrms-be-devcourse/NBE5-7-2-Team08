@@ -23,7 +23,6 @@ class HookConfigTest(unittest.TestCase):
                 "PermissionRequest",
                 "PreToolUse",
                 "PostToolUse",
-                "Stop",
             },
         )
 
@@ -71,6 +70,9 @@ class HookConfigTest(unittest.TestCase):
 
         self.assertNotIn("additionalContext", serialized)
         self.assertNotIn("additionalContextLimit", serialized)
+
+    def test_does_not_register_stop_summary_generation(self):
+        self.assertNotIn("Stop", load_config()["hooks"])
 
 
 if __name__ == "__main__":

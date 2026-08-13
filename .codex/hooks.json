@@ -88,17 +88,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/summarize_ai_log.py\"",
-            "timeout": 10
-          }
-        ]
-      }
     ]
   }
 }
