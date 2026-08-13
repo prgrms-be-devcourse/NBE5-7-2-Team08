@@ -42,6 +42,10 @@ class ChunkMarkdownTest(unittest.TestCase):
 
         self.assertTrue(chunks)
         self.assertTrue(all(len(chunk.content) <= 12 for chunk in chunks))
+        self.assertEqual(
+            [chunk.content_offset for chunk in chunks if chunk.start_line == 3],
+            [0, 12, 24],
+        )
 
 
 if __name__ == "__main__":

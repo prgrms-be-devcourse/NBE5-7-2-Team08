@@ -11,5 +11,5 @@
 | mrr | 0.5000 |
 | no_result_precision | 1.0000 |
 | citation_completeness | 1.0000 |
-| p50_ms | 477.3005 |
-| p95_ms | 531.6214 |
+| p50_ms | 516.4978 |
+| p95_ms | 587.5014 |

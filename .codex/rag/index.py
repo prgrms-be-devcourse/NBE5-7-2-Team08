@@ -39,9 +39,10 @@ def open_index(path: Path) -> sqlite3.Connection:
             end_line INTEGER NOT NULL,
             content TEXT NOT NULL,
             content_sha256 TEXT NOT NULL,
+            content_offset INTEGER NOT NULL DEFAULT 0,
             embedding BLOB,
             embedding_model TEXT,
-            UNIQUE(path, start_line, end_line)
+            UNIQUE(path, start_line, end_line, content_offset)
         );
         CREATE TABLE IF NOT EXISTS metadata (
             key TEXT PRIMARY KEY,
@@ -51,14 +52,44 @@ def open_index(path: Path) -> sqlite3.Connection:
         USING fts5(content, heading, content='chunks', content_rowid='id');
         """
     )
+    columns = {row["name"] for row in connection.execute("PRAGMA table_info(chunks)")}
+    if "content_offset" not in columns:
+        connection.executescript(
+            """
+            DROP TABLE IF EXISTS chunks_fts;
+            ALTER TABLE chunks RENAME TO chunks_old;
+            CREATE TABLE chunks (
+                id INTEGER PRIMARY KEY,
+                path TEXT NOT NULL,
+                heading TEXT NOT NULL,
+                start_line INTEGER NOT NULL,
+                end_line INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                content_sha256 TEXT NOT NULL,
+                content_offset INTEGER NOT NULL DEFAULT 0,
+                embedding BLOB,
+                embedding_model TEXT,
+                UNIQUE(path, start_line, end_line, content_offset)
+            );
+            INSERT INTO chunks(id, path, heading, start_line, end_line, content, content_sha256, embedding, embedding_model)
+            SELECT id, path, heading, start_line, end_line, content, content_sha256, embedding, embedding_model
+            FROM chunks_old;
+            DROP TABLE chunks_old;
+            CREATE VIRTUAL TABLE chunks_fts
+            USING fts5(content, heading, content='chunks', content_rowid='id');
+            """
+        )
     return connection
 
 
-def _existing_chunks(connection: sqlite3.Connection) -> Dict[Tuple[str, int, int], sqlite3.Row]:
+def _existing_chunks(connection: sqlite3.Connection) -> Dict[Tuple[str, int, int, int], sqlite3.Row]:
     rows = connection.execute(
-        "SELECT id, path, start_line, end_line, heading, content_sha256 FROM chunks"
+        "SELECT id, path, start_line, end_line, content_offset, heading, content_sha256 FROM chunks"
     ).fetchall()
-    return {(row["path"], row["start_line"], row["end_line"]): row for row in rows}
+    return {
+        (row["path"], row["start_line"], row["end_line"], row["content_offset"]): row
+        for row in rows
+    }
 
 
 def _rebuild_fts(connection: sqlite3.Connection) -> None:
@@ -68,7 +99,10 @@ def _rebuild_fts(connection: sqlite3.Connection) -> None:
 def sync_chunks(connection: sqlite3.Connection, chunks: List[Chunk], model_name: str) -> None:
     """Synchronize source chunks while preserving unchanged row identifiers."""
     existing = _existing_chunks(connection)
-    incoming = {(chunk.path, chunk.start_line, chunk.end_line): chunk for chunk in chunks}
+    incoming = {
+        (chunk.path, chunk.start_line, chunk.end_line, chunk.content_offset): chunk
+        for chunk in chunks
+    }
     selected_model = connection.execute(
         "SELECT value FROM metadata WHERE key = 'embedding_model'"
     ).fetchone()
@@ -89,8 +123,8 @@ def sync_chunks(connection: sqlite3.Connection, chunks: List[Chunk], model_name:
         if row is None:
             connection.execute(
                 """
-                INSERT INTO chunks(path, heading, start_line, end_line, content, content_sha256)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO chunks(path, heading, start_line, end_line, content, content_sha256, content_offset)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     chunk.path,
@@ -99,6 +133,7 @@ def sync_chunks(connection: sqlite3.Connection, chunks: List[Chunk], model_name:
                     chunk.end_line,
                     chunk.content,
                     chunk.content_sha256,
+                    chunk.content_offset,
                 ),
             )
         elif row["heading"] != chunk.heading or row["content_sha256"] != chunk.content_sha256:
@@ -139,8 +174,8 @@ def store_embeddings(
 
     for chunk, embedding in zip(chunks, embeddings):
         row = connection.execute(
-            "SELECT id FROM chunks WHERE path = ? AND start_line = ? AND end_line = ?",
-            (chunk.path, chunk.start_line, chunk.end_line),
+            "SELECT id FROM chunks WHERE path = ? AND start_line = ? AND end_line = ? AND content_offset = ?",
+            (chunk.path, chunk.start_line, chunk.end_line, chunk.content_offset),
         ).fetchone()
         if row is None:
             raise ValueError("chunk was not indexed")

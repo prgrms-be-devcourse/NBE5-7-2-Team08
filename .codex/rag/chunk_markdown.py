@@ -20,6 +20,7 @@ class Chunk:
     end_line: int
     content: str
     content_sha256: str
+    content_offset: int = 0
 
 
 def _content_hash(content: str) -> str:
@@ -64,6 +65,7 @@ def _split_oversized_chunk(chunk: Chunk, max_chars: int) -> List[Chunk]:
             end_line=chunk.end_line,
             content=chunk.content[index : index + max_chars],
             content_sha256=_content_hash(chunk.content[index : index + max_chars]),
+            content_offset=chunk.content_offset + index,
         )
         for index in range(0, len(chunk.content), max_chars)
     ]
