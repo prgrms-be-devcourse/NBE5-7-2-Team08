@@ -1,0 +1,11 @@
+[
+  {"query": "JWT 토큰과 refresh token 정책", "expected_paths": ["ai/permission-guard-policy.md"]},
+  {"query": "WebSocket DM 커서 페이지네이션", "expected_paths": ["docs/superpowers/specs/2026-08-11-dm-cursor-pagination-design.md"]},
+  {"query": "알림 전달 관찰성과 실패 추적", "expected_paths": []},
+  {"query": "Blue Green 배포 실패 롤백", "expected_paths": ["docs/superpowers/specs/2026-08-05-homeserver-blue-green-deployment-design.md"]},
+  {"query": "쿼리 실행 계획 측정 조건", "expected_paths": ["docs/superpowers/specs/2026-08-08-query-plan-analysis-design.md"]},
+  {"query": "AI 작업 로그와 Hook의 역할", "expected_paths": ["docs/superpowers/specs/2026-08-12-ai-workflow-logging-hooks-design.md"]},
+  {"query": "permission guard는 보안 경계인가", "expected_paths": ["ai/permission-guard-policy.md", "ai/permission-guard-case-study.md"]},
+  {"query": "jwt_refresh_token_rotation", "expected_paths": []},
+  {"query": "RAG와 무관한 프랑스 요리법", "expected_paths": []}
+]

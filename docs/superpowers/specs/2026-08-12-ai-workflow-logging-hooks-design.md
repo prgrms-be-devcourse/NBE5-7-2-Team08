@@ -1,6 +1,6 @@
 # DevChat AI 보조 개발 워크플로우와 Logging Hook 설계
 
-> **상태: 구현 및 자동 테스트 완료, 실제 `/hooks` 신뢰 턴 운영 검증 전.** 이 문서에서 재현성은 같은 Git 기준점과 검증 명령으로 결과를 다시 확인하는 **검증 재현성**이며, 같은 프롬프트에서 같은 코드가 생성된다는 뜻이 아니다.
+> **상태: superseded.** Stop Hook과 자동 Markdown summary·토큰 snapshot은 제거됐다. 현재 운영 기준은 [`ai/ai-assisted-development-workflow.md`](../../../ai/ai-assisted-development-workflow.md)와 `AGENTS.md`이며, 아래 Stop 관련 상세 설계는 당시 검토 기록으로만 보존한다.
 
 ## 현행 구현 보강사항
 

@@ -10,6 +10,15 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/rag/run_user_prompt_rag.py\"",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "SubagentStart": [
@@ -76,17 +85,6 @@
             "type": "command",
             "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/log_ai_event.py\"",
             "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/summarize_ai_log.py\"",
-            "timeout": 10
           }
         ]
       }

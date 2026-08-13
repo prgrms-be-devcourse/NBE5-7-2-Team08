@@ -1,0 +1,18 @@
+{
+  "mode": "hybrid",
+  "model": "intfloat/multilingual-e5-small",
+  "dense_min_score": 0.88,
+  "index": "ai/rag/index/devchat-context.sqlite3",
+  "question_count": 9,
+  "platform": "macOS-26.5.1-arm64-arm-64bit",
+  "metrics": {
+    "recall_at_3": 0.6666666666666666,
+    "mrr": 0.5,
+    "no_result_precision": 1.0,
+    "citation_completeness": 1.0,
+    "p50_ms": 516.115417,
+    "p95_ms": 587.6973749999999,
+    "hook_p50_ms": 3045.4522500000003,
+    "hook_p95_ms": 3067.4258330000016
+  }
+}

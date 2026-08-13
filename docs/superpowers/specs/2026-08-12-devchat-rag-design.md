@@ -1,10 +1,10 @@
 # DevChat 저장소 문맥 RAG 설계
 
-> **상태: 설계 완료, 미구현.** 현행 기준은 아래 `현행 확정사항`의 Hybrid RAG다. 뒤의 `초기 FTS5-first 상세안`은 당시 고려한 계약과 변경 근거를 보존하지만 실행 기준은 아니다.
+> **상태: 구현 및 로컬 검증 완료.** 현행 기준은 아래 `현행 확정사항`의 Hybrid RAG다. 뒤의 `초기 FTS5-first 상세안`은 당시 고려한 계약과 변경 근거를 보존하지만 실행 기준은 아니다.
 
 ## 현행 확정사항
 
-사용자 요청이 들어올 때 DevChat의 승인된 현재 문서에서 관련 근거를 찾아 Codex에 짧은 컨텍스트로 제공한다. 각 결과에는 파일과 줄 번호를 포함하고 관련도가 낮으면 아무 문서도 제공하지 않는다.
+사용자 요청이 `@rag`로 시작할 때만 DevChat의 승인된 현재 문서에서 관련 근거를 찾아 Codex에 짧은 컨텍스트로 제공한다. 각 결과에는 파일과 줄 번호를 포함하고 관련도가 낮으면 아무 문서도 제공하지 않는다. `@rag`가 없는 요청에서는 검색, 임베딩 모델 로딩, 추가 컨텍스트 주입을 모두 수행하지 않는다.
 
 ### 문서 집합
 
@@ -40,9 +40,9 @@
 - RRF 자체는 항상 순위를 만들므로 lexical 근거와 corpus 평가로 보정한 cosine threshold를 결합 전에 적용해 no-result를 판정한다.
 - 동일 문서의 인접 chunk는 합치고 중복 인용을 제거한다.
 
-임베딩 모델은 `intfloat/multilingual-e5-small`과 `intfloat/multilingual-e5-base`를 같은 질문 세트로 비교한다. `base`가 정확도와 no-result 판정에서 실제 개선을 보일 때만 채택한다. `BGE-M3`는 FTS5와 기능이 겹치고 작은 문서 corpus에는 운영 복잡도가 커서 초기 범위에서 제외한다.
+임베딩 모델은 같은 9개 질문 세트에서 `intfloat/multilingual-e5-small`과 `intfloat/multilingual-e5-base`를 비교했다. `base`가 검색 품질을 개선하지 못해 `small`을 선택했다. 최신 지연시간 판단은 최종 corpus에서 별도 프로세스로 실제 Hook 수명주기를 측정한 기록을 사용한다. `dense_min_score`는 세 no-result 사례를 모두 통과한 0.88이다. `BGE-M3`는 FTS5와 기능이 겹치고 작은 문서 corpus에는 운영 복잡도가 커서 초기 범위에서 제외한다.
 
-모델은 로컬 CPU에서 실행하며 최초 다운로드 이후 OpenAI 임베딩 API 토큰을 사용하지 않는다. 검색 본문이 `additionalContext`로 들어갈 때만 Codex 입력 토큰이 증가한다.
+모델은 로컬 CPU에서 실행하며 최초 index 생성만 다운로드를 허용하고 이후 OpenAI 임베딩 API 토큰을 사용하지 않는다. `@rag` 요청마다 경량 Hook 래퍼가 `.venv`를 확인한 뒤 Python 검색 프로세스를 시작하고, runtime 모델은 local cache에서만 로드한 뒤 검색을 마치면 종료한다. `.venv` 또는 index가 없으면 컨텍스트 없이 성공 종료한다. 검색 본문이 `additionalContext`로 들어갈 때만 Codex 입력 토큰이 증가한다.
 
 ### 출력과 평가
 
@@ -60,7 +60,7 @@
 3. small/base 임베딩 index와 모델 비교
 4. RRF, no-result gate와 인접 chunk 병합
 5. 세 모드 평가 결과 기록
-6. `UserPromptSubmit` Hook 연결과 1,200자 제한 검증
+6. `@rag` 접두사 전용 `UserPromptSubmit` Hook 연결과 1,200자 제한 검증
 
 Logging Hook 실제 턴과 Permission Guard 설계를 먼저 검증한 뒤 별도 구현 계획을 작성한다.
 

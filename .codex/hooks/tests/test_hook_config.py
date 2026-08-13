@@ -23,7 +23,6 @@ class HookConfigTest(unittest.TestCase):
                 "PermissionRequest",
                 "PreToolUse",
                 "PostToolUse",
-                "Stop",
             },
         )
 
@@ -54,11 +53,26 @@ class HookConfigTest(unittest.TestCase):
             "^(Bash|apply_patch|Edit|Write)$",
         )
 
+    def test_user_prompt_submit_keeps_logging_and_uses_optional_rag_runtime_wrapper(self):
+        groups = load_config()["hooks"]["UserPromptSubmit"]
+        commands = [
+            handler["command"]
+            for group in groups
+            for handler in group["hooks"]
+        ]
+
+        self.assertTrue(any("log_ai_event.py" in command for command in commands))
+        self.assertTrue(any("/usr/bin/python3" in command for command in commands))
+        self.assertTrue(any("run_user_prompt_rag.py" in command for command in commands))
+
     def test_does_not_add_model_context(self):
         serialized = json.dumps(load_config())
 
         self.assertNotIn("additionalContext", serialized)
         self.assertNotIn("additionalContextLimit", serialized)
+
+    def test_does_not_register_stop_summary_generation(self):
+        self.assertNotIn("Stop", load_config()["hooks"])
 
 
 if __name__ == "__main__":
